@@ -29,6 +29,7 @@ export default async function SettingsPage() {
         plans={result.plans}
         announcement={result.announcement}
         cronStatus={result.cronStatus}
+        demoControl={result.demoControl}
       />
     </div>
   );

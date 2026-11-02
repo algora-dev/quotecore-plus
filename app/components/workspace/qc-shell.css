@@ -143,26 +143,28 @@ html[data-takeoff-immersive='touch'] .qc-main { max-width:none; padding:0; }
 }
 @media print { .qc-mobile-return,.qc-page-back { display:none!important; } }
 
-/* Demo/Workspace segmented toggle (2026-11-02): switch look, active side orange. */
+/* Demo/Workspace segmented toggle (2026-11-02): switch look, active side orange.
+   Shape follows the v2 standard - rounded-corner square controls (radius tokens),
+   matching .qc-choice-group - never full-round pills (owner 2026-11-02). */
 .qc-demo-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 3px;
+  gap: 4px;
+  padding: 4px;
   border: 1px solid var(--qc-border-divider, rgba(15, 23, 42, .12));
-  border-radius: 999px;
+  border-radius: var(--qc-radius-control, 12px);
   background: var(--qc-bg-subtle, rgba(15, 23, 42, .04));
 }
 .qc-demo-toggle-seg {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
-  font-size: 12px;
+  min-height: 32px;
+  padding: 6px 12px;
+  border-radius: var(--qc-radius-small, 8px);
+  font-size: 13px;
+  line-height: 20px;
   font-weight: 600;
-  line-height: 1;
   white-space: nowrap;
 }
 .qc-demo-toggle-seg.is-active {
@@ -174,5 +176,5 @@ a.qc-demo-toggle-seg { color: var(--qc-text-secondary, #475569); text-decoration
 a.qc-demo-toggle-seg:hover { background: rgba(255, 107, 53, .12); color: #C2410C; }
 a.qc-demo-toggle-seg:focus-visible { outline: 2px solid #FF9A5C; outline-offset: 2px; }
 @media (max-width: 640px) {
-  .qc-demo-toggle-seg { min-height: 34px; padding: 0 10px; font-size: 11px; }
+  .qc-demo-toggle-seg { min-height: 34px; padding: 6px 10px; font-size: 12px; }
 }

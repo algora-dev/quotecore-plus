@@ -1,27 +1,31 @@
 'use client';
 
 import { useState } from 'react';
-import type { PlanData, AnnouncementConfig, CronStatusData } from './actions';
+import type { PlanData, AnnouncementConfig, CronStatusData, DemoControlData } from './actions';
 import { PlanManagementTab } from './PlanManagementTab';
 import { CronStatusTab } from './CronStatusTab';
 import { AnnouncementTab } from './AnnouncementTab';
+import { DemoSwitchesTab } from './DemoSwitchesTab';
 
-type Tab = 'plans' | 'crons' | 'announcement';
+type Tab = 'plans' | 'crons' | 'announcement' | 'walkthrough';
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'plans', label: 'Plans' },
   { key: 'crons', label: 'Cron Jobs' },
   { key: 'announcement', label: 'Announcement' },
+  { key: 'walkthrough', label: 'Walkthrough' },
 ];
 
 export function SettingsPanel({
   plans,
   announcement,
   cronStatus,
+  demoControl,
 }: {
   plans: PlanData[];
   announcement: AnnouncementConfig;
   cronStatus: CronStatusData;
+  demoControl: DemoControlData;
 }) {
   const [tab, setTab] = useState<Tab>('plans');
 
@@ -48,6 +52,7 @@ export function SettingsPanel({
       {tab === 'plans' && <PlanManagementTab plans={plans} />}
       {tab === 'crons' && <CronStatusTab cronStatus={cronStatus} />}
       {tab === 'announcement' && <AnnouncementTab initialConfig={announcement} />}
+      {tab === 'walkthrough' && <DemoSwitchesTab initial={demoControl} />}
     </div>
   );
 }

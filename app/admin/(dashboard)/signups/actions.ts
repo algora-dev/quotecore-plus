@@ -2,7 +2,6 @@
 
 import { requireAdmin } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import { loadDemoVisitors, type DemoVisitorRow } from '@/app/lib/admin/demo-visitors';
 
 export interface SignupRow {
   companyId: string;
@@ -18,7 +17,7 @@ export interface SignupRow {
 }
 
 export type SignupsResult =
-  | { ok: true; signups: SignupRow[]; demoVisitors: DemoVisitorRow[] }
+  | { ok: true; signups: SignupRow[] }
   | { ok: false; error: string };
 
 /**
@@ -68,13 +67,5 @@ export async function loadRecentSignups(limit: number = 50): Promise<SignupsResu
     };
   });
 
-  // Demo tab degrades to empty on failure; the real feed above still renders.
-  let demoVisitors: DemoVisitorRow[] = [];
-  try {
-    demoVisitors = await loadDemoVisitors(limit);
-  } catch {
-    demoVisitors = [];
-  }
-
-  return { ok: true, signups, demoVisitors };
+  return { ok: true, signups };
 }

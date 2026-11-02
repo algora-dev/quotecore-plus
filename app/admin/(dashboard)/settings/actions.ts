@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { writeAudit } from '@/app/lib/admin/audit';
@@ -50,7 +51,7 @@ export interface CronStatusData {
 }
 
 export type SettingsDataResult =
-  | { ok: true; plans: PlanData[]; announcement: AnnouncementConfig; cronStatus: CronStatusData }
+  | { ok: true; plans: PlanData[]; announcement: AnnouncementConfig; cronStatus: CronStatusData; demoControl: DemoControlData }
   | { ok: false; error: string };
 
 export type ActionResult =
@@ -156,10 +157,23 @@ export async function getSettingsData(): Promise<SettingsDataResult> {
     .order('fire_at', { ascending: false })
     .limit(10);
 
+  // Guided Walkthrough master switches (moved from the removed /admin/demo
+  // control room, owner 2026-11-02). Emergency brakes - no deploy needed.
+  const { data: demoControlRow } = await admin
+    .from('demo_control')
+    .select('demo_enabled, ai_enabled, updated_at')
+    .eq('id', 1)
+    .maybeSingle();
+
   return {
     ok: true,
     plans: (plans ?? []) as PlanData[],
     announcement,
+    demoControl: {
+      demoEnabled: demoControlRow?.demo_enabled === true,
+      aiEnabled: demoControlRow?.ai_enabled === true,
+      updatedAt: (demoControlRow?.updated_at as string | null) ?? null,
+    },
     cronStatus: {
       jobs: CRON_REGISTRY,
       scheduledMessageStats: {
@@ -173,6 +187,31 @@ export async function getSettingsData(): Promise<SettingsDataResult> {
       failedMessages: (failedMsgs ?? []) as CronStatusData['failedMessages'],
     },
   };
+}
+
+// ---------------------------------------------------------------------------
+// Guided Walkthrough master switches (relocated from /admin/demo, 2026-11-02)
+// ---------------------------------------------------------------------------
+
+export interface DemoControlData {
+  demoEnabled: boolean;
+  aiEnabled: boolean;
+  updatedAt: string | null;
+}
+
+export async function setDemoSwitch(field: 'demo_enabled' | 'ai_enabled', value: boolean) {
+  const profile = await requireAdmin();
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from('demo_control')
+    .update({
+      [field]: value,
+      updated_at: new Date().toISOString(),
+      updated_by: (profile as { id?: string }).id ?? null,
+    })
+    .eq('id', 1);
+  if (error) throw new Error(`Failed to update ${field}: ${error.message}`);
+  revalidatePath('/admin/settings');
 }
 
 // ---------------------------------------------------------------------------
