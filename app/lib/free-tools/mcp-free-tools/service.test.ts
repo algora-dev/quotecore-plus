@@ -64,11 +64,15 @@ test('cladding and flooring start with the real workstation but reject roof-only
   await assert.rejects(() => instance.startTakeoff({ plan, trade: 'flooring', sourceOutline: { points: [{x:.1,y:.1},{x:.9,y:.1},{x:.9,y:.9}] } }), /supported only for roofing/);
 });
 
-test('normalized source geometry fails closed for out-of-range and self-crossing polygons', async () => {
+test('invalid model outline geometry degrades to a no-outline workspace instead of failing the takeoff', async () => {
   const bytes = await fixture();
   const { instance } = service(bytes);
-  await assert.rejects(() => instance.startTakeoff({ plan, trade: 'roofing', sourceOutline: { points: [{x:-.1,y:.1},{x:.8,y:.1},{x:.8,y:.8}] } }), /between 0 and 1/);
-  await assert.rejects(() => instance.startTakeoff({ plan, trade: 'roofing', sourceOutline: { points: [{x:.1,y:.1},{x:.9,y:.9},{x:.9,y:.1},{x:.1,y:.9}] } }), /intersect|self|cross|no area/i);
+  const outOfRange = await instance.startTakeoff({ plan, trade: 'roofing', sourceOutline: { points: [{x:-.1,y:.1},{x:.8,y:.1},{x:.8,y:.8}] } });
+  assert.equal(outOfRange.hasSuggestedOutline, false);
+  const selfCrossing = await instance.startTakeoff({ plan, trade: 'roofing', sourceOutline: { points: [{x:.1,y:.1},{x:.9,y:.9},{x:.9,y:.1},{x:.1,y:.9}] } });
+  assert.equal(selfCrossing.hasSuggestedOutline, false);
+  const notAnObject = await instance.startTakeoff({ plan, trade: 'roofing', sourceOutline: 'nonsense' });
+  assert.equal(notAnObject.hasSuggestedOutline, false);
 });
 
 test('workspace session is signed and expires', async () => {
@@ -96,7 +100,9 @@ test('PDF attachments are preserved for the existing browser page picker instead
   assert.equal(loaded.asset.frame, null);
   const asset = await instance.loadAsset(started.token);
   assert.equal(asset.bytes.toString('ascii', 0, 5), '%PDF-');
-  await assert.rejects(() => instance.startTakeoff({ plan: pdfPlan, trade: 'roofing', sourceOutline: { points: [{x:.1,y:.1},{x:.9,y:.1},{x:.9,y:.9}] } }), /choose the page/i);
+  const pdfWithOutline = await instance.startTakeoff({ plan: pdfPlan, trade: 'roofing', sourceOutline: { points: [{x:.1,y:.1},{x:.9,y:.1},{x:.9,y:.9}] } });
+  assert.equal(pdfWithOutline.assetKind, 'pdf');
+  assert.equal(pdfWithOutline.hasSuggestedOutline, false);
 });
 
 test('measurements-to-pricing session preserves supplied values and starts all pricing rates at zero', async () => {

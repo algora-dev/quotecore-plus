@@ -233,8 +233,8 @@ export class FreeToolsMcpService {
 
     if (isPdf) {
       if (raw.length > MAX_PDF_ATTACHMENT_BYTES) throw new ScanError('FILE_TOO_LARGE', 'Use a PDF plan under 50 MiB.', 413);
-      if (input.sourceOutline !== undefined)
-        throw new ScanError('PDF_OUTLINE_UNSUPPORTED', 'For PDF plans, choose the page in QuoteCore+ first. Do not submit source_outline against a multi-page attachment.', 400);
+      // v5: outlines are meaningless before PDF page selection, and the required-outline
+      // instruction means models may attach one anyway - discard it and continue.
       bytes = raw;
       const sha256 = createHash('sha256').update(bytes).digest('hex');
       asset = {
@@ -258,8 +258,14 @@ export class FreeToolsMcpService {
       bytes = prepared.bytes;
       if (input.sourceOutline !== undefined) {
         if (input.trade !== 'roofing') throw new ScanError('INVALID_INPUT', 'source_outline is currently supported only for roofing plans.');
-        const proposal = normalizedOutline(input.sourceOutline, prepared.frame);
-        outlineSuggestion = outlineScan(proposal.outline, proposal.notes);
+        try {
+          const proposal = normalizedOutline(input.sourceOutline, prepared.frame);
+          outlineSuggestion = outlineScan(proposal.outline, proposal.notes);
+        } catch (error) {
+          // v5: the tool asks the model to ALWAYS attempt the outline, so junk
+          // geometry must degrade to a no-outline workspace, never fail the takeoff.
+          if (!(error instanceof ScanError)) throw error;
+        }
       }
       asset = {
         kind: 'image',
