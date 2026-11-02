@@ -27,7 +27,7 @@ export function WelcomeModal({ base, firstName, pricingFirst = false }: Props) {
   }
   if (!open) return null;
   return <aside className="qc-pricing-welcome" data-qc-ui="v2" aria-label="Getting started help">
-    <QcIcon name="help" /><div><strong>{pricingFirst ? `New here, ${firstName}? Start with a component you know.` : `Welcome, ${firstName}. Your workspace is ready to explore.`}</strong>
+    <QcIcon name="help" /><div><strong>{pricingFirst ? (firstName ? `New here, ${firstName}? Start with a component you know.` : 'New here? Start with a component you know.') : (firstName ? `Welcome, ${firstName}. Your workspace is ready to explore.` : 'Welcome. Your workspace is ready to explore.')}</strong>
       <p>{pricingFirst ? 'The pricing guide shows you how to test an example and create your own.' : 'Check your company’s Pricing Library, continue a job, or use Tutorials whenever you need help.'}</p>
       <div><Link prefetch={false} href={`${base}/components?learn=1`} className="qc-text-link">Pricing guide</Link><Link prefetch={false} href={`${base}/tutorials`} className="qc-text-link">Tutorials</Link></div>
       {error && <p role="status">{error} <QcButton size="sm" onClick={() => setOpen(false)}>Hide for now</QcButton></p>}

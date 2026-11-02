@@ -26,7 +26,7 @@ export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationC
   const resume = recentWork?.[0];
   return <div className="qc-home" data-qc-ui="v2">
     <header className="qc-home-heading">
-      <div><p className="qc-eyebrow">{isDemo ? 'Your demo' : 'Your workspace'}</p><h1>{isDemo ? 'Welcome to your demo workspace' : <>Welcome {newUser ? '' : 'back, '}{firstName}</>}</h1>
+      <div><p className="qc-eyebrow">{isDemo ? 'Your demo' : 'Your workspace'}</p><h1>{isDemo ? 'Welcome to your demo workspace' : firstName ? <>Welcome {newUser ? '' : 'back, '}{firstName}</> : newUser ? 'Welcome to your workspace' : 'Welcome back'}</h1>
         <p>Measure with confidence. Price your work. Send a great quote.</p></div>
       <div className="flex flex-wrap items-center gap-2">
         {newUser && !isDemo ? <a href="/demo" target="_blank" rel="noopener noreferrer" className="qc-button" data-qc-variant="primary"><QcIcon name="help" /> Guided walkthrough</a> : null}

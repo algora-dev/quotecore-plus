@@ -8,7 +8,6 @@ import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { smartAssistantFeatureAvailable } from '@/app/lib/smart-assistant/access.server';
 import { MeasureJobButton } from './MeasureJobModal';
 import { WelcomeModal } from './tutorials/WelcomeModal';
-import { FreeWelcomeModal } from './FreeWelcomeModal';
 import { getActiveDemoContext } from '@/app/lib/demo/context';
 import { DocDraftRestorer } from './DocDraftRestorer';
 import { TakeoffDraftNoteBanner } from './TakeoffDraftNoteBanner';
@@ -74,7 +73,7 @@ export default async function WorkspaceHome({
     .eq('id', profile.id)
     .single();
 
-  const firstName = user?.full_name?.split(' ')[0] || 'there';
+  const firstName = user?.full_name?.split(' ')[0] ?? '';
   // Demo sessions greet with their own welcome inside the guide widget; never
   // stack the normal-account modals on top of it (owner direction 2026-10-04).
   const demoContext = await getActiveDemoContext(company.id);
@@ -123,7 +122,6 @@ export default async function WorkspaceHome({
 
   return (
     <section data-qc-ui="v2" className="space-y-5">
-      <Suspense fallback={null}><FreeWelcomeModal workspaceSlug={workspaceSlug} /></Suspense>
       {showWelcome ? <WelcomeModal base={`/${workspaceSlug}`} firstName={firstName} pricingFirst={!hasCalcDraft && recentWork !== undefined && recentWork.length === 0 && !(company as { is_supplier?: boolean }).is_supplier} /> : null}
       {hasCalcDraft && <CalcDraftImportBanner draftId={signupDraft!} sourceRef={signupRef ?? null} />}
       <Suspense fallback={null}><DocDraftRestorer workspaceSlug={workspaceSlug} /></Suspense>
