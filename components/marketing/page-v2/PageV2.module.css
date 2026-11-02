@@ -157,9 +157,10 @@
 @media (prefers-reduced-motion: reduce) {
   .root *, .root *::before, .root *::after { scroll-behavior: auto !important; transition-duration: .001ms !important; animation-duration: .001ms !important; animation-iteration-count: 1 !important; }
 }
-.conversionGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+.conversionGrid { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 16px; }
 .conversionCard { display: flex; flex-direction: column; min-height: 250px; padding: 28px; border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 8px 27px rgba(27,34,46,.035); }
 .conversionCard h3 { margin: 0; color: var(--ink); font-size: 20px; line-height: 1.24; letter-spacing: -.027em; }
 .conversionCard p { margin: 12px 0 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
-.conversionCard .textLink { margin-top: auto; padding-top: 22px; }
+.conversionAction { margin-top: auto; align-self: flex-start; }
+.conversionCard > .conversionAction { margin-top: auto; padding-top: 22px; }
 @media (max-width: 900px) { .conversionGrid { grid-template-columns: 1fr; } .conversionCard { min-height: 0; } }

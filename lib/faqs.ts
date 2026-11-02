@@ -27,7 +27,7 @@ export const homepageFaqs: FaqItem[] = [
   {
     question: "How do I get started?",
     answer:
-      "Explore the free tools, or use the pricing tool to choose the features your business needs and see your tailored QuoteCore+ subscription price.",
+      "Create a Free Workspace and start using QuoteCore+ on your own jobs. You can follow the optional guided walkthrough, or book a free 25-minute call with Shaun to talk through how you currently work and where QuoteCore+ could help.",
   },
   {
     question: "Why do contractors switch to QuoteCore+?",

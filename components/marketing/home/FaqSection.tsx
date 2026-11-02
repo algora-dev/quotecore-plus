@@ -10,13 +10,13 @@ import s from './Homepage.module.css';
 import f from './FaqSection.module.css';
 
 export function FaqSection({ config, pricingHref = '/pricing', setupHref = '/done-for-you-setup' }: {
-  config: Pick<HomepageConfig, 'demoHref' | 'bookingHref'>;
+  config: Pick<HomepageConfig, 'bookingHref'>;
   pricingHref?: string;
   setupHref?: string;
 }) {
   const list = useRef<HTMLDivElement>(null);
   const animations = useRef(new Map<HTMLDetailsElement, Animation>());
-  const destinations = { demo: config.demoHref, pricing: pricingHref, setup: setupHref };
+  const destinations = { pricing: pricingHref, setup: setupHref };
 
   useEffect(() => {
     const active = animations.current;
@@ -104,7 +104,7 @@ export function FaqSection({ config, pricingHref = '/pricing', setupHref = '/don
           </summary>
           <div className={f.answer} data-faq-answer>
             <p>{faq.answer}</p>
-            {faq.link && <a className={f.answerLink} href={destinations[faq.link.destination]} target="_blank" rel="noopener noreferrer">{faq.link.label}<Icon name="arrow" size={15} /></a>}
+            {faq.link && <a className={f.answerLink} href={destinations[faq.link.destination]}>{faq.link.label}<Icon name="arrow" size={15} /></a>}
           </div>
         </details>)}
       </div>

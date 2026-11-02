@@ -1,18 +1,12 @@
 import Link from 'next/link';
+import { workflowCallHref } from '@/lib/booking';
 
 /**
- * Lapsed-comp notice (owner directive 2026-10-18).
+ * Lapsed complimentary-access notice.
  *
- * Shown at the top of the onboarding paywall when the company had a
- * complimentary access grant (companies.comp_until) that has since passed
- * and the account is inactive. The 2026-09-16 one-month comps expired
- * 2026-10-16; instead of a silent paywall, these users get a plain
- * explanation plus the three routes the owner chose:
- *   1. Build a paid plan (pricing builder)
- *   2. Explore the interactive demo (which replaced the free trial)
- *   3. See what's new (marketing homepage)
- *
- * Purely presentational; the paywall below still handles actual checkout.
+ * This is a billing recovery surface for legacy complimentary grants. It must
+ * not reintroduce the old free-trial/demo/public-pricing-builder funnel.
+ * Saved data remains intact; the billing surface below handles paid access.
  */
 export function LapsedCompNotice({ endedOn }: { endedOn: string | null }) {
   const endedLabel = endedOn
@@ -32,33 +26,18 @@ export function LapsedCompNotice({ endedOn }: { endedOn: string | null }) {
         Your complimentary access has ended
       </h2>
       <p className="mt-2 text-sm leading-relaxed text-slate-600">
-        Your free access to QuoteCore+{endedLabel ? ` ended on ${endedLabel}` : ' has ended'},
-        and QuoteCore+ no longer offers a free trial. Your account, jobs and quotes are all
-        still saved — choose an option below to keep going.
+        Your complimentary paid access{endedLabel ? ` ended on ${endedLabel}` : ' has ended'}.
+        Your account, jobs and quotes are still saved. Use the billing options below to choose
+        the paid features and capacity you need, or talk it through with Shaun first.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <Link
-          href="/pricing"
+          href={workflowCallHref}
           prefetch={false}
           className="qc-button"
           data-qc-variant="primary"
         >
-          Create your paid plan
-        </Link>
-        <Link
-          href="/demo"
-          prefetch={false}
-          className="qc-button"
-          data-qc-variant="glass"
-        >
-          Explore the demo
-        </Link>
-        <Link
-          href="https://quote-core.com"
-          prefetch={false}
-          className="text-sm font-medium text-[#BD4A1A] hover:text-[#ff5722]"
-        >
-          See what&apos;s new &rarr;
+          Book 25 minutes with Shaun
         </Link>
       </div>
     </section>

@@ -5,6 +5,8 @@ import { trackEvent } from "@/lib/analytics";
 import { appUrl } from "@/lib/app-url";
 import SocialIcons from "./SocialIcons";
 import { MarketingButton } from "./marketing/MarketingButton";
+import { FreeWorkspaceButton } from "./marketing/FreeWorkspaceButton";
+import { workflowCallHref } from "@/lib/booking";
 import styles from "./BlogHeader.module.css";
 import controls from "./marketing/MarketingButton.module.css";
 
@@ -16,9 +18,8 @@ function buildNavItems(appHref: string, homepage: boolean): NavItem[] {
     { label: "Features", href: homepage ? "#workflow" : "/features" },
     { label: "Done For You", href: "/done-for-you-setup" },
     { label: "Pricing", href: homepage ? "#pricing" : "/pricing" },
-    { label: "Demo", href: "/demo" },
-    { label: "Free Tools", href: "/free-tools" },
-    { label: "Contact us", href: "/contact" },
+    { label: "Free Workspace", href: "/free-trial" },
+    { label: "Book 25 minutes with Shaun", href: workflowCallHref },
   ];
 }
 
@@ -74,7 +75,6 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "dark", 
     };
   }, [menuOpen]);
 
-  const trackDemo = (location: string) => trackEvent("demo_tool_click", { location, mode: "takeoff" });
 
   return (
     <header ref={headerRef} className={`${styles.header} ${theme === "dark" ? styles.dark : ""} ${scrolled ? styles.scrolled : ""}`}>
@@ -100,33 +100,17 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "dark", 
               </a>
             ) : null}
             <MarketingButton
-              href={appLink || "/login"}
-              variant="glass"
-              size="large"
-              className={styles.signIn}
-              onClick={() => trackEvent("app_click", { location: "nav" })}
-            >
-              Enter App
-            </MarketingButton>
-            <MarketingButton
-              href="/demo"
+              href={workflowCallHref}
               variant="primary"
               size="large"
-              onClick={() => trackDemo("nav")}
+              onClick={() => trackEvent("book_call_click", { location: "nav" })}
             >
-              Demo
+              Book 25 minutes with Shaun
             </MarketingButton>
+            <FreeWorkspaceButton variant="glass" size="large">Create free workspace</FreeWorkspaceButton>
           </div>
 
-          <MarketingButton
-            href="/demo"
-            variant="primary"
-            className={styles.mobileDemo}
-            onClick={() => trackDemo("nav-mobile")}
-            ariaLabel="Try the QuoteCore+ interactive demo"
-          >
-            Demo
-          </MarketingButton>
+          <MarketingButton href={workflowCallHref} variant="primary" className={styles.mobileDemo} onClick={() => trackEvent("book_call_click", { location: "mobile_nav" })}>25 min with Shaun</MarketingButton>
 
           <button
             ref={menuButtonRef}

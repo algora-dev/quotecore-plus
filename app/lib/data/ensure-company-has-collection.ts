@@ -12,8 +12,7 @@
  * `is_bootstrap` at all.
  *
  * Call this:
- *   - At the last step of company creation (`completeGoogleOnboarding`,
- *     `signupWithCompany`).
+ *   - During Free Workspace/company provisioning or migration recovery.
  *   - From the one-off `scripts/backfill-component-collections.mjs` backfill.
  *   - As a defensive fallback before any code path that needs a collection
  *     for a company that may not have been bootstrapped yet (rare; current

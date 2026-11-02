@@ -63,8 +63,8 @@ export default function OffcutOptimiserPage() {
         eyebrow="Long-run roofing cut list and offcut planning"
         title={<>Stop guessing roofing waste with a flat percentage.</>}
         lead="Offcut Optimiser turns a reviewed roof takeoff into suggested whole-roof cutting plans. See how many sheets or purchased lengths the geometry is likely to need, where compatible angled offcuts may be reused and whether your quote has enough material allowed before the job is won."
-        primary={{ href: bookingHref, label: 'Book a tailored 20-minute demo' }}
-        secondary={{ href: '/free-roof-takeoff', label: 'Try the free roof takeoff' }}
+        primary={{ href: bookingHref, label: 'Book 25 minutes with Shaun' }}
+        secondary={{ href: '/signup', label: 'Create my free workspace', freeWorkspace: true }}
         proof={['Built for hips, valleys and angled cuts', 'Compare generated cutting plans', 'Review, refine or discard the result']}
         visual={<ProductFrame src="/marketing/current-ux/offcut-optimiser-plan.webp" alt="QuoteCore+ Offcut Optimiser with a generated whole-roof cut plan" width={2048} height={1109} eager caption="A generated whole-roof sheet and offcut plan. Compare cutting options, purchased lengths and reusable offcuts before relying on the material quantity." />}
       />
@@ -160,11 +160,10 @@ export default function OffcutOptimiserPage() {
 
       <Section>
         <Container>
-          <SectionHeader eyebrow="See it on a real roof" title="Start free, or let us show the workflow against the way your business actually roofs." lead="The free roof takeoff is the fastest way to understand the measurement side. For Offcut Optimiser itself, a tailored screen-share is the best way to see how it fits your profiles, quoting process and real roof geometry." />
+          <SectionHeader eyebrow="See where it fits" title="Use Offcut Optimiser in your Free Workspace, or talk through your long-run workflow with Shaun." lead="Start with the real QuoteCore+ workflow. If your profiles, roof geometry or quoting process need a more tailored discussion, the 25-minute call is there for that." />
           <ConversionPaths items={[
-            { title: 'Try the free roof takeoff', body: 'Measure a roof plan in the browser and see the geometry that sits upstream of cut planning.', href: '/free-roof-takeoff', label: 'Open the free roof takeoff' },
-            { title: 'Book a tailored 20-minute demo', body: 'Show us how you quote long-run or metal roofing and we will demonstrate the workflow around your use case. No obligation.', href: bookingHref, label: 'Book a tailored demo' },
-            { title: 'Build your configuration', body: 'Add Digital Takeoff and Offcut Optimiser in the pricing builder and see the resulting monthly subscription.', href: '/pricing', label: 'See pricing' },
+            { title: 'Create your Free Workspace', body: 'Try the connected takeoff, pricing and quoting workflow yourself and keep using the workspace for as long as the free allowances suit you.', href: '/signup', label: 'Create my free workspace', freeWorkspace: true },
+            { title: 'Talk it through with Shaun', body: 'Tell Shaun how you currently quote long-run or metal roofing, see where QuoteCore+ could make it faster or easier, and take away his #1 tip for winning more quoted jobs.', href: bookingHref, label: 'Book 25 minutes with Shaun' },
           ]} />
         </Container>
       </Section>
@@ -184,7 +183,7 @@ export default function OffcutOptimiserPage() {
         </Container>
       </Section>
 
-      <FinalCta title="Know the material risk before the customer knows the price." body="Generate the cut-plan starting point early, quote from a more realistic material allowance, then let your roofing judgement improve the plan where it matters." primary={{ href: bookingHref, label: 'Book a tailored 20-minute demo' }} secondary={{ href: '/free-roof-takeoff', label: 'Try the free roof takeoff' }} />
+      <FinalCta title="Know the material risk before the customer knows the price." body="Generate the cut-plan starting point early, quote from a more realistic material allowance, then let your roofing judgement improve the plan where it matters." primary={{ href: bookingHref, label: 'Book 25 minutes with Shaun' }} secondary={{ href: '/signup', label: 'Create my free workspace', freeWorkspace: true }} />
       <div style={{ height: 72 }} />
     </PageScaffold>
   );

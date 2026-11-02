@@ -14,11 +14,11 @@ export const metadata: Metadata = {
   // Root layout appends "| QuoteCore+" via template - do NOT add brand suffix here (avoids suffix doubling)
   title: "Contractor Estimating & Quoting Software for Construction",
   description:
-    "Contractor estimating and quoting software for trades - build estimates and quotes from measurements on site or in the office, with digital takeoff, Smart Components, material ordering, invoicing and Smart Assistant. Free tools with no signup; paid configurations from US$29/month.",
+    "Contractor estimating and quoting software for trades - build estimates and quotes from measurements on site or in the office, with digital takeoff, Smart Components, material ordering, invoicing and Smart Assistant. Create a Free Workspace with no card or expiry, then upgrade only if you need more features, capacity or usage.",
   openGraph: {
     title: "Contractor Estimating & Quoting Software | QuoteCore+",
     description:
-      "Contractor estimating and quoting software for trades - build estimates and quotes from measurements on site or in the office. Free tools with no signup; paid configurations from US$29/month.",
+      "Contractor estimating and quoting software for trades - build estimates and quotes from measurements on site or in the office. Create a Free Workspace with no card or expiry, then upgrade only if you need more features, capacity or usage.",
     url: "/construction-quoting-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -120,7 +120,7 @@ const faqSchema = {
       name: "Can I try it before paying?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Our free tools work instantly with no signup, and current paid configurations start at US$29/month, with the interactive app demo available before subscribing.",
+        text: "Yes. Create a real Free Workspace with no card and no expiry. Use it on your own jobs, try the optional Guided Walkthrough, and upgrade only if you need more features, capacity or usage.",
       },
     },
     {
@@ -128,7 +128,7 @@ const faqSchema = {
       name: "How much does construction quoting software cost?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: `QuoteCore+ uses configurable monthly pricing. Current public configurations range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax} per month, depending on workload and selected tools. See the pricing page for the current configuration and total before subscribing.`,
+        text: `QuoteCore+ uses configurable monthly pricing. Current public configurations range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax} per month, depending on workload and selected tools. See the pricing page for the public range. If you upgrade, create your exact plan inside Billing after you have tried the app.`,
       },
     },
     {
@@ -250,7 +250,7 @@ const faqs = [
   },
   {
     q: "Can I try it before paying?",
-    a: "Yes. Our free tools work instantly with no signup, and current paid configurations start at US$29/month, with the interactive app demo available before subscribing.",
+    a: "Yes. Create a real Free Workspace with no card and no expiry. Use it on your own jobs, try the optional Guided Walkthrough, and upgrade only if you need more features, capacity or usage.",
   },
   {
     q: "Who do I contact with questions?",
@@ -371,30 +371,18 @@ export default function ConstructionQuotingSoftwarePage() {
               Measure jobs with digital takeoff and Roof Scan Assist, build priced quotes with Smart Components™, track customer approval, order materials, manage work, invoice and get paid - all in one connected workflow that runs on phone, tablet or desktop.
             </p>
 
-            {/* Two entry paths */}
-            <div className="mx-auto mt-6 grid max-w-3xl gap-3 text-left sm:grid-cols-2">
-              <a href="/free-roof-takeoff" className="rounded-xl border border-zinc-200 bg-white px-5 py-4 transition-colors hover:border-[#FF6B35]/40">
-                <p className="text-sm font-semibold text-zinc-950">Start with a plan or image</p>
-                <p className="mt-1 text-sm leading-6 text-zinc-600">Digital takeoff for roofs, walls and floors - manual, or AI-assisted where available. <span className="text-[#BD4A1A]">Try the free takeoff tools &rarr;</span></p>
-              </a>
-              <a href="/measurement-to-quote-tool" className="rounded-xl border border-zinc-200 bg-white px-5 py-4 transition-colors hover:border-[#FF6B35]/40">
-                <p className="text-sm font-semibold text-zinc-950">Already have measurements?</p>
-                <p className="mt-1 text-sm leading-6 text-zinc-600">Enter areas, lengths and quantities from a site measure or satellite report; reusable components apply material, labor and waste pricing. <span className="text-[#BD4A1A]">Open Measurement-to-Quote &rarr;</span></p>
-              </a>
-            </div>
-
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-left">
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-[#FF6B35]">
                 Quick answer
               </p>
               <p className="text-sm leading-6 text-zinc-600">
-                Quoting software for contractors turns measurements, labour and material prices into a professional, priced quote - without spreadsheets or re-typed numbers. It is built for contractors, builders, roofers, plasterers and subcontractors who quote from measurements or plans. Try the free tools with no signup, then build a paid configuration from US$29/month through the pricing tool - so you can move to a connected quoting workflow with confidence.
+                Quoting software for contractors turns measurements, labour and material prices into a professional, priced quote without spreadsheets or re-typed numbers. It is built for contractors, builders, roofers, plasterers and subcontractors who quote from measurements or plans. Start in a real Free Workspace, use it on your own jobs, and only build a paid plan inside Billing if you later need more features, capacity or usage.
               </p>
             </div>
 
             <CommercialHeroActions location="construction_quoting_hero" />
 
-            <p className="mt-3 text-sm text-zinc-400">Free tools forever. Current paid configurations start at US$29/month.</p>
+            <p className="mt-3 text-sm text-zinc-400">No card. No expiry. Upgrade only if the Free Workspace stops being enough.</p>
 
             <p className="mt-3 text-sm text-zinc-500">
               Already have spreadsheets, price lists or quote templates?{" "}
@@ -474,19 +462,8 @@ export default function ConstructionQuotingSoftwarePage() {
         <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
           <div className="rounded-[2rem] border border-zinc-200 bg-zinc-50 px-7 py-8">
             <h2 className="text-2xl font-semibold text-zinc-950">How much does it cost?</h2>
-            <p className="mt-3 text-zinc-600">Configurable monthly pricing in USD. Current global configurations range from US$29 to US$259/month, built through the pricing tool.</p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-4">
-              {[
-                { name: "Configurable", price: "US$29+", note: "Build your setup in the pricing tool" },
-              ].map((p) => (
-                <div key={p.name} className="rounded-2xl border border-zinc-200 bg-white px-5 py-4">
-                  <p className="text-sm font-semibold text-zinc-950">{p.name}</p>
-                  <p className="mt-1 text-xl font-semibold text-[#BD4A1A]">{p.price}</p>
-                  <p className="mt-1 text-xs text-zinc-500">{p.note}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-4 text-sm text-zinc-500">See the <a href="/pricing" className="text-[#BD4A1A] hover:underline">full pricing comparison</a> for everything included in each plan.</p>
+            <p className="mt-3 text-zinc-600">Paid configurations currently range from US$29 to US$259/month. Create a Free Workspace first, learn which features actually help, then build your exact plan inside Billing when you are ready.</p>
+            <p className="mt-4 text-sm text-zinc-500">See <a href="/pricing" className="text-[#BD4A1A] hover:underline">how QuoteCore+ pricing works</a>.</p>
           </div>
         </section>
 
@@ -589,10 +566,6 @@ export default function ConstructionQuotingSoftwarePage() {
                 <figcaption className="px-5 py-3 text-sm text-zinc-600">{img.caption}</figcaption>
               </figure>
             ))}
-          </div>
-          <div className="mt-10 text-center">
-            <a href="/demo" className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">Explore the interactive demo</a>
-            <p className="mt-3 text-sm text-zinc-400">Free tools forever. Interactive demo available before subscribing.</p>
           </div>
         </section>
 
@@ -816,11 +789,9 @@ export default function ConstructionQuotingSoftwarePage() {
                         or book a free{" "}
                         <a
                           href={workflowCallHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
                           className="text-[#FF6B35] hover:underline"
                         >
-                          20-minute call
+                          25-minute call
                         </a>
                         .
                       </>
@@ -828,7 +799,7 @@ export default function ConstructionQuotingSoftwarePage() {
                       <>
                         QuoteCore+ uses configurable monthly pricing. Current public configurations range from US${publicPricing.monthlyMin} to US${publicPricing.monthlyMax} per month, depending on workload and selected tools. See the{" "}
                         <a href="/pricing" className="text-[#FF6B35] hover:underline">pricing page</a>{" "}
-                        for the current configuration and total before subscribing.
+                        for the public range. If you upgrade, create your exact plan inside Billing after you have tried the app.
                       </>
                     ) : f.a === "spreadsheets-link" ? (
                       <>
@@ -920,22 +891,6 @@ export default function ConstructionQuotingSoftwarePage() {
               <p className="font-semibold text-zinc-950">Invoicing</p>
               <p className="mt-1 text-sm text-zinc-600">Turn accepted quotes into professional invoices.</p>
             </a>
-            <a href="/free-construction-calculator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Free construction calculator</p>
-              <p className="mt-1 text-sm text-zinc-600">Areas, timber lengths, and building materials.</p>
-            </a>
-            <a href="/free-quote-generator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Free quote generator</p>
-              <p className="mt-1 text-sm text-zinc-600">Create a professional quote for free, no signup required.</p>
-            </a>
-            <a href="/free-roof-takeoff" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Free roof takeoff tool</p>
-              <p className="mt-1 text-sm text-zinc-600">Measure a roof plan online, no signup.</p>
-            </a>
-            <a href="/measurement-to-quote-tool" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Measurement-to-Quote tool</p>
-              <p className="mt-1 text-sm text-zinc-600">Turn measurements into priced estimates, free.</p>
-            </a>
             <a href="/roofing-takeoff-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Roofing takeoff software</p>
               <p className="mt-1 text-sm text-zinc-600">Roof measurement software for PDF plans.</p>
@@ -944,18 +899,12 @@ export default function ConstructionQuotingSoftwarePage() {
               <p className="font-semibold text-zinc-950">Construction takeoff software</p>
               <p className="mt-1 text-sm text-zinc-600">Measure PDF plans digitally across trades.</p>
             </a>
-            <a href="/free-construction-takeoff-tools" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Free takeoff tools</p>
-              <p className="mt-1 text-sm text-zinc-600">Roof, siding/cladding and flooring takeoffs - no signup.</p>
-            </a>
+            
             <a href="/roofing-quoting-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Roofing quoting software</p>
               <p className="mt-1 text-sm text-zinc-600">Built specifically for roofing contractors - takeoff to invoice.</p>
             </a>
-            <a href="/free-tools" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Free tools</p>
-              <p className="mt-1 text-sm text-zinc-600">Calculators, quote generator, invoice generator - no signup required.</p>
-            </a>
+            
             <a href="/trust" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Trust and security</p>
               <p className="mt-1 text-sm text-zinc-600">How we protect your data and respect your business.</p>
@@ -968,7 +917,7 @@ export default function ConstructionQuotingSoftwarePage() {
           <CommercialFinalCta
             location="construction_quoting_final"
             title="Quote. Manage. Grow."
-            body="Try the connected contractor workflow yourself, or book a free 20-minute call to map QuoteCore+ against your current measurements, pricing and quoting process."
+            body="Try the connected contractor workflow yourself, or book a free 25-minute call to map QuoteCore+ against your current measurements, pricing and quoting process."
           />
         </section>
 

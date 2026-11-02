@@ -267,7 +267,7 @@ export function quoteHref(state:CalculatorState,r:Result):string {
   const params=new URLSearchParams({ref:profileFor(state.trade).slug,currency:state.currency});
   if(state.tab==='pricing'&&r.price){
     const p=state.pricing,lines=[{description:p.name.trim()||'Building material',qty:Number(numericText(r.price.pricedQuantity)),unit:p.pricingStrategy==='per_unit'?r.price.unit:'packs',rate:Number(p.price)}];
-    if(r.price.labourCost>0)lines.push({description:`Labour — ${p.name.trim()||'building work'}`,qty:1,unit:'job',rate:r.price.labourCost});
+    if(r.price.labourCost>0)lines.push({description:`Labour - ${p.name.trim()||'building work'}`,qty:1,unit:'job',rate:r.price.labourCost});
     params.set('lines',JSON.stringify(lines));
   }else {params.set('qty',numericText(r.value));params.set('unit',r.unit);}
   return '/free-quote-generator?'+params.toString();

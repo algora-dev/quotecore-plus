@@ -49,10 +49,10 @@ export function DocumentAssist({config,services,onClose,onApply,hasExisting,init
           <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" aria-label="Choose a document image" hidden onChange={e=>{void choose(e.target.files?.[0]);e.target.value='';}}/>
         </div>}
       <p className={s.privacyLine}><Icon name="lock"/>{services.preview?'Offline preview: your input stays here. Extraction returns a fixed, labelled sample, not live AI.': 'Only when you press Extract, your text or photo is sent to the existing AI processing service. Always check the result.'}</p>
-      {error&&<div role="alert" className={s.errorBox}><p>{error}</p>{quota&&onIncrease&&<Button onClick={onIncrease}>Increase AI allowance — free</Button>}</div>}
+      {error&&<div role="alert" className={s.errorBox}><p>{error}</p>{quota&&onIncrease&&<Button onClick={onIncrease}>Increase AI allowance for free</Button>}</div>}
       <div className={s.dialogActions}>{services.preview&&<Button disabled={busy} onClick={()=>{setMode('text');setText(copy.assistPlaceholder);}}>Use example text</Button>}<Button variant="primary" icon="spark" pending={busy} disabled={mode==='text'?!text.trim()||text.length>10000:!image} onClick={()=>void extract()}>{busy?'Reading your document…':services.preview?'Preview extraction (sample)':'Extract document details'}</Button></div>
     </>:<>
-      <div className={s.notice}><Icon name="shield"/><div><strong>{example?'Example extraction — not live AI':`${result.lines.length} items found · ${result.confidence||'unknown'} confidence`}</strong><p>Nothing has changed in your document yet.</p></div></div>
+      <div className={s.notice}><Icon name="shield"/><div><strong>{example?'Example extraction, not live AI':`${result.lines.length} items found · ${result.confidence||'unknown'} confidence`}</strong><p>Nothing has changed in your document yet.</p></div></div>
       {extractedDetails(result).length>0&&<dl className={s.extractedDetails}>{extractedDetails(result).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}
       {config.kind==='invoice'&&result.paymentDetails&&<p className={s.hint}>Verify payment instructions against your own records before sharing. AI extraction does not verify bank details.</p>}
       <p className={s.hint}>Currency and tax are not inferred. Check your current settings after applying these details.</p>

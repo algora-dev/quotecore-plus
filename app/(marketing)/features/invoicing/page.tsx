@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import Link from "next/link";
 import DemoCTACard from "@/components/DemoCTACard";
+import TwoPathCta from "@/components/conversion/TwoPathCta";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -109,14 +110,7 @@ export default function InvoicingPage() {
             <p className="mt-4 text-lg text-zinc-600">
               Create a branded, professional invoice from an accepted quote, import a quote from another tool, or start from scratch. Line items, pricing, and payment instructions flow automatically. No formatting, no spreadsheets.
             </p>
-            <div className="mt-6 flex gap-3">
-              <a href="/demo" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-                Explore the interactive demo
-              </a>
-              <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
-                All features
-              </Link>
-            </div>
+            <TwoPathCta location="feature_invoicing_hero" className="mt-6" compact />
           </div>
         </section>
 
@@ -311,13 +305,9 @@ export default function InvoicingPage() {
               <h3 className="font-semibold text-slate-900">Material ordering</h3>
               <p className="mt-1 text-sm text-zinc-600">Order materials from suppliers and invoice customers from the same data.</p>
             </Link>
-            <Link href="/free-invoice-generator" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <h3 className="font-semibold text-slate-900">Free invoice generator</h3>
-              <p className="mt-1 text-sm text-zinc-600">Create a professional invoice for free, no signup required.</p>
-            </Link>
             <Link href="/pricing" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Pricing</h3>
-              <p className="mt-1 text-sm text-zinc-600">Build your configuration - current global setups start at US$29/month.</p>
+              <p className="mt-1 text-sm text-zinc-600">See the current public range, then create your exact plan inside Billing if you decide to upgrade.</p>
             </Link>
           </div>
         </section>
@@ -327,19 +317,7 @@ export default function InvoicingPage() {
         <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
           <DemoCTACard location="feature_invoicing_bottom" variant="inline" className="mx-auto max-w-2xl" />
         </section>
-{/* CTA */}
-        <section className="mx-auto max-w-5xl px-6 pb-24 lg:px-8">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight">Try invoicing free</h2>
-            <p className="mt-2 text-zinc-600">Free tools, no signup. Explore the interactive demo before subscribing to the paid app.</p>
-            <a href="/demo" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-              Explore the interactive demo
-            </a>
-            <p className="mt-4 text-sm text-zinc-500">
-              <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>
-            </p>
-          </div>
-        </section>
+
 
         <SiteFooter />
       </main>

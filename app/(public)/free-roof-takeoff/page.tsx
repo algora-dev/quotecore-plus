@@ -299,10 +299,7 @@ export default async function FreeRoofTakeoffPage({
           </table>
         </div>
         <p className="mt-4 text-sm text-slate-600">
-          Ready to price or quote? See{' '}
-          <Link href="/roofing-takeoff-software" className="text-[#BD4A1A] underline underline-offset-2">roofing takeoff software</Link>{' '}
-          or{' '}
-          <Link href="/pricing" className="text-[#BD4A1A] underline underline-offset-2">plans and pricing</Link>.
+          Ready to price or quote? <Link href="/free-trial" className="text-[#B63D0A] underline underline-offset-2">Create a Free Workspace</Link> to connect takeoff, pricing and quoting, or use the call option above to talk through your workflow with Shaun.
         </p>
       </section>
 

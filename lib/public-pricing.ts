@@ -18,7 +18,7 @@ export const publicPricing = {
   monthlyMin: centsToWhole(minMonthlyCents),
   monthlyMax: centsToWhole(maxMonthlyCents),
   doneForYouStarting: 499,
-  hasFullAppTrial: false,
+  hasFreeWorkspace: true,
   hasMoneyBackGuarantee: false,
 } as const;
 

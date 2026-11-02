@@ -1,4 +1,4 @@
-import { MarketingButton } from '@/components/marketing/MarketingButton';
+import { FreeWorkspaceButton } from '@/components/marketing/FreeWorkspaceButton';
 import { DemoCallButton } from './DemoCall';
 import { DeviceBadge } from './DeviceBadge';
 import { DemoCarousel } from './DemoCarousel';
@@ -13,17 +13,17 @@ export function DemoSection({ config }: { config: Pick<HomepageConfig, 'demoHref
       <div className={`${s.container} ${s.demoGrid}`}>
         <div className={s.demoCopy}>
           <div className={s.demoDevice}><DeviceBadge label="Mobile + desktop" /></div>
-          <p className={s.eyebrow}>The guided demo</p>
-          <h2 id="demo-title" className={s.sectionTitle}>Try the app features yourself.</h2>
-          <p className={s.bodyCopy}>Step into a ready-made roofing business and follow a guided demo from creating a pricing component and measuring a roof to editing a customer quote, then asking your Smart Assistant to complete tasks for you.</p>
+          <p className={s.eyebrow}>Inside your Free Workspace</p>
+          <h2 id="demo-title" className={s.sectionTitle}>Learn the workflow, then use your own workspace.</h2>
+          <p className={s.bodyCopy}>Create your real Free Workspace first. When you want a structured introduction, open the optional Guided Walkthrough and step into a ready-made roofing business for the four core tasks.</p>
           <div className={s.demoCtas}>
-            <MarketingButton href={config.demoHref} variant="primary" size="large" className={s.button} icon={<Icon name="arrow" />}>Start the guided demo</MarketingButton>
+            <FreeWorkspaceButton variant="primary" size="large" className={s.button} icon={<Icon name="arrow" />}>Create Free Workspace</FreeWorkspaceButton>
             <DemoCallButton bookingHref={config.bookingHref} location="try-it" />
           </div>
           <div className={s.reassurance}>
-            <span><Icon name="check" size={16} />No sign-up</span>
-            <span><Icon name="check" size={16} />No credit card</span>
-            <span><Icon name="check" size={16} />No trial</span>
+            <span><Icon name="check" size={16} />No card</span>
+            <span><Icon name="check" size={16} />No expiry</span>
+            <span><Icon name="check" size={16} />Guided Walkthrough optional</span>
           </div>
         </div>
         <DemoCarousel />

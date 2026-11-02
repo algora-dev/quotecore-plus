@@ -1,0 +1,22 @@
+.section { padding:clamp(64px,8vw,92px) 0; color:#fbfcff; background:radial-gradient(circle at 78% 0,rgba(255,107,53,.14),transparent 30%),#0a0b10; }
+.container { width:100%; max-width:1280px; padding-inline:24px; margin-inline:auto; display:grid; grid-template-columns:minmax(0,.95fr) minmax(380px,1.05fr); gap:clamp(50px,8vw,104px); align-items:center; }
+.eyebrow { display:flex; align-items:center; gap:14px; margin:0 0 18px; color:#ff9a5c; font-size:10px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; }
+.eyebrow:before { content:''; width:36px; height:1px; background:linear-gradient(90deg,#ff641f,#ffb36b); }
+.copy h2 { margin:0; font-size:clamp(32px,3.45vw,48px); line-height:1.085; letter-spacing:-.045em; font-weight:650; }
+.lead { max-width:650px; margin:18px 0 0; color:#e7eaf1; font-size:16px; line-height:1.72; }
+.copy blockquote { margin:24px 0; padding:3px 0 3px 18px; border-left:2px solid #ff8a3d; color:#b9c0cc; font-size:14px; line-height:1.7; }
+.side { display:grid; gap:14px; }
+.founder { display:flex; align-items:center; gap:13px; }
+.founder img { width:58px; height:58px; border-radius:50%; object-fit:cover; border:1px solid rgba(231,233,239,.2); }
+.founder strong { display:block; color:#fbfcff; font-size:14px; }
+.founder span { display:block; margin-top:3px; color:#b9c0cc; font-size:11px; }
+.steps { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.steps article { padding:17px; border:1px solid rgba(231,233,239,.16); border-radius:15px; background:#171c23; transition:transform 140ms ease,border-color 140ms ease; }
+.steps article:hover { transform:translateY(-2px); border-color:rgba(255,154,92,.38); }
+.steps article > span { color:#ff9a5c; font-size:10px; font-weight:800; letter-spacing:.12em; }
+.steps strong { display:block; margin-top:12px; color:#fbfcff; font-size:14px; }
+.steps p { margin:5px 0 0; color:#b9c0cc; font-size:12px; line-height:1.55; }
+.tip { display:flex; align-items:center; gap:9px; padding:12px 14px; border:1px solid rgba(255,179,107,.24); border-radius:13px; background:rgba(255,107,53,.08); color:#e7eaf1; font-size:12px; }
+.tip svg { color:#ffb36b; }
+@media (max-width: 940px) { .container { grid-template-columns:1fr; } }
+@media (max-width: 680px) { .container { padding-inline:17px; } .steps { grid-template-columns:1fr; } }

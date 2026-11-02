@@ -26,7 +26,7 @@ type DemoStage =
   | { phase: 'quote'; payload: DemoFinishPayload; run: number; startedAt: number };
 
 /**
- * Interactive demo wrapper on the free-tool shell (FreeTakeoffApp).
+ * Focused sample roof-takeoff wrapper on the free-tool shell (FreeTakeoffApp).
  *
  * The takeoff stage renders the REAL app workstation, seeded with the
  * captured baseline (plan + calibration + component library +, in scan mode,
@@ -118,7 +118,7 @@ export function DemoTakeoff() {
   return (
     <div className="flex items-center justify-center px-4 py-10 md:py-14">
       <div className="w-full max-w-xl bg-white rounded-2xl border border-slate-200 shadow-lg p-8 md:p-10">
-        <p className="text-xs font-medium uppercase tracking-wide text-[#BD4A1A]">Interactive demo</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-[#BD4A1A]">Sample roof takeoff</p>
         <h2 className="mt-2 text-2xl font-semibold text-slate-900">Try the digital takeoff</h2>
         <p className="mt-2 text-sm text-slate-500">
           The full QuoteCore+ takeoff workstation with a sample roof plan. Scan it with AI or measure

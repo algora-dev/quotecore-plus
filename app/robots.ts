@@ -62,6 +62,8 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         '/admin',
         '/login',
         '/signup',
+        '/demo',
+        '/demo-',
         // Workspace-scoped authed routes - gated by middleware
         '/*/quotes',
         '/*/customers',

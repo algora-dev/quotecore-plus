@@ -159,20 +159,12 @@ export default function RoofingTakeoffSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Upload plans and measure roof areas, lengths and pitch digitally - on site from your phone or tablet, or at the office on desktop. Roof Scan Assist detects roof geometry automatically. Smart Components&#8482; turn measurements into material quantities and priced estimates. Configurations from US$29/month through the pricing builder.
+              Upload plans and measure roof areas, lengths and pitch digitally on site from your phone or tablet, or at the office on desktop. Roof Scan Assist detects roof geometry automatically. Smart Components&#8482; turn measurements into material quantities and priced estimates. Start in a Free Workspace and upgrade only when you need more.
             </p>
 
             <CommercialHeroActions location="roofing_takeoff_hero" />
 
-            <p className="mt-3 text-sm text-zinc-500">Free tools stay free. The demo and workflow call are available before subscribing.</p>
-
-            {/* Free product bridge */}
-            <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-[#FF6B35]/30 bg-orange-50/50 px-5 py-4 text-left">
-              <p className="text-sm leading-6 text-zinc-700">
-                Want to try the measurement workflow first?{" "}
-                <a href="/free-roof-takeoff" className="font-semibold text-[#BD4A1A] hover:underline">Try the free roof takeoff tool - upload your own plan, no signup.</a>
-              </p>
-            </div>
+            <p className="mt-3 text-sm text-zinc-500">No card and no expiry. Use the Free Workspace on your own jobs for as long as it suits you.</p>
           </div>
         </section>
 
@@ -538,24 +530,6 @@ export default function RoofingTakeoffSoftwarePage() {
               <p className="font-semibold text-zinc-950">Smart Components&#8482;</p>
               <p className="mt-1 text-sm text-zinc-600">
                 Reusable components that auto-apply materials and pricing to takeoff.
-              </p>
-            </a>
-            <a
-              href="/free-roofing-takeoff-builder"
-              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-            >
-              <p className="font-semibold text-zinc-950">Free takeoff builder</p>
-              <p className="mt-1 text-sm text-zinc-600">
-                Try the roof takeoff builder free, no signup required.
-              </p>
-            </a>
-            <a
-              href="/free-roofing-takeoff-calculator"
-              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-            >
-              <p className="font-semibold text-zinc-950">Free takeoff calculator</p>
-              <p className="mt-1 text-sm text-zinc-600">
-                Quick roof takeoff calculations, free to use.
               </p>
             </a>
             <a

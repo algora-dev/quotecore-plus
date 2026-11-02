@@ -226,10 +226,10 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
               onCta={shared.popupTrigger?.onCta}
               ctaText={shared.popupTrigger?.stage === 'smart-to-signup'
                 ? (!authUser
-                    ? 'Save to QuoteCore+ (plans from /mo)'
+                    ? 'Save to my Free Workspace'
                     : tierInfo?.tier === 3
                       ? 'Save this component to your workspace'
-                      : 'Complete your sign up to save this component')
+                      : 'Create your Free Workspace to save this component')
                 : 'Add this to a free quote'
               }
               ctaHref={shared.popupTrigger?.stage === 'smart-to-signup'
@@ -241,7 +241,7 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
                     ? 'Reuse it on every quote - materials, waste, pricing and pitch included'
                     : tierInfo?.tier === 3
                       ? 'It will be added to your Smart Components, ready to use in any quote'
-                      : 'Finish setting up your workspace and this component will be added for you')
+                      : 'Create your Free Workspace and this component will be added for you')
                 : 'Turn measurements into a professional quote in 2 minutes - no signup needed'
               }
             />

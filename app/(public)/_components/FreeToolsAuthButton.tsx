@@ -9,8 +9,8 @@ export function FreeToolsAuthButton({ compact = false }: { compact?: boolean }) 
     // Skeleton placeholder - never render an empty header slot
     return (
       <div className="flex items-center gap-2" aria-hidden="true">
-        <div className="h-7 w-14 rounded-full bg-zinc-100 animate-pulse" />
-        <div className="h-7 w-20 rounded-full bg-zinc-100 animate-pulse" />
+        <div className="h-7 w-14 rounded-xl bg-zinc-100 animate-pulse" />
+        <div className="h-7 w-20 rounded-xl bg-zinc-100 animate-pulse" />
       </div>
     );
   }
@@ -29,7 +29,7 @@ export function FreeToolsAuthButton({ compact = false }: { compact?: boolean }) 
         </span>
         <button
           onClick={signOut}
-          className="qc-glint rounded-full border border-zinc-300 bg-white/70 px-3 py-1.5 text-xs font-medium text-zinc-900 transition-colors hover:border-[#FF6B35]/40"
+          className="qc-glint rounded-xl border border-zinc-300 bg-white/70 px-3 py-2 text-xs font-medium text-zinc-900 transition-colors hover:border-[#FF6B35]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B63D0A] focus-visible:ring-offset-2"
         >
           Log out
         </button>
@@ -41,15 +41,15 @@ export function FreeToolsAuthButton({ compact = false }: { compact?: boolean }) 
     <div className="flex items-center gap-2">
       <button
         onClick={() => openAuthModal('signin')}
-        className="qc-glint rounded-full border border-zinc-300 bg-white/70 px-3 py-1.5 text-xs font-medium text-zinc-900 transition-colors hover:border-[#FF6B35]/40"
+        className="qc-glint rounded-xl border border-zinc-300 bg-white/70 px-3 py-2 text-xs font-medium text-zinc-900 transition-colors hover:border-[#FF6B35]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B63D0A] focus-visible:ring-offset-2"
       >
-        Log in
+        Tool login
       </button>
       <button
         onClick={() => openAuthModal('signup')}
-        className="qc-glint rounded-full bg-[#FF6B35] bg-gradient-to-r from-[#FF6B35] to-[#FF8C1F] px-3.5 py-1.5 text-xs font-semibold text-white shadow-[0_8px_20px_rgba(255,107,53,0.28)] transition-all hover:shadow-[0_12px_26px_rgba(255,107,53,0.42)] hover:brightness-105"
+        className="qc-glint rounded-xl border border-zinc-300 bg-white/70 px-3.5 py-2 text-xs font-semibold text-zinc-900 transition-colors hover:border-[#FF6B35]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B63D0A] focus-visible:ring-offset-2"
       >
-        {compact ? 'Sign up' : 'Sign up free'}
+        {compact ? 'Tool account' : 'Free tools account'}
       </button>
     </div>
   );

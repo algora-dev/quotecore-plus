@@ -54,7 +54,7 @@ export function DocumentGenerator({config,search,services,account,auth,onAuthCom
     if(!account.canRemoveBranding||!id||handledAuth.current.has(id))return;
     handledAuth.current.add(id);
     setDialog(returnToAssist.current?'assist':null);returnToAssist.current=false;
-    setNotice('Account confirmed. QuoteCore+ branding is removed — no need to generate this document again.');
+    setNotice('Account confirmed. QuoteCore+ branding is removed. No need to generate this document again.');
     if(onAuthComplete)void onAuthComplete(id).catch(e=>setNotice(e instanceof Error?e.message:'Your account is ready. The optional email preference could not be saved.'));
     else clearAuthResume(id);
   },[account.canRemoveBranding,account.userId,dialog,onAuthComplete,setNotice]);
@@ -112,7 +112,7 @@ export function DocumentGenerator({config,search,services,account,auth,onAuthCom
     const params=new URLSearchParams({currency:d.currencyCode,taxEnabled:String(d.taxEnabled),taxRate:String(d.taxRate),taxName:d.taxName});
     return `${url}&${params.toString()}`;
   }
-  const saveStatus=status==='saving'?'Saving in this tab…':status==='saved'?'Draft saved in this tab':status==='unavailable'?'Tab storage unavailable — keep this page open':'Opening your draft…';
+  const saveStatus=status==='saving'?'Saving in this tab…':status==='saved'?'Draft saved in this tab':status==='unavailable'?'Tab storage unavailable. Keep this page open':'Opening your draft…';
   return <div className={s.root} data-qc-ui="v2" data-qc-free-document>
     <style>{DOCUMENT_CSS}</style>
     <div className={s.screen}>
@@ -130,7 +130,7 @@ export function DocumentGenerator({config,search,services,account,auth,onAuthCom
       <div className={s.allowanceWrap}><AllowanceBar account={account} onDetails={()=>setDialog('allowances')} onUpgrade={()=>openAccount('allowance')}/></div>
       <main ref={main} id="quote-workspace" className={s.workspace}>
         <div className={s.workspaceToolbar}><div className={s.draftStatus}><Icon name={status==='unavailable'?'alert':'save'}/><span>{saveStatus}</span>{d.sample&&<span className={s.sampleTag}>Example</span>}</div><button type="button" className={s.textButton} onClick={()=>setDialog('reset')} disabled={!ready||generating}><Icon name="refresh"/>Start new</button></div>
-        {notice&&<div className={s.statusMessage} role="status"><span>{notice}</span>{undo?<button id="undo-change" type="button" onClick={()=>{update(undo.draft);setNotice(`${undo.label} — undone.`);setUndo(null);}}>Undo</button>:<button type="button" aria-label="Dismiss update" onClick={()=>setNotice('')}><Icon name="close"/></button>}</div>}
+        {notice&&<div className={s.statusMessage} role="status"><span>{notice}</span>{undo?<button id="undo-change" type="button" onClick={()=>{update(undo.draft);setNotice(`${undo.label} undone.`);setUndo(null);}}>Undo</button>:<button type="button" aria-label="Dismiss update" onClick={()=>setNotice('')}><Icon name="close"/></button>}</div>}
         {!ready?<div className={s.loading}>Opening your {copy.noun} editor…</div>:<>
           <div className={s.workspaceGrid}>
             <section className={s.editor} aria-label={`${copy.label} editor`}>
@@ -159,7 +159,7 @@ export function DocumentGenerator({config,search,services,account,auth,onAuthCom
                   {warnings.length>0&&!generated&&<div className={s.reviewWarnings}><strong><Icon name="eye"/>Before you send</strong><ul>{warnings.map(w=><li key={w}>{w}</li>)}</ul></div>}
                   {generated?<>
                     <div className={s.readyCard}><span className={s.readyCheck}><Icon name="check"/></span><h3>Ready for your {copy.recipient}.</h3><p>Choose “Save as PDF” in the print dialog, or send it straight to your printer.</p><Button variant="primary" icon="download" pending={printing} onClick={()=>void print()}>Print / Save PDF</Button>
-                      {account.canRemoveBranding?<p className={s.brandingRemoved}><Icon name="check"/>No QuoteCore+ branding. Just your business.</p>:<><Button className={s.removeBranding} icon="spark" onClick={()=>openAccount('branding')}>Remove branding — free</Button><p className={s.readyHint}>Free verified account · 10 documents + 3 AI drafts / day</p></>}
+                      {account.canRemoveBranding?<p className={s.brandingRemoved}><Icon name="check"/>No QuoteCore+ branding. Just your business.</p>:<><Button className={s.removeBranding} icon="spark" onClick={()=>openAccount('branding')}>Remove branding for free</Button><p className={s.readyHint}>Free verified account · 10 documents + 3 AI drafts / day</p></>}
                     </div>
                     <PaidAppDiscovery/>
                     <Disclosure title="Use these items in another free tool" subtitle="Reuse visible items without retyping" icon="external">
@@ -169,9 +169,9 @@ export function DocumentGenerator({config,search,services,account,auth,onAuthCom
                     </Disclosure>
                   </>:<>
                     <div className={s.generateArea}><Button variant="primary" icon="check" pending={generating} onClick={()=>void generate()}>{generating?'Checking your allowance…':copy.action}</Button><p>Nothing is sent to your {copy.recipient}.</p></div>
-                    <p className={s.generateAllowance}><Icon name="file"/>{account.limits.docPerDay===null?'Included with your paid app account.':`Uses 1 of your ${account.limits.docPerDay} document generations per day.`}<button type="button" onClick={()=>setDialog('allowances')}>How limits work</button></p>
+                    <p className={s.generateAllowance}><Icon name="file"/>{account.limits.docPerDay===null?'Included with your QuoteCore+ workspace.':`Uses 1 of your ${account.limits.docPerDay} document generations per day.`}<button type="button" onClick={()=>setDialog('allowances')}>How limits work</button></p>
                   </>}
-                  {requestError&&<div className={s.errorBox} role="alert"><p>{requestError}</p>{limitError&&!account.canRemoveBranding&&<Button onClick={()=>openAccount('allowance')}>Get 10 documents a day — free</Button>}{limitError&&account.canRemoveBranding&&<a className={s.transferLink} href="/demo" target="_blank" rel="noopener noreferrer">Explore the paid app demo<Icon name="arrow"/></a>}</div>}
+                  {requestError&&<div className={s.errorBox} role="alert"><p>{requestError}</p>{limitError&&!account.canRemoveBranding&&<Button onClick={()=>openAccount('allowance')}>Get 10 documents a day for free</Button>}{limitError&&account.canRemoveBranding&&<a className={s.transferLink} href="/signup">Create a Free Workspace<Icon name="arrow"/></a>}</div>}
                 </>}
               </div>
               <div className={s.editorFooter}><div>{step===0?<span className={s.footerHint}><Icon name="shield"/>You’re in control of every detail.</span>:<Button icon="back" variant="ghost" onClick={()=>navigate((step-1) as 0|1)} disabled={generating||printing}>Back</Button>}</div>
@@ -184,7 +184,7 @@ export function DocumentGenerator({config,search,services,account,auth,onAuthCom
             </aside>
           </div>
           <button type="button" className={s.mobilePreview} onClick={()=>setDialog('preview')}><Icon name="eye"/>{copy.preview}<span>{money(totals.total,d.currencyCode)}</span><Icon name="expand"/></button>
-          <div className={s.localNote}><Icon name="lock"/><p>{status==='unavailable'?'Your browser is not saving this draft. Keep the tab open until you export.':'Your draft is saved in this browser tab, not in your account. Export your PDF before closing the tab. Signing up does not save the document into the paid app.'}</p></div>
+          <div className={s.localNote}><Icon name="lock"/><p>{status==='unavailable'?'Your browser is not saving this draft. Keep the tab open until you export.':'Your draft is saved in this browser tab, not in your account. Export your PDF before closing the tab. Creating a Free Workspace is a separate step if you want the connected app workflow.'}</p></div>
         </>}
       </main>
       {dialog==='assist'&&<DocumentAssist config={config} services={services} onClose={()=>setDialog(null)} onApply={applyAI} hasExisting={hasWork(d)} initial={assistInput} onInputState={setAssistInput} aiPerDay={account.limits.aiPerDay} onIncrease={!account.canRemoveBranding?()=>openAccount('allowance',true):undefined}/>}

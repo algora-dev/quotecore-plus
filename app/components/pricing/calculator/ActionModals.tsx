@@ -26,16 +26,16 @@ export function ActionModal({ kind, options, catalog, onClose, action, notice }:
   const booking = kind === 'book-demo';
   const setupStartingPrice = catalog.currency === 'NZD' ? 'NZ$899' : 'US$499';
   return <FocusDialog title={booking ? 'See how it could fit the way you work' : 'Let’s get you ready to work'}
-    eyebrow={booking ? '20 minutes · Free · No pressure' : 'Done-for-You setup'} onClose={onClose}>
+    eyebrow={booking ? '25 minutes · Free · No pressure' : 'Done-for-You setup'} onClose={onClose}>
     <p className="qcp-dialog-intro">{booking
-      ? 'Tell us how you measure and price today. We’ll share our screen, show the tools that fit and answer your questions.'
+      ? 'Tell Shaun how you measure and price today. He’ll help you work out what could make the process faster or easier, answer your questions and share his #1 tip for winning more quoted jobs.'
       : 'A new app can still take time to learn. We’ll help load your pricing and services, shape your setup around your business and teach you with your own jobs.'}</p>
     <ol className="qcp-dialog-steps">{(booking ? [
       ['Your workflow', 'Tell us how you work today.'],
-      ['A relevant demo', 'See the tools that make sense for your business.'],
+      ['What could help', 'Work out which QuoteCore+ tools and allowances make sense for your business.'],
       ['Your questions', 'Ask what you need. No pressure to sign up.'],
     ] : [
-      ['Free 20-minute demo + setup conversation', 'Show us how you work. We’ll demonstrate a relevant workflow and work out what needs configuring for your business.'],
+      ['Free 25-minute call with Shaun', 'Tell Shaun how you work and work out what would need configuring for your business.'],
       ['Agree the setup scope', 'We confirm what needs configuring and the one-time setup price before work starts.'],
       ['We configure it. You learn with us.', 'We configure the agreed setup and guide you using the workflow you will actually use.'],
     ]).map(([title, text], i) => <li key={title}><span className="qcp-step-number">0{i + 1}</span><div><strong>{title}</strong><p>{text}</p></div></li>)}</ol>

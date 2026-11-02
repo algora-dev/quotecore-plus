@@ -503,7 +503,7 @@ export function FreeRoofTakeoff() {
 
         <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-between">
           <Link href="/takeoff-demo" className="text-sm text-slate-500 hover:text-slate-800">
-            No plan handy? Try the demo with a sample plan
+            No plan handy? Try the sample plan
           </Link>
         </div>
       </div>

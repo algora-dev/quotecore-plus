@@ -5,8 +5,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { buildBreadcrumbSchema, siteUrl } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 import DemoCTACard from "@/components/DemoCTACard";
-
-import { workflowCallHref } from '@/lib/booking';
+import TwoPathCta from "@/components/conversion/TwoPathCta";
 export const metadata: Metadata = {
   title: "Done-for-you roofing quote service",
   description:
@@ -170,22 +169,7 @@ export default function ServicesPage() {
               <p className="mt-4 max-w-xl rounded-2xl border border-[#FF6B35]/15 bg-[radial-gradient(circle_at_18%_20%,rgba(255,107,53,0.10),transparent_38%),linear-gradient(135deg,rgba(255,255,255,0.74)_0%,rgba(255,247,243,0.68)_48%,rgba(255,255,255,0.74)_100%)] px-5 py-4 text-base font-semibold leading-7 text-zinc-950 shadow-[0_18px_55px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-xl">
                 Let us quote a job for you using QuoteCore+. If it&apos;s not better than your current system, get a free coffee on us!
               </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a
-                  href="/contact"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white shadow-[0_14px_35px_rgba(255,107,53,0.22)] transition-colors hover:bg-[#E55A28] sm:w-44"
-                >
-                  Get in touch
-                </a>
-                <a
-                  href={workflowCallHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="pill-shimmer inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-300 bg-white px-7 py-2.5 text-sm font-medium text-zinc-900 shadow-[0_10px_25px_rgba(15,23,42,0.05)] transition-colors duration-200 hover:border-[#FF6B35]/40 sm:w-44"
-                >
-                  Book a free 20-min call
-                </a>
-              </div>
+              <TwoPathCta compact location="services_hero" className="mt-8" />
             </div>
 
             <div className="overflow-hidden rounded-3xl shadow-[0_18px_55px_rgba(15,23,42,0.12)]">
@@ -247,38 +231,9 @@ export default function ServicesPage() {
             </div>
           </div>
 
-          <div className="mt-8 rounded-2xl border border-[#FF6B35]/25 bg-[linear-gradient(135deg,#fff_0%,#fff8f4_100%)] px-4 py-6 sm:p-6 lg:p-8">
-            <div className="grid items-center gap-6 lg:grid-cols-[auto_1fr_auto]">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-[#FF6B35]/25 bg-white text-[#FF6B35]">
-                <StepIcon type="send" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-semibold text-zinc-950">Ready to get started?</h2>
-                <p className="mt-2 max-w-xl text-base leading-7 text-zinc-600">
-                  Send us your plans and we&apos;ll take care of the measuring and quote build.
-                </p>
-              </div>
-              <div className="flex w-full flex-col gap-4 sm:flex-row lg:min-w-[430px] lg:w-auto">
-                <a
-                  href="/contact"
-                  className="inline-flex min-h-11 w-full flex-1 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold leading-none text-white shadow-[0_14px_35px_rgba(255,107,53,0.22)] transition-colors hover:bg-[#E55A28] sm:min-h-14 sm:px-8 sm:py-3 sm:text-base"
-                >
-                  Get in touch
-                </a>
-                <a
-                  href={workflowCallHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="pill-shimmer inline-flex min-h-11 w-full flex-1 items-center justify-center rounded-full border border-zinc-300 bg-white px-7 py-2.5 text-sm font-medium leading-none text-zinc-900 shadow-[0_10px_25px_rgba(15,23,42,0.05)] transition-colors duration-200 hover:border-[#FF6B35]/40 sm:min-h-14 sm:px-8 sm:py-3"
-                >
-                  Book a free 20-min call
-                </a>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
-        {/* Demo card */}
+        {/* Final conversion */}
         <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
           <DemoCTACard location="services_bottom" variant="inline" className="mx-auto max-w-2xl" />
         </section>

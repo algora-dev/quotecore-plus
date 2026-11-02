@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { PageScaffold } from '@/components/marketing/page-v2/PageV2';
+import TwoPathCta from '@/components/conversion/TwoPathCta';
+import { FreeWorkspaceButton } from '@/components/marketing/FreeWorkspaceButton';
 import { buildBreadcrumbSchema, siteUrl } from '@/lib/schema';
 import { workflowCallHref } from '@/lib/booking';
 import { EvidenceZoomRoot, ZoomCard } from './EvidenceZoom';
@@ -95,10 +97,10 @@ const faqSchema = {
     },
     {
       '@type': 'Question',
-      name: 'Can I send QuoteCore+ one of my own roof plans for a demo?',
+      name: 'Can I bring one of my own roof plans to the call?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes. A tailored demo can use a roof plan the contractor would normally need to measure and quote, so the team can show how that plan would move through takeoff, pricing and the customer quote workflow.',
+        text: 'Yes. Book a free 25-minute call with Shaun and tell him how you currently work. You can send a roof plan if it helps, but you do not need to prepare or show anything on the call. Shaun can explain how QuoteCore+ could fit the workflow and what a configured setup would involve.',
       },
     },
     {
@@ -350,9 +352,9 @@ const faqs = [
       'Yes. Your reusable products, labour rates, coverage, waste and pricing rules need to be configured first. That reusable setup is what makes fast repeatable quoting possible. You can configure it yourself or use QuoteCore+ Done For You Setup to help translate your current pricing and workflow into the app.',
   },
   {
-    question: 'Can I send you one of my own roof plans for a demo?',
+    question: 'Can I bring one of my own roof plans to the call?',
     answer:
-      'Yes. Book a tailored demo and provide a roof plan you would normally need to measure and quote. We can use it to show how the takeoff, pricing and quote workflow would look in QuoteCore+ and where your own configured products and pricing rules would fit.',
+      'Yes. Book a free 25-minute call with Shaun and tell him how you currently work. You can send a roof plan if it helps, but there is no need to prepare a presentation or physically show anything. The goal is to work out how QuoteCore+ could fit and what setup would make sense.',
   },
   {
     question: 'How does this compare with RoofSnap, Roofr and RoofCAD?',
@@ -442,7 +444,7 @@ export default function FastestRoofingEstimatingSoftwarePage() {
                   <a className={c('button', 'button-primary')} href="#proof">
                     Watch the uncut 2:27 proof <PlayIcon />
                   </a>
-                  <a className={c('button', 'button-light')} href={BOOK} {...EXT}>
+                  <a className={c('button', 'button-light')} href={BOOK}>
                     Test it with your roof plan <ArrowIcon />
                   </a>
                 </div>
@@ -566,15 +568,12 @@ export default function FastestRoofingEstimatingSoftwarePage() {
                   </div>
                 </div>
                 <div className={c('conversion-card')} id="book">
-                  <div>
-                    <h3>Want to see it on a roof you actually quote?</h3>
-                    <p>Book a free tailored demo and send us a roof plan you would normally have to measure and price. We can walk through how that job would look in QuoteCore+ using the workflow that fits your business.</p>
-                  </div>
-                  <div className={c('conversion-actions')}>
-                    <a className={c('button', 'button-primary')} href={BOOK} {...EXT}>Book a demo with your roof plan</a>
-                    <a className={c('button', 'button-light')} href="/demo" {...EXT}>Try the guided demo</a>
-                    <a className={c('button', 'button-ghost')} href="/pricing" {...EXT}>Check pricing →</a>
-                  </div>
+                  <TwoPathCta
+                    location="fastest_roofing_proof"
+                    compact
+                    title="Want to see how this could fit the roofs you actually quote?"
+                    description="Create a Free Workspace and try QuoteCore+ on your own jobs, or spend 25 minutes with Shaun talking through how you work now and where the workflow could be faster."
+                  />
                 </div>
               </div>
             </div>
@@ -658,8 +657,8 @@ export default function FastestRoofingEstimatingSoftwarePage() {
                   <p>That is the point of reusable estimating software. Your products, labour rates, coverage, waste and pricing rules need to exist in QuoteCore+ before the system can reuse them this quickly.</p>
                 </div>
                 <div className={s['setup-context-actions']}>
-                  <a className={c('button', 'button-primary')} href="/done-for-you-setup" {...EXT}>We can set it up for you</a>
-                  <a className={c('button', 'button-light')} href={BOOK} {...EXT}>Bring your roof plan to a demo</a>
+                  <a className={c('button', 'button-primary')} href="/done-for-you-setup">See Done For You Setup</a>
+                  <a className={c('button', 'button-light')} href={BOOK}>Talk setup through with Shaun</a>
                 </div>
               </div>
             </div>
@@ -763,8 +762,8 @@ export default function FastestRoofingEstimatingSoftwarePage() {
                   <strong>Same roofing library, different starting line:</strong> the 17-second test begins after takeoff is complete. The 2:27 benchmark starts earlier, from the unmeasured architectural plan.
                 </div>
                 <div style={{ marginTop: 24, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <a className={c('button', 'button-primary')} href="/demo" {...EXT}>Try Smart Assistant in the demo</a>
-                  <a className={c('button', 'button-secondary')} href="/pricing" {...EXT}>Build your plan</a>
+                  <FreeWorkspaceButton size="large">Try Smart Assistant in a Free Workspace</FreeWorkspaceButton>
+                  <a className={c('button', 'button-secondary')} href={BOOK}>Book 25 minutes with Shaun</a>
                 </div>
               </div>
               <div className={s['assistant-visual']}>
@@ -887,7 +886,7 @@ export default function FastestRoofingEstimatingSoftwarePage() {
                 </div>
               </div>
               <div className={s['challenge-actions']}>
-                <a className={c('button', 'button-primary')} href="/contact" {...EXT}>Send us a faster workflow</a>
+                <a className={c('button', 'button-primary')} href="/contact">Send us a faster workflow</a>
                 <a className={c('button', 'button-secondary')} href="#comparison">Review the benchmark</a>
               </div>
             </div>
@@ -958,11 +957,11 @@ export default function FastestRoofingEstimatingSoftwarePage() {
                 <div>
                   <div className={s.eyebrow} style={{ marginBottom: 14 }}>Pricing setup is required</div>
                   <h2 style={{ fontSize: 'clamp(30px,3vw,42px)' }}>For benchmark-level speed, QuoteCore+ needs to know how your business prices.</h2>
-                  <p>Your products, labour, coverage, waste, margin and pricing rules need to be configured before they can be reused automatically. Build that library yourself, or use Done For You Setup and show us how you quote today so we can help translate the workflow into QuoteCore+.</p>
+                  <p>Your products, labour, coverage, waste, margin and pricing rules need to be configured before they can be reused automatically. Build that library yourself, or use Done For You Setup and tell Shaun how you quote today so he can help translate the workflow into QuoteCore+.</p>
                 </div>
                 <div className={s['dfy-actions']}>
-                  <a className={c('button', 'button-primary')} href="/done-for-you-setup" {...EXT}>See Done For You Setup</a>
-                  <a className={c('button', 'button-secondary')} href={BOOK} {...EXT}>Book a demo with your roof plan</a>
+                  <a className={c('button', 'button-primary')} href="/done-for-you-setup">See Done For You Setup</a>
+                  <a className={c('button', 'button-secondary')} href={BOOK}>Book 25 minutes with Shaun</a>
                 </div>
               </div>
             </div>
@@ -1007,14 +1006,13 @@ export default function FastestRoofingEstimatingSoftwarePage() {
             <div className={s.container}>
               <div className={s['final-card']}>
                 <div>
-                  <div className={s.eyebrow}>Put your own roof plan on screen</div>
+                  <div className={s.eyebrow}>Try it your way</div>
                   <h2>See whether QuoteCore+ is faster on the work you actually quote.</h2>
-                  <p>Send us a residential roof plan you would normally measure and price. On a free tailored demo we can show how that roof would move through takeoff, your pricing structure and the customer quote, and explain what needs to be configured to get repeatable speed.</p>
+                  <p>Create a Free Workspace and use your own jobs, or tell Shaun how you currently measure, price and quote. He can help you work out where QuoteCore+ could save time and give you his #1 tip for winning more of the jobs you already quote.</p>
                 </div>
                 <div className={s['final-actions']}>
-                  <a className={c('button', 'button-primary')} href={BOOK} {...EXT}>Book a demo with your roof plan</a>
-                  <a className={c('button', 'button-light')} href="/demo" {...EXT}>Try the guided demo</a>
-                  <a className={c('button', 'button-ghost')} href="/pricing" {...EXT}>See pricing &amp; build your plan →</a>
+                  <FreeWorkspaceButton size="large">Create my free workspace</FreeWorkspaceButton>
+                  <a className={c('button', 'button-light')} href={BOOK}>Book 25 minutes with Shaun</a>
                 </div>
               </div>
             </div>

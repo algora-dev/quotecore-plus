@@ -235,7 +235,7 @@ function classifyDestination(url: URL): ConversionType | null {
   if (path === "/pricing") return "pricing";
   if ((path === "/demo" || host === "demo.quote-core.com") && currentHost !== "demo.quote-core.com") return "demo";
   if (path === "/signup" || path.startsWith("/signup/")) return "create_account";
-  // Only count the acquisition handoff into the paid app, not every internal
+  // Only count the acquisition handoff into the app workspace, not every internal
   // navigation after the visitor is already using app.quote-core.com.
   if (host === "app.quote-core.com" && currentHost !== "app.quote-core.com") return "open_app";
   return null;

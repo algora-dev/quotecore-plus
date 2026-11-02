@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { MarketingButton } from '@/components/marketing/MarketingButton';
+import { FreeWorkspaceButton } from '@/components/marketing/FreeWorkspaceButton';
+import { workflowCallHref } from '@/lib/booking';
 import { FocusDialog } from './FocusDialog';
 import { Icon, type IconName } from './Icon';
 import s from './Homepage.module.css';
@@ -97,8 +99,8 @@ function track(name: string, params?: Record<string, string | number>) {
   w.gtag?.('event', name, params);
 }
 
-export function FitQuizDialog({ open, onClose, demoHref = '/demo', pricingHref = '/pricing', setupHref = '/#setup' }: {
-  open: boolean; onClose: () => void; demoHref?: string; pricingHref?: string; setupHref?: string;
+export function FitQuizDialog({ open, onClose }: {
+  open: boolean; onClose: () => void;
 }) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<FitOption[]>([]);
@@ -275,35 +277,20 @@ export function FitQuizDialog({ open, onClose, demoHref = '/demo', pricingHref =
                   </ul>
                   <div className={s.fitCtas}>
                     <MarketingButton
-                      href={pricingHref}
+                      href={workflowCallHref}
                       variant="primary"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      icon={<Icon name="arrow" size={16} />}
-                      onClick={() => track('quiz_cta_click', { cta: 'build_plan' })}
+                      icon={<Icon name="people" size={16} />}
+                      onClick={() => track('quiz_cta_click', { cta: 'book_call' })}
                     >
-                      Build your plan
+                      Book 25 minutes with Shaun
                     </MarketingButton>
-                    <a
-                      className={s.fitCtaSecondary}
-                      href={demoHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => track('quiz_cta_click', { cta: 'demo' })}
+                    <FreeWorkspaceButton
+                      variant="glass"
+                      icon={<Icon name="arrow" size={16} />}
+                      onClick={() => track('quiz_cta_click', { cta: 'free_workspace' })}
                     >
-                      <span>See how it works</span>
-                      <Icon name="play" size={16} />
-                    </a>
-                    <a
-                      className={s.fitCtaSecondary}
-                      href={setupHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => track('quiz_cta_click', { cta: 'done_for_you' })}
-                    >
-                      <span>Have us set it up</span>
-                      <Icon name="people" size={16} />
-                    </a>
+                      Create my free workspace
+                    </FreeWorkspaceButton>
                   </div>
                   <button type="button" className={`${s.fitRetake} ${n.quizRetake}`} onClick={retake}>Not quite you? Retake</button>
                 </div>

@@ -12,11 +12,11 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "Roofing Quoting Software | QuoteCore+",
   description:
-    "Roofing quoting software for roofers and contractors. Digital roof takeoff on phone, tablet or desktop, Roof Scan Assist, Smart Components, quotes, material ordering, invoicing, and Smart Assistant. Configurations from US$29/month through the pricing builder.",
+    "Roofing quoting software for roofers and contractors. Digital roof takeoff on phone, tablet or desktop, Roof Scan Assist, Smart Components, quotes, material ordering, invoicing, and Smart Assistant. Start in a Free Workspace, then upgrade only when you need more features, capacity or usage.",
   openGraph: {
     title: "Roofing Quoting Software | QuoteCore+",
     description:
-      "Roofing quoting software for roofers and contractors. Digital roof takeoff on phone, tablet or desktop, Roof Scan Assist, Smart Components, quotes, material ordering, invoicing, and Smart Assistant. Configurations from US$29/month through the pricing builder.",
+      "Roofing quoting software for roofers and contractors. Digital roof takeoff on phone, tablet or desktop, Roof Scan Assist, Smart Components, quotes, material ordering, invoicing, and Smart Assistant. Start in a Free Workspace, then upgrade only when you need more features, capacity or usage.",
     url: "/roofing-quoting-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -137,7 +137,7 @@ const faqs = [
   },
   {
     q: "How do plans and free tools work?",
-    a: "The free tools are unlimited and need no signup. Current paid configurations start at US$29/month; the interactive demo is available before subscribing.",
+    a: "Create a Free Workspace with no card and no expiry. Use QuoteCore+ on your own jobs, try the optional Guided Walkthrough, and upgrade only when you need more features, capacity or usage.",
   },
   {
     q: "Can I create and manage quotes from my phone?",
@@ -251,7 +251,7 @@ export default function RoofingQuotingSoftwarePage() {
 
             <CommercialHeroActions location="roofing_quoting_hero" />
 
-            <p className="mt-3 text-sm text-zinc-500">Free tools stay free. The demo and workflow call are available before subscribing.</p>
+            <p className="mt-3 text-sm text-zinc-500">No card and no expiry. Keep using the Free Workspace if it is enough for your business.</p>
           </div>
         </section>
 
@@ -532,9 +532,7 @@ export default function RoofingQuotingSoftwarePage() {
                       </>
                     ) : f.a === "metal-roofing-link" ? (
                       <>
-                        Yes. Smart Components can store metal roofing materials, pricing, waste allowances, screw counts, and custom lengths. The{" "}
-                        <a href="/free-metal-roofing-calculator" className="text-[#FF6B35] hover:underline">free metal roofing calculator</a>{" "}
-                        gives quick material estimates without signing up.
+                        Yes. Smart Components can store metal roofing materials, pricing, waste allowances, screw counts and custom lengths, so the same rules can be reused across future jobs.
                       </>
                     ) : (
                       f.a
@@ -597,22 +595,6 @@ export default function RoofingQuotingSoftwarePage() {
             <a href="/features/invoicing" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Invoicing</p>
               <p className="mt-1 text-sm text-zinc-600">Create professional invoices from accepted quotes with payment details attached.</p>
-            </a>
-            <a href="/free-roofing-calculator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Free roofing calculator</p>
-              <p className="mt-1 text-sm text-zinc-600">Pitch, rafter lengths, areas, and material quantities.</p>
-            </a>
-            <a href="/free-metal-roofing-calculator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Free metal roofing calculator</p>
-              <p className="mt-1 text-sm text-zinc-600">Estimate metal roofing materials and costs.</p>
-            </a>
-            <a href="/free-roof-pitch-calculator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Free roof pitch calculator</p>
-              <p className="mt-1 text-sm text-zinc-600">Calculate pitch from rise and run or convert degrees.</p>
-            </a>
-            <a href="/free-quote-generator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Free quote generator</p>
-              <p className="mt-1 text-sm text-zinc-600">Create a professional quote for free, no signup required.</p>
             </a>
             <a href="/customer-stories" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Customer stories</p>

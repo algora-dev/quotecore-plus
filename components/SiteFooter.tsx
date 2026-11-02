@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SocialIcons from "@/components/SocialIcons";
+import { workflowCallHref } from "@/lib/booking";
 
 const linkClass = "text-sm text-zinc-500 transition-colors hover:text-zinc-900";
 
@@ -54,6 +55,8 @@ export default function SiteFooter() {
           <nav aria-label="Company">
             <h2 className="text-sm font-semibold text-zinc-950">Company</h2>
             <div className="mt-4 flex flex-col gap-3">
+              <a href={workflowCallHref} className={linkClass}>Book 25 minutes with Shaun</a>
+              <Link href="/free-trial" className={linkClass}>Free Workspace</Link>
               <Link href="/company" className={linkClass}>Company</Link>
               <Link href="/about" className={linkClass}>About</Link>
               <Link href="/customer-stories" className={linkClass}>Customer stories</Link>
@@ -62,7 +65,6 @@ export default function SiteFooter() {
               <Link href="/affiliate-program" className={linkClass}>Partner program</Link>
               <Link href="/services" className={linkClass}>Services</Link>
               <Link href="/contact" className={linkClass}>Contact</Link>
-              <Link href="/pricing" className={linkClass}>Get started</Link>
             </div>
           </nav>
           <nav aria-label="Legal and region">

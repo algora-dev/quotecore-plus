@@ -81,8 +81,8 @@ A user provides roof measurements (area, pitch, ridges, hips, valleys, barges, s
 - [Supplier Resources](https://quote-core.com/features/supplier-resources)
 
 ## Pricing
-- [Free tools and no-trial policy](https://quote-core.com/free-trial) - the app has no full-app trial; free tools and an interactive app demo are available before subscribing
-- Paid pricing is configurable through the pricing builder, with current global configurations from US$29 to US$259 per month
+- [Free Workspace](https://quote-core.com/free-trial) - create a real QuoteCore+ account with no card and no fixed trial expiry; use it on your own jobs and optionally follow the guided walkthrough
+- Paid configurations currently range from US$29 to US$259 per month. Exact plan configuration is built inside the authenticated Billing area after the user has tried the product.
 
 ## Company
 QuoteCore+ is built by T3 Play Limited. The software helps roofing, construction, and trade contractors create professional quotes from architectural plans using AI-assisted takeoff and material calculation.

@@ -4,7 +4,7 @@
  * Two variants:
  *   - Email/password signup: sent from /auth/callback after first
  *     confirmation. Single CTA: "Confirm Email" → dashboard.
- *   - Google signup: sent from completeGoogleOnboarding after onboarding.
+ *   - Send only from an explicit post-provisioning/welcome-email flow. The current Free Workspace signup has no mandatory onboarding wizard.
  *     Includes a Tutorials blurb + "Go to Tutorials" button (Google users
  *     are auto-confirmed by Supabase, so they get the richer email).
  */

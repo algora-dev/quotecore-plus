@@ -11,7 +11,7 @@ function safeBookingHref(value: string): string {
   }
 }
 
-/** Free 20-minute workflow/product call used across commercial marketing pages. */
+/** Free 25-minute workflow/product call with Shaun used across commercial marketing pages. */
 export const workflowCallHref =
   safeBookingHref(process.env.NEXT_PUBLIC_HOMEPAGE_BOOKING_URL ?? "") || "/contact";
 

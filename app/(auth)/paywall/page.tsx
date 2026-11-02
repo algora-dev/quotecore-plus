@@ -1,6 +1,6 @@
 import { QcJourney, QcJourneySteps } from '@/app/components/ui/v2/QcJourney';
 import Link from 'next/link';
-import { PlanPriceSummary, formatPlanPrice } from '@/app/components/billing/PlanPriceSummary';
+import { PlanPriceSummary } from '@/app/components/billing/PlanPriceSummary';
 import { redirect } from 'next/navigation';
 
 import { loadCompanyContext } from '@/app/lib/data/company-context';
@@ -16,9 +16,9 @@ import { PaywallSetupFlow } from '@/app/components/billing/PaywallSetupFlow';
 import { LapsedCompNotice } from '@/app/components/billing/LapsedCompNotice';
 
 /**
- * Onboarding paywall (paid-upfront model, 2026-09-16).
+ * Inactive-workspace billing recovery / upgrade surface.
  *
- * Every new signup lands here after onboarding: the workspace layout gate
+ * Active Free Workspaces do not land here. The workspace layout gate
  * (app/(auth)/[workspaceSlug]/layout.tsx) redirects any company whose
  * effective plan is inactive (never paid / canceled / not comped) here
  * until they subscribe or we manually comp them.
@@ -50,7 +50,7 @@ export default async function PaywallPage() {
 
   // Lapsed complimentary grant (owner directive 2026-10-18): expired comps
   // land here blocked; show them why plus the demo / pricing / homepage
-  // routes instead of a silent generic paywall.
+  // recovery context instead of a silent generic paywall.
   const lapsedComp = Boolean(
     companyRow?.comp_until && new Date(companyRow.comp_until) <= new Date(),
   );
@@ -58,12 +58,9 @@ export default async function PaywallPage() {
   // V5 pricing cutover (testing, owner 2026-10-11): calculator-only paywall,
   // no legacy plan cards regardless of entry path. Main keeps legacy surfaces.
   const newPricing = customPricingOnly();
-  // Purchasable tiers only. The `free` tier is backend-only (dunning
-  // fallback), and coming-soon tiers have no checkout path.
+  // Purchasable paid tiers only. The Free Workspace is provisioned separately
+  // and does not require checkout; this recovery surface only offers paid access.
   const plans = newPricing ? [] : await loadBillingPlans(new Set(['starter', 'pro', 'pro_plus']));
-  // Value display only. Setup package amounts and all checkout flows are unchanged.
-  const proPlan = plans.find(plan => plan.code === 'pro');
-  const includedProValue = proPlan && Number.isFinite(proPlan.priceCentsMonthly) && proPlan.priceCentsMonthly > 0 ? formatPlanPrice(proPlan.priceCentsMonthly * 6) : null;
 
   return (
     <QcJourney><div className="qc-flow-auth">
@@ -81,12 +78,12 @@ export default async function PaywallPage() {
 
         <div className="mt-8 text-center max-w-2xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
-            Activate your workspace
+            Choose your paid setup
           </h1>
           <p className="mt-2 text-sm md:text-base text-slate-600">
             {newPricing
-              ? 'Build the setup that fits your work. Pay only for what your workflow needs; access begins after payment is confirmed.'
-              : 'Choose the subscription that fits your work. Features and limits depend on the plan; access begins after payment is confirmed.'}
+              ? 'Build the paid setup that fits your work. Your exact configuration and price are handled here inside your account.'
+              : 'Choose the paid subscription that fits your work. Features and limits depend on the plan you select.'}
           </p>
           {!newPricing && <PlanPriceSummary plans={plans} />}
         </div>
@@ -140,117 +137,24 @@ export default async function PaywallPage() {
           </div>
         </div>
 
-        {/* Done-For-You packages - two cards mirroring the marketing page.
-            Link-only (no checkout yet): buyers contact us first, so these
-            send them to /done-for-you-setup with everything they need. */}
-        <div className="mt-10">
-          <div className="text-center max-w-2xl mx-auto">
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900">
-              Don&apos;t want to set it up yourself?
-            </h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Let us build your entire estimating system for you - and skip the setup risk
-              completely. Both packages include <span className="font-semibold text-slate-900">6 months of QuoteCore+ Pro{includedProValue ? ` (${includedProValue} value)` : ''}</span> plus
-              hands-on support while you get up and running.
-            </p>
-          </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2 max-w-3xl mx-auto">
-            {/* $499 - Done-For-You Estimating Setup */}
-            <div className="flex flex-col rounded-xl border-2 border-slate-200 bg-white p-6 hover:border-[#FF6B35] hover:shadow-lg transition-all">
-              <div className="flex items-baseline justify-between">
-                <h3 className="font-semibold text-slate-900">Done-For-You Setup</h3>
-                <div className="text-right">
-                  <span className="text-2xl font-bold text-slate-900">$499</span>
-                  <span className="text-xs text-slate-400"> one-off</span>
-                </div>
-              </div>
-              <p className="mt-1 text-xs text-slate-500">
-                Best for smaller setups or a focused range of products and services.
+        {/* Done For You stays a scoped service, not a second set of fixed tiers. */}
+        <div className="mt-10 max-w-3xl mx-auto rounded-xl border border-slate-200 bg-white p-5 md:p-6">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-lg md:text-xl font-bold text-slate-900">Prefer us to set it up for you?</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Done For You starts from $499 and is scoped to your business. It includes the agreed setup, your first 3 months of the appropriate QuoteCore+ subscription, a personalised handover and 3 months of support.
               </p>
-              <ul className="mt-4 space-y-2 flex-1">
-                {[
-                  'Up to 20 custom components built for you',
-                  'Your material pricing configured',
-                  'Labour & waste rules configured',
-                  'Personalised training + 6 months support',
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                    <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-4 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                6 months QuoteCore+ Pro included
-              </div>
-              <Link data-qc-variant="primary"
-                href="/done-for-you-setup"
-                prefetch={false}
-                className="qc-button qc-flow-control mt-5"
-              >
-                Learn more &rarr;
-              </Link>
             </div>
-
-            {/* $999 - Complete Done-For-You Setup */}
-            <div className="flex flex-col rounded-xl border-2 border-[#FF6B35] bg-orange-50/40 p-6 hover:shadow-lg transition-all relative">
-              <span className="absolute -top-2.5 left-6 rounded-full bg-[#FF6B35] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                Most complete
-              </span>
-              <div className="flex items-baseline justify-between">
-                <h3 className="font-semibold text-slate-900">Complete Done-For-You</h3>
-                <div className="text-right">
-                  <span className="text-2xl font-bold text-slate-900">$999</span>
-                  <span className="text-xs text-slate-400"> one-off</span>
-                </div>
-              </div>
-              <p className="mt-1 text-xs text-slate-500">
-                Best for larger or more detailed estimating systems.
-              </p>
-              <ul className="mt-4 space-y-2 flex-1">
-                {[
-                  'Up to 60 custom components built for you',
-                  'Everything in the $499 setup, plus:',
-                  'Larger material & pricing setup',
-                  'Help organising larger catalogues',
-                  'Detailed workflow configuration',
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                    <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-4 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                6 months QuoteCore+ Pro included
-              </div>
-              <Link data-qc-variant="primary"
-                href="/done-for-you-setup"
-                prefetch={false}
-                className="qc-button qc-flow-control mt-5"
-              >
-                Learn more &rarr;
-              </Link>
-            </div>
+            <Link
+              data-qc-variant="primary"
+              href="/done-for-you-setup"
+              prefetch={false}
+              className="qc-button qc-flow-control shrink-0"
+            >
+              See Done For You &rarr;
+            </Link>
           </div>
-        </div>
-
-        {/* Clean exit - account stays canceled/locked, no extra state written */}
-        <div className="mt-8 text-center">
-          <Link
-            href="/free-tools"
-            prefetch={false}
-            className="qc-flow-link text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors"
-          >
-            No thanks, I&apos;ll keep using the free tools
-          </Link>
         </div>
       </main>
     </div></QcJourney>

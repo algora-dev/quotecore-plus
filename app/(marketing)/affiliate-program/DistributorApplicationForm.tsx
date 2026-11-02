@@ -88,19 +88,15 @@ export default function DistributorApplicationForm() {
           Thanks. We will review your application and contact you by email if we think there is a good fit.
         </p>
         <p className="mt-4 text-sm text-zinc-500">
-          In the meantime, walk through the{" "}
-          <Link href="/demo" className="font-semibold text-[#BD4A1A] hover:underline">
-            interactive demo
-          </Link>
-          , explore the{" "}
-          <Link href="/free-calculators" className="font-semibold text-[#BD4A1A] hover:underline">
-            free tools
+          In the meantime, explore the{" "}
+          <Link href="/free-trial" className="font-semibold text-[#BD4A1A] hover:underline">
+            Free Workspace
           </Link>{" "}
-          or see how{" "}
+          and see how{" "}
           <Link href="/done-for-you-setup" className="font-semibold text-[#BD4A1A] hover:underline">
             Done For You Setup
           </Link>{" "}
-          works, so you know exactly what you will be promoting.
+          works, so you know the two main customer journeys you will be promoting.
         </p>
       </div>
     );

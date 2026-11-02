@@ -53,7 +53,7 @@ export function DocumentPaper({draft:d,guest=true,placeholders=false}: {draft:Do
     {order&&(d.deliveryAddress||d.deliveryDate)&&<div className="qcd-delivery"><div><p className="qcd-kicker">Deliver to</p><p>{d.deliveryAddress||'To be confirmed'}</p></div>{d.deliveryDate&&<div><p className="qcd-kicker">Requested delivery</p><p>{d.deliveryDate}</p></div>}</div>}
     <table><thead><tr><th scope="col">Description</th><th scope="col">Qty</th><th scope="col">Unit</th><th scope="col">Rate</th><th scope="col">Total</th></tr></thead>
       <tbody>{lines.map(l=><tr key={l.id}><td>{l.description}</td><td>{l.qty}</td><td>{l.unit}</td><td>{d.hideAllPrices?'-':exactMoney(l.rate,d.currencyCode)}</td><td>{d.hideAllPrices?'-':exactMoney(l.qty*l.rate,d.currencyCode)}</td></tr>)}
-        {!lines.length&&placeholders&&<tr className="qcd-placeholder-row"><td>Your items will appear here</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>}
+        {!lines.length&&placeholders&&<tr className="qcd-placeholder-row"><td>Your items will appear here</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>}
       </tbody></table>
     {!d.hideTotals&&<div className="qcd-totals"><div className="qcd-total-row"><span>Subtotal</span><strong>{exactMoney(totals.subtotal,d.currencyCode)}</strong></div>
       {d.taxEnabled&&<div className="qcd-total-row"><span>{d.taxName} ({d.taxRate}%)</span><strong>{exactMoney(totals.tax,d.currencyCode)}</strong></div>}
@@ -62,7 +62,7 @@ export function DocumentPaper({draft:d,guest=true,placeholders=false}: {draft:Do
     {invoice&&(d.paymentDetails||d.paymentReference)&&<section className="qcd-payment"><p className="qcd-kicker">Payment details</p>{d.paymentDetails&&<p>{d.paymentDetails}</p>}{d.paymentReference&&<p className="qcd-payment-ref"><strong>Payment reference:</strong> {d.paymentReference}</p>}</section>}
     {d.notes&&<div className="qcd-notes"><p className="qcd-kicker">{order?'Notes for supplier':'Notes'}</p><p>{d.notes}</p></div>}
     {d.footer&&<div className="qcd-footer" style={{fontStyle:d.footerItalic?'italic':'normal'}}>{d.footer}</div>}
-    {guest&&<div className="qcd-branding"><img src="/marketing/brand/quotecore-logo-transparent.png" alt="QuoteCore+"/><span>This {meta.noun} was generated using QuoteCore+ Free Tools — quotecoreplus.com</span></div>}
+    {guest&&<div className="qcd-branding"><img src="/marketing/brand/quotecore-logo-transparent.png" alt="QuoteCore+"/><span>This {meta.noun} was generated using QuoteCore+ Free Tools | quotecoreplus.com</span></div>}
   </article>;
 }
 export function ScaledPaper({draft,guest,placeholders=false}: {draft:DocumentDraft;guest:boolean;placeholders?:boolean}) {

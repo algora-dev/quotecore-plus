@@ -16,6 +16,7 @@ import {
   type FaqItem,
 } from '@/components/marketing/page-v2/PageV2';
 import { buildBreadcrumbSchema, buildFaqSchema } from '@/lib/schema';
+import { workflowCallHref } from '@/lib/booking';
 
 export const metadata: Metadata = {
   title: 'Free Measurement-to-Quote Tool | QuoteCore+',
@@ -33,9 +34,9 @@ const faqs: FaqItem[] = [
   { question: 'Can I price a job from measurements I already have?', answer: 'Yes. Measurements can come from a site measure, another takeoff, a report, a spreadsheet or your own notes. You do not need to redraw a plan just to use those quantities.' },
   { question: 'Can I import a spreadsheet or CSV price list?', answer: 'Yes. The free tool supports CSV import with mapping for a limited component library. For larger catalogues, use the dedicated Catalog-to-Component Converter or the saved app workflow.' },
   { question: 'How are pitch, waste and pack sizes handled?', answer: 'Component rules can apply pitch logic, waste allowances and pack pricing according to the settings in the tool. Review the component setup and measurements before using the result for a real job.' },
-  { question: 'Can I turn the result into a customer quote?', answer: 'Yes. The free workflow can move priced lines toward a customer quote, and the paid QuoteCore+ app keeps the saved job, reusable component library and downstream documents connected.' },
-  { question: 'Is the Measurement-to-Quote tool free?', answer: 'Yes. The core browser workflow is free and does not require signup to start. The paid app is separate and adds saved jobs, reusable account setup and the connected quoting, ordering and invoicing workflow.' },
-  { question: 'Does the free tool permanently save my pricing library?', answer: 'No. The free tool is for the current browser task. Use the paid QuoteCore+ app when you want a persistent reusable component library and saved jobs.' },
+  { question: 'Can I turn the result into a customer quote?', answer: 'Yes. The free workflow can move priced lines toward a customer quote, and a QuoteCore+ Free Workspace keeps the saved job, reusable component library and downstream documents connected.' },
+  { question: 'Is the Measurement-to-Quote tool free?', answer: 'Yes. The core browser workflow is free and does not require signup to start. A QuoteCore+ Free Workspace adds saved jobs, reusable account setup and the connected quoting, ordering and invoicing workflow, with no card or paid plan required to start.' },
+  { question: 'Does the free tool permanently save my pricing library?', answer: 'No. The free tool is for the current browser task. Use a QuoteCore+ Free Workspace when you want a persistent reusable component library and saved jobs.' },
   { question: 'What is the difference between this and Digital Takeoff?', answer: 'Measurement-to-Quote starts after measuring. Digital Takeoff is for measuring a plan or image first. Both can lead into the same idea: quantities drive reusable pricing rules.' },
 ];
 
@@ -63,9 +64,9 @@ export default async function Page({ searchParams }: { searchParams?: Promise<{ 
         title={<>Already have measurements? Turn them into materials, labour and pricing.</>}
         lead="Enter areas, lengths or quantities from a site measure, plan takeoff, aerial report or spreadsheet. Reusable components apply your pricing rules, then you can review the result, build a customer quote or carry the workflow into QuoteCore+."
         primary={{ href: '#measurement-tool', label: 'Use the free tool' }}
-        secondary={{ href: '/demo', label: 'Explore the interactive app demo' }}
+        secondary={{ href: '/signup', label: 'Create Free Workspace', freeWorkspace: true }}
         proof={['Free core workflow', 'No signup to start', 'Use measurements you already have']}
-        visual={<ProductFrame src="/marketing/current-ux/quote-builder-components-measurements.webp" alt="QuoteCore+ Quote Builder with measurements and Smart Components" width={2048} height={1112} eager caption="The paid app keeps measured quantities, reusable Smart Components and the priced job together. The free tool below lets you try the core measurement-to-pricing idea first." />}
+        visual={<ProductFrame src="/marketing/current-ux/quote-builder-components-measurements.webp" alt="QuoteCore+ Quote Builder with measurements and Smart Components" width={2048} height={1112} eager caption="A Free Workspace keeps measured quantities, reusable Smart Components and the priced job together. The free tool below lets you try the core measurement-to-pricing idea first." />}
       />
 
       <div id="measurement-tool"><FreeQuoteBuilder initialMode={initialMode} initialTrade={initialTrade} /></div>
@@ -83,12 +84,12 @@ export default async function Page({ searchParams }: { searchParams?: Promise<{ 
 
       <Section tone="soft">
         <Container>
-          <SplitFeature visual={<ProductFrame src="/marketing/current-ux/quote-builder-components-measurements.webp" alt="Current QuoteCore+ Quote Builder showing Smart Components and job measurements" width={2048} height={1112} caption="The paid app saves the component library and measured job so the next quote does not start from a blank tool." />}>
-            <h2>Free tool for the current task. Saved app workflow for repeat work.</h2>
-            <p>The free tool is useful when you need to price the job in front of you. The paid QuoteCore+ app is for keeping the setup and job history so those pricing rules are ready again tomorrow.</p>
+          <SplitFeature visual={<ProductFrame src="/marketing/current-ux/quote-builder-components-measurements.webp" alt="Current QuoteCore+ Quote Builder showing Smart Components and job measurements" width={2048} height={1112} caption="A Free Workspace saves the component library and measured job so the next quote does not start from a blank tool." />}>
+            <h2>Free tool for the current task. Free Workspace for repeat work.</h2>
+            <p>The free tool is useful when you need to price the job in front of you. A QuoteCore+ Free Workspace keeps the setup and job history so those pricing rules are ready again tomorrow.</p>
             <FeatureGrid columns={2} items={[
-              { kicker: 'Free browser tool', title: 'Current task', body: <p>Limited component library, measurements and priced output without creating a paid account.</p> },
-              { kicker: 'Paid app', title: 'Reusable workflow', body: <p>Saved Smart Components, saved jobs, customer quotes, orders and invoices connected to the account.</p> },
+              { kicker: 'Free browser tool', title: 'Current task', body: <p>Limited component library, measurements and priced output without creating an account.</p> },
+              { kicker: 'Free Workspace', title: 'Reusable workflow', body: <p>Saved Smart Components, saved jobs, customer quotes, orders and invoices connected to your real account.</p> },
             ]} />
           </SplitFeature>
         </Container>
@@ -124,14 +125,13 @@ export default async function Page({ searchParams }: { searchParams?: Promise<{ 
         <Container>
           <SectionHeader eyebrow="Next step" title="Choose the next step that suits you" />
           <ConversionPaths items={[
-            { title: 'Explore the interactive app demo', body: 'See how saved measurements, pricing, quotes and the job workflow fit together in a prepared account.', href: '/demo', label: 'Explore the demo' },
-            { title: 'Build your configuration', body: 'Choose the workload and tools you want in the paid app and see the current monthly price.', href: '/pricing', label: 'See pricing' },
-            { title: 'Bring your existing pricing with you', body: 'Done For You Setup can help translate agreed spreadsheets, products, labour and pricing logic into your QuoteCore+ account.', href: '/done-for-you-setup', label: 'Explore Done For You' },
+            { title: 'Talk it through with Shaun', body: 'Tell Shaun how you currently measure, price and quote. He will help you work out where QuoteCore+ could make it faster or easier, and share his #1 tip for winning more quoted jobs.', href: workflowCallHref, label: 'Book 25 minutes with Shaun' },
+            { title: 'Explore it yourself', body: 'Create a real Free Workspace with no card or expiry. Use your own jobs, with the optional Guided Walkthrough there when you want it.', href: '/signup', label: 'Create my Free Workspace', freeWorkspace: true },
           ]} />
         </Container>
       </Section>
 
-      <FinalCta title="Already measured the job? Start from what you know." body="Use the free tool for the current task, then explore the saved QuoteCore+ workflow when you want those pricing rules and jobs ready to reuse." primary={{ href: '#measurement-tool', label: 'Use the free tool' }} secondary={{ href: '/demo', label: 'Explore the app demo' }} />
+      <FinalCta title="Already measured the job? Start from what you know." body="Use the free tool for the current task. When you want the setup saved for next time, create a Free Workspace or talk through your workflow with Shaun." primary={{ href: workflowCallHref, label: 'Book 25 minutes with Shaun' }} secondary={{ href: '/signup', label: 'Create my Free Workspace', freeWorkspace: true }} />
       <div style={{ height: 72 }} />
     </PageScaffold>
   );

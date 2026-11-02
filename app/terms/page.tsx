@@ -105,11 +105,12 @@ export default function TermsOfServicePage() {
       </ul>
       <p>Where reasonably possible, we will explain the restriction and provide a way to restore access.</p>
 
-      <h2 id="trials-and-free-access">4. Free access and paid Plans</h2>
-      <p>We do not offer a free trial of the app. Instead, we provide unlimited free access to our free tools, which run in your browser and do not require an account, signup or payment details.</p>
-      <p>The free tools let you use individual tools (such as the takeoff builder, roofing calculator, quote generator and others) at no cost. The app itself is the paid version: it combines the workflow in one place and adds saved jobs, reusable setup and additional capabilities, available through the paid subscription described in section 5. QuoteCore+ does not offer a full-app free trial or a general money-back guarantee.</p>
-      <p>We believe this offers more value and less friction than a free trial: there is nothing to sign up for, no card required, and you only pay for the app if and when you choose a Plan.</p>
-      <p>We may change, add or withdraw free tools for future users. Free tools may have different support, usage and feature limits from paid Plans.</p>
+      <h2 id="trials-and-free-access">4. Free Workspace and free tools</h2>
+      <p>QuoteCore+ currently offers a Free Workspace that can be created without selecting a paid Plan or providing payment-card details. The Free Workspace is a real Account and Workspace, not a timed trial, and may be used subject to the feature, capacity and usage limits shown in the Service.</p>
+      <p>The Free Workspace may include access to an optional guided walkthrough using fictional or sample business data. The guided walkthrough is provided for learning purposes and is separate from the Customer Data in your own Workspace.</p>
+      <p>We also provide standalone free tools that may run in your browser without an Account. Free tools and the Free Workspace may have different features, support, storage, capacity and usage limits from paid Plans.</p>
+      <p>You may choose to upgrade from the Free Workspace to a paid Plan when you need additional features, capacity or usage. We do not require you to upgrade merely because a fixed trial period has ended.</p>
+      <p>We may change, add, limit or withdraw free features or tools for future use, subject to applicable law and any notice obligations. QuoteCore+ does not offer a general money-back guarantee unless one is expressly stated for a particular Order or required by law.</p>
 
       <h2 id="paid-subscriptions">5. Paid subscriptions</h2>
       <h3>5.1 Plans</h3>

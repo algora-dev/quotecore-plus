@@ -189,13 +189,13 @@ export function PostGenerationModal({
           <div>
             <TooltipButton
               label="Save to App"
-              tooltip="Save to QuoteCore+ (current configurations from US$29/month; interactive demo available). Save, edit, send quotes and use all features of the app"
+              tooltip="Save this into your QuoteCore+ Free Workspace so you can keep editing it and continue the connected workflow"
               onClick={onSaveToApp}
               variant="accent"
               icon={saveIcon}
             />
             <p className="mt-1.5 text-center text-xs text-slate-400">
-              Your {toolType} will be saved in your account once you sign up and pick a plan.
+              Your {toolType} can be saved into your Free Workspace. No card or plan selection is required to start.
             </p>
           </div>
 

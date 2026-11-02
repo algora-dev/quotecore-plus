@@ -1,44 +1,59 @@
 import type { Metadata } from 'next';
-import { BulletList, Container, ConversionPaths, FaqAccordion, FeatureGrid, FinalCta, Hero, PageScaffold, ProductFrame, Section, SectionHeader, SplitFeature, type FaqItem } from '@/components/marketing/page-v2/PageV2';
+import {
+  Container,
+  FaqAccordion,
+  FeatureGrid,
+  FinalCta,
+  Hero,
+  PageScaffold,
+  Section,
+  SectionHeader,
+  type FaqItem,
+} from '@/components/marketing/page-v2/PageV2';
 import { workflowCallHref } from '@/lib/booking';
 import { buildBreadcrumbSchema, buildFaqSchema, buildPricingOffers } from '@/lib/schema';
 import { publicPricing } from '@/lib/public-pricing';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
 
 export const metadata: Metadata = {
-  title: 'QuoteCore+ Pricing | Build Your Estimating & Quoting Plan',
-  description: 'Build a QuoteCore+ plan around your workload and the tools you need. Current global configurations range from US$29 to US$259/month. Explore demos, free tools and Done For You Setup.',
+  title: 'QuoteCore+ Pricing | Try Everything First, Then Build Your Plan',
+  description: `Try QuoteCore+ in a Free Workspace before choosing a paid plan. Current configurations range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax}/month. Build your exact plan inside your account or talk it through with Shaun.`,
   alternates: { canonical: 'https://quote-core.com/pricing', languages: hreflangLanguages('/pricing') },
   openGraph: {
-    title: 'QuoteCore+ Pricing | Build Your Estimating & Quoting Plan',
-    description: 'Configure the workload and tools you need. Current global QuoteCore+ configurations range from US$29 to US$259/month.',
+    title: 'QuoteCore+ Pricing | Try Everything First, Then Build Your Plan',
+    description: `Try the app first. Upgrade only when you know what your business needs. Current configurations range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax}/month.`,
     url: 'https://quote-core.com/pricing', siteName: 'QuoteCore+', type: 'website',
-    images: [
-      {
-        url: '/images/social/og-pricing.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'QuoteCore+ pricing - Why pay for features you don\u2019t use? Build the plan you actually need. Plans from $29/month.',
-      },
-    ],
+    images: [{ url: '/images/social/og-pricing.jpg', width: 1200, height: 630, alt: 'QuoteCore+ pricing' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'QuoteCore+ Pricing | Build Your Estimating & Quoting Plan',
-    description: 'Why pay for features you don\u2019t use? Build the plan you actually need. Plans from $29/month.',
+    title: 'QuoteCore+ Pricing | Try Everything First, Then Build Your Plan',
+    description: `Try the app first. Upgrade only when you know what your business needs. US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax}/month.`,
     images: ['/images/social/og-pricing.jpg'],
   },
 };
 
 const faqs: FaqItem[] = [
-  { question: 'How much does QuoteCore+ cost?', answer: `QuoteCore+ uses configurable monthly pricing built around your workload and selected tools. Current global configurations range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax} per month. Use the pricing builder on this page to choose your workload and tools and see the resulting monthly price.` },
-  { question: 'What is the cheapest QuoteCore+ setup?', answer: `The current global pricing builder starts at US$${publicPricing.monthlyMin} per month for the minimum public configuration. Your exact monthly price changes with the workload and optional tools you choose.` },
-  { question: 'What can make my monthly price higher?', answer: 'The pricing builder changes the monthly total based on your core job or quote allowance and optional usage such as Digital Takeoff, Roof Scan Assist, offcut optimisation and Smart Assistant. The builder shows the total before you continue.' },
-  { question: 'Is there a free trial?', answer: 'No. There is no full-app trial. You can explore the interactive app demo, use the free browser tools with no signup, try the focused takeoff demo, or book a tailored product demo before subscribing.' },
-  { question: 'Can I try QuoteCore+ before subscribing?', answer: 'Yes. The interactive app demo gives you a prepared fictional roofing workspace to explore, and the free tools let you complete practical takeoff, measurement, pricing and document tasks without a paid account.' },
-  { question: 'Can I change my configuration later?', answer: 'The public pricing model is built around configurable usage and tools. Use the current app and billing controls for any available subscription changes after signup.' },
-  { question: 'Is Done For You included in the monthly subscription?', answer: `No. Done For You Setup is a separate one-time service starting from US$${publicPricing.doneForYouStarting}. It is for businesses that want QuoteCore+ to help configure agreed materials, labour, waste and pricing logic and then train them using their own workflow.` },
-  { question: 'Are taxes included?', answer: 'The pricing builder displays the subscription price before any tax treatment that may apply to your location. The checkout flow is the final source for applicable taxes and the amount charged.' },
+  {
+    question: 'How much does QuoteCore+ cost?',
+    answer: `Paid QuoteCore+ configurations currently range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax} per month. Your exact price depends on the features, capacity and usage you choose after you have had a chance to try the app.`,
+  },
+  {
+    question: 'Do I need to choose a plan before I can use QuoteCore+?',
+    answer: 'No. Create a Free Workspace first. Use it on your own jobs, try the optional guided walkthrough and learn which features are useful before you decide whether you need a paid plan.',
+  },
+  {
+    question: 'Where do I build my exact plan?',
+    answer: 'Inside your QuoteCore+ account. Open Billing and use Create Your Plan when you are ready. The public website intentionally does not ask you to choose features before you know what they do.',
+  },
+  {
+    question: 'Can Shaun help me work out what I need?',
+    answer: 'Yes. Book a free 25-minute call, tell Shaun how you currently measure, price and quote, and he can help identify which QuoteCore+ features are likely to be useful. Either way, he will also share his number one tip for winning more of the jobs you already quote.',
+  },
+  {
+    question: 'What if the Free Workspace is enough for me?',
+    answer: 'Keep using it. Upgrade only when you need more features, capacity or usage.',
+  },
 ];
 
 const schemas = [
@@ -52,58 +67,54 @@ export default function PricingPage() {
     <PageScaffold breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Pricing' }]} schemas={schemas}>
       <Hero
         eyebrow="QuoteCore+ pricing"
-        title={<>Build a plan around the way you work.</>}
-        lead={`Choose your workload and the tools you need. Current global configurations range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax} per month, configured inside your workspace when you are ready.`}
-        body="Create a free workspace with just your email, or explore the interactive demo, use the free tools or book a tailored product demo first."
-        primary={{ href: '/signup', label: 'Create your free workspace' }}
-        secondary={{ href: '/demo', label: 'Explore the interactive demo' }}
-        proof={['One configurable monthly price', 'Free workspace to start', 'Free tools and demos available first']}
-        visual={<ProductFrame src="/marketing/current-ux/job-space-overview.webp" alt="Current QuoteCore+ Job Space overview" width={2048} height={1112} eager caption="The pricing configuration changes with the tools and usage you choose. The goal remains one connected job workflow." />}
+        title={<>Don&apos;t pay for something you don&apos;t need.<br />Try everything first for free.</>}
+        lead="See how our app can help your business, what features you need, then create your plan."
+        body={`Paid configurations currently range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax} per month. You do not need to choose one before creating your Free Workspace.`}
+        primary={{ href: '/signup', label: 'Create my Free Workspace', freeWorkspace: true }}
+        secondary={{ href: workflowCallHref, label: 'Book 25 minutes with Shaun' }}
+        proof={['No card needed', 'No expiry', 'Upgrade only if you need more']}
       />
 
-      <Section tone="soft">
-        <Container>
-          <SectionHeader eyebrow="What changes the price" title="Pay for the workload and tools you choose." lead="Your core workload combines with the optional tools and allowances that match how you expect to use QuoteCore+. Build and change your configuration inside your workspace billing settings at any time." />
-          <FeatureGrid columns={3} items={[
-            { title: 'Core workload', body: <p>Your expected job or quote volume sets the core allowance used by your plan.</p> },
-            { title: 'Digital Takeoff', body: <p>Add the in-app plan measurement workspace when you want to measure drawings directly in QuoteCore+.</p> },
-            { title: 'Roof Scan Assist', body: <p>Choose the Roof Scan Assist allowance that fits how often you expect to automate roof-plan takeoff.</p> },
-            { title: 'Offcut optimisation', body: <p>Add offcut and cut-plan capability when it belongs in your roofing workflow.</p> },
-            { title: 'Smart Assistant', body: <p>Choose an Assistant allowance based on how much help you expect to use across supported account tasks.</p> },
-            { title: 'One monthly total', body: <p>Your choices combine into one monthly price, configured and changed inside the app.</p> },
-          ]} />
-        </Container>
-      </Section>
-
-      <Section tone="soft">
-        <Container>
-          <SplitFeature visual={<ProductFrame src="/marketing/current-ux/job-space-overview.webp" alt="Current QuoteCore+ Job Space showing the connected job workflow" width={2048} height={1112} caption="The plan configuration changes. The connected workflow is what the subscription gives you access to." />}>
-            <h2>The plan changes. The connected workflow stays the point.</h2>
-            <p>QuoteCore+ is designed so the important job information can stay together instead of being retyped between a takeoff tool, spreadsheet, quote document and invoicing system.</p>
-            <BulletList items={['Saved jobs and measurements', 'Reusable Smart Components', 'Customer quotes and activity', 'Material ordering and invoicing workflow', 'Phone, tablet and desktop access']} />
-          </SplitFeature>
+      <Section tone="dark">
+        <Container narrow>
+          <SectionHeader
+            eyebrow="15 minutes to clarity"
+            title="Learn the workflow before you price the plan."
+            lead="Use the optional guided walkthrough to understand the core QuoteCore+ workflow in around 10 to 15 minutes, or skip it and try the same tools on your own jobs. Once you know what helps, the pricing choices make much more sense."
+            dark
+          />
         </Container>
       </Section>
 
       <Section>
         <Container>
-          <SectionHeader eyebrow="Try it before you subscribe" title="No full-app trial. Three useful ways to evaluate QuoteCore+." lead="Choose the evaluation path that answers what you actually need to know." />
-          <ConversionPaths items={[
-            { title: 'Explore the interactive app demo', body: 'Open a prepared fictional roofing account, follow the guided examples and look around the wider workspace at your own pace.', href: '/demo', label: 'Explore the demo' },
-            { title: 'Use the free tools', body: 'Try takeoff, measurement-to-pricing, calculators and document tools in your browser without creating a paid app account.', href: '/free-tools', label: 'Browse free tools' },
-            { title: 'Book a tailored 20-minute demo', body: 'Tell us how you currently measure and price work. We will share our screen and show a workflow that is relevant to your trade and questions.', href: workflowCallHref, label: 'Book a tailored demo' },
+          <SectionHeader
+            eyebrow="Two ways to get your price"
+            title="Build it yourself, or talk it through with Shaun."
+            lead="Either way, start by understanding what your business actually needs rather than buying a generic package first."
+          />
+          <FeatureGrid columns={2} items={[
+            {
+              kicker: 'Try it yourself',
+              title: 'Create your Free Workspace',
+              body: <p>Use QuoteCore+ for real, try the guided walkthrough if you want it, then open Billing → Create Your Plan inside your account when you are ready to see your exact configuration and price.</p>,
+            },
+            {
+              kicker: 'Let us help',
+              title: 'Book 25 minutes with Shaun',
+              body: <p>Tell Shaun how you currently work. He can help you identify which features are likely to save you time, what level of usage you may need and what that setup is likely to cost. You will also get his number one tip for winning more quoted jobs.</p>,
+            },
           ]} />
         </Container>
       </Section>
 
       <Section tone="soft">
-        <Container>
-          <SplitFeature reverse visual={<ProductFrame src="/marketing/current-ux/smart-components-pricing-library.webp" alt="QuoteCore+ Smart Components pricing library" width={2048} height={1111} caption="Done For You Setup can help translate agreed materials, labour, waste and pricing logic into the account you will actually use." />}>
-            <h2>Want us to help build the setup around your business?</h2>
-            <p>Done For You Setup is a separate one-time service starting from <strong>US${publicPricing.doneForYouStarting}</strong>. It is for businesses that want help translating existing materials, labour rates, waste rules and pricing logic into QuoteCore+ and learning the agreed setup using real jobs.</p>
-            <p>Your monthly subscription is configured separately inside your workspace billing settings.</p>
-            <BulletList items={['Existing spreadsheets and price lists can be a starting point', 'The agreed setup is configured around your own pricing logic', 'Training focuses on the way your business will use QuoteCore+']} />
-          </SplitFeature>
+        <Container narrow>
+          <SectionHeader
+            eyebrow="Why we price it this way"
+            title="Know what a feature does before you pay for it."
+            lead="QuoteCore+ is not built around forcing every business into the same Starter, Pro or Business package. Try the tools first, understand what earns its place in your workflow, then create the plan that fits."
+          />
         </Container>
       </Section>
 
@@ -111,8 +122,17 @@ export default function PricingPage() {
         <Container><FaqAccordion faqs={faqs} title="Pricing FAQ" /></Container>
       </Section>
 
-      <FinalCta title="Start free, configure when you are ready." body="Create a free workspace in seconds with just your email, or explore the product before you configure a paid plan." primary={{ href: '/signup', label: 'Create your free workspace' }} secondary={{ href: '/demo', label: 'Explore the demo' }} />
-      <div style={{ height: 72 }} />
+      <Section tone="dark">
+        <Container>
+          <FinalCta
+            eyebrow="Start free"
+            title="Upgrade only when you need more features, capacity or usage."
+            body="If the Free Workspace is enough, keep using it. If you need more later, build your plan inside your account or talk it through with Shaun."
+            primary={{ href: '/signup', label: 'Create my Free Workspace', freeWorkspace: true }}
+            secondary={{ href: workflowCallHref, label: 'Book 25 minutes with Shaun' }}
+          />
+        </Container>
+      </Section>
     </PageScaffold>
   );
 }

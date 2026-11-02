@@ -81,7 +81,7 @@ export function SmartComponentsSection({ className }: { className?: string }) {
       <div ref={mount} />
       {!loaded && (
         <p role={failed ? 'status' : undefined} className="smart-components-fallback">
-          {failed ? 'The interactive demonstration could not load. ' : ''}
+          {failed ? 'The Smart Components preview could not load. ' : ''}
           You bring the knowledge. Smart Components™ save it and handle the calculations.
         </p>
       )}

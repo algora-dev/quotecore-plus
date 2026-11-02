@@ -1,11 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { MarketingButton } from "@/components/marketing/MarketingButton";
+import { FreeWorkspaceButton } from "@/components/marketing/FreeWorkspaceButton";
+import { workflowCallHref } from "@/lib/booking";
+import { shaunCallPromiseShort } from "@/lib/marketing-conversion";
 
 /**
  * SetupHelpModal - homepage conversion modal.
  *
- * Two paths: Done-For-You setup help, or free tools (no commitment).
+ * Two paths: 25 minutes with Shaun, or a Free Workspace.
  *
  * Trigger: 25s after the visitor lands on the page (lets the intro play
  * and browsing begin). Never during the video: playing the video showcase
@@ -127,34 +131,26 @@ export default function SetupHelpModal() {
               Don&apos;t want to set up another piece of software?
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-zinc-600">
-              <span className="font-semibold text-[#FF6B35]">We get it.</span> We can set QuoteCore+ up around the way you already work - or you can test our free tools first, with no commitment.
+              <span className="font-semibold text-[#B63D0A]">We get it.</span> Tell Shaun how you work and he can help you decide what would actually make it faster, or create a Free Workspace and explore it yourself.
             </p>
 
             <div className="mt-6 flex flex-col gap-3">
-              <a
-                href="/done-for-you-setup"
-                onClick={() => trackEvent("setup_modal_cta_click", "see_how_it_works")}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-black px-6 py-3.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_20px_rgba(255,107,53,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2"
-              >
-                See How It Works
-              </a>
-              <a
-                href="/free-tools"
-                onClick={() => trackEvent("setup_modal_cta_click", "try_free_tools")}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#FF6B35] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2"
-              >
-                Try Our Free Tools
-              </a>
+              <MarketingButton href={workflowCallHref} variant="primary" size="large" className="w-full" onClick={() => trackEvent("setup_modal_cta_click", "book_call")}>
+                Book 25 minutes with Shaun
+              </MarketingButton>
+              <FreeWorkspaceButton variant="glass" size="large" className="w-full" onClick={() => trackEvent("setup_modal_cta_click", "free_workspace")}>
+                Create my free workspace
+              </FreeWorkspaceButton>
             </div>
 
-            <p className="mt-4 text-center text-xs text-zinc-400">
-              No hard sell. Get help setting it up, or explore the tools yourself first.
+            <p className="mt-4 text-center text-xs leading-5 text-zinc-500">
+              {shaunCallPromiseShort}
             </p>
 
             <button
               type="button"
               onClick={close}
-              className="mx-auto mt-3 rounded-full border border-zinc-200 px-4 py-1.5 text-xs text-zinc-500 transition-colors hover:border-[#FF6B35] hover:text-[#FF6B35] hover:shadow-[0_0_12px_rgba(255,107,53,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+              className="mx-auto mt-3 rounded-xl border border-zinc-200 px-4 py-1.5 text-xs text-zinc-500 transition-colors hover:border-[#FF6B35] hover:text-[#FF6B35] hover:shadow-[0_0_12px_rgba(255,107,53,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
             >
               Close
             </button>
@@ -164,7 +160,7 @@ export default function SetupHelpModal() {
           <button
             type="button"
             onClick={close}
-            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-zinc-500 shadow-sm transition-all hover:bg-white hover:text-[#FF6B35] hover:shadow-[0_0_16px_rgba(255,107,53,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+            className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-xl bg-white/80 text-zinc-500 shadow-sm transition-all hover:bg-white hover:text-[#FF6B35] hover:shadow-[0_0_16px_rgba(255,107,53,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
             aria-label="Close"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">

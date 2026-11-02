@@ -7,6 +7,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 import { SITE_URL } from "@/lib/seo/site-url";
 import { ORG_LINKEDIN } from "@/app/lib/seo";
+import TwoPathCta from "@/components/conversion/TwoPathCta";
 
 export const metadata: Metadata = {
   title: "About QuoteCore+ | Built From the Roofing Industry",
@@ -124,18 +125,10 @@ export default function AboutPage() {
           </div>
 
           {/* CTA */}
-          <div className="mt-10 rounded-[2rem] border border-[#FF6B35]/20 bg-[#FF6B35]/5 p-8 text-center">
-            <p className="text-xl font-semibold text-zinc-950">See it for yourself.</p>
-            <p className="mt-2 text-zinc-500">Free tools with no signup. Current paid configurations start at US$29/month; explore the interactive demo before subscribing.</p>
-            <a
-              href="/demo"
-              className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
-            >
-              Explore the interactive demo
-            </a>
-            <p className="mt-4 text-sm text-zinc-500">
-              <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link> · <Link href="/contact" className="underline hover:text-zinc-900">Contact us</Link> · <Link href="/affiliate-program" className="underline hover:text-zinc-900">Partner program</Link>
-            </p>
+          <div className="mt-10 rounded-[2rem] border border-[#FF6B35]/20 bg-[#FF6B35]/5 p-8">
+            <p className="text-xl font-semibold text-zinc-950">See how QuoteCore+ fits the way you work.</p>
+            <p className="mt-2 max-w-2xl text-zinc-500">Start in a real Free Workspace, or spend 25 minutes with Shaun and talk through how you measure, price and quote today.</p>
+            <TwoPathCta location="about_cta" className="mt-6" />
           </div>
         </section>
 

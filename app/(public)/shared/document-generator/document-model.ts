@@ -128,21 +128,21 @@ export function sampleDraft(host = '', date = localDate(),kind:DocumentKind='quo
     notes: 'Includes supply and installation. Work to be scheduled after acceptance. Please contact us with any questions.',
     footer: 'Thank you for the opportunity to quote for your project.',
     lines: [
-      { id: newId(), description: 'Standing-seam roof covering — supply & installation', qty: 120, unit: 'm²', rate: 48, lineHidden: false },
+      { id: newId(), description: 'Standing-seam roof covering - supply & installation', qty: 120, unit: 'm²', rate: 48, lineHidden: false },
       { id: newId(), description: 'Matching ridge and barge flashings', qty: 24, unit: 'm', rate: 22.5, lineHidden: false },
       { id: newId(), description: 'Site preparation and waste removal', qty: 1, unit: 'job', rate: 280, lineHidden: false },
     ],
   };
   if(kind==='invoice')return {...sample,kind,invoiceNumber:'INV-024',invoiceDate:date,dueDate:addDays(date,14),
-    fromAddress:'8 Workshop Road, Sampletown',taxId:'',paymentDetails:'Payment by bank transfer.\nUse your invoice number as the payment reference.\nExample only — add your own verified bank details.',paymentReference:'INV-024',
+    fromAddress:'8 Workshop Road, Sampletown',taxId:'',paymentDetails:'Payment by bank transfer.\nUse your invoice number as the payment reference.\nExample only. Add your own verified bank details.',paymentReference:'INV-024',
     notes:'Roofing work completed as agreed. Please contact us with any questions.',footer:'Thank you for your business.'};
   if(kind==='order')return {...sample,kind,clientName:'',clientEmail:'',clientAddress:'',poNumber:'PO-024',poDate:date,
     supplierName:'Example Roofing Supplies',supplierEmail:'orders@example.com',supplierAddress:'12 Trade Park, Sampletown',
     deliveryDate:addDays(date,7),deliveryAddress:'24 Sample Lane, Sampletown',jobReference:'Sample roof · JOB-024',fromAddress:'8 Workshop Road, Sampletown',taxId:'',
     notes:'Please confirm availability and the delivery date before dispatch. Contact us if a substitution is needed.',footer:'Please quote our PO number on your confirmation and invoice.',
-    lines:[{id:newId(),description:'Standing-seam metal roofing — charcoal',qty:120,unit:'m²',rate:32,lineHidden:false},
+    lines:[{id:newId(),description:'Standing-seam metal roofing - charcoal',qty:120,unit:'m²',rate:32,lineHidden:false},
       {id:newId(),description:'Matching folded barge flashing',qty:24,unit:'m',rate:16.5,lineHidden:false},
-      {id:newId(),description:'Roofing fixings — box of 250',qty:3,unit:'box',rate:38,lineHidden:false}]};
+      {id:newId(),description:'Roofing fixings - box of 250',qty:3,unit:'box',rate:38,lineHidden:false}]};
   return sample;
 }
 const TEXT_FIELDS = ['companyName','fromName','fromPhone','fromEmail','clientName','clientEmail','clientAddress','quoteDate','quoteNumber','validDays','notes','footer','taxName','invoiceNumber','invoiceDate','dueDate','paymentDetails','paymentReference','supplierName','supplierEmail','supplierAddress','poNumber','poDate','deliveryDate','deliveryAddress','jobReference','fromAddress','taxId'] as const;
@@ -218,7 +218,7 @@ export function applyUrlImport(base: DocumentDraft, query: string): { draft: Doc
   if (!imported && !encoded && quantity === null && params.has('amount')) {
     const amount = Number(params.get('amount'));
     if (Number.isFinite(amount) && Math.abs(amount) <= 1e12) {
-      next.lines = [{ ...blankLine('job'), description: 'Imported amount — check tax before use', rate: amount }];
+      next.lines = [{ ...blankLine('job'), description: 'Imported amount - check tax before use', rate: amount }];
       warning = 'An amount was imported without item details. Check whether it already includes tax before generating.'; imported = true;
     }
   }

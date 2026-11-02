@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import Link from "next/link";
 import DemoCTACard from "@/components/DemoCTACard";
+import TwoPathCta from "@/components/conversion/TwoPathCta";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -126,15 +127,7 @@ export default function SendingAndTrackingPage() {
             <p className="mt-4 text-lg text-zinc-600">
               Send quotes, orders and invoices directly from QuoteCore+ with attachments. Track when recipients open and read them. Set up automatic follow-ups with configurable delays and cancellation conditions - so chasing happens on its own. Check status from your phone, tablet or desktop, or ask Smart Assistant for a quote&rsquo;s status instead of opening the app.
             </p>
-            <div className="mt-6 flex gap-3">
-              <a href="/demo" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-                Explore the interactive demo
-              </a>
-              <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
-                All features
-              </Link>
-            </div>
-            <p className="mt-3 text-sm text-zinc-500">Free tools, no signup. Explore the interactive demo before subscribing to the paid app.</p>
+            <TwoPathCta location="feature_sending_and_tracking_hero" className="mt-6" compact />
           </div>
         </section>
 
@@ -301,16 +294,7 @@ export default function SendingAndTrackingPage() {
         <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
           <DemoCTACard location="feature_sending_and_tracking_bottom" variant="inline" className="mx-auto max-w-2xl" />
         </section>
-{/* CTA */}
-        <section className="relative overflow-hidden bg-white py-16 sm:py-20">
-          <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
-            <h2 className="text-3xl font-semibold sm:text-4xl">Stop chasing. Start tracking.</h2>
-            <p className="mt-4 text-base text-zinc-600">Send, track and follow up automatically. Explore the interactive demo or build your configuration in the pricing tool.</p>
-            <a href="/demo" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
-              Explore the interactive demo
-            </a>
-          </div>
-        </section>
+
 
         <SiteFooter />
       </main>

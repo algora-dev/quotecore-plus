@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-// Booking link for the 20-minute walkthrough (same pattern as the contact
+// Booking link for the 25-minute call with Shaun (same pattern as the contact
 // route): the homepage Calendly URL when configured, /contact as fallback.
 const WORKFLOW_CALL_URL = (() => {
   const raw = process.env.NEXT_PUBLIC_HOMEPAGE_BOOKING_URL?.trim();
@@ -83,17 +83,16 @@ export async function POST(req: NextRequest) {
         <h2 style="color:#111;margin-bottom:8px;">Your free $109 QuoteCore+ subscription is ready to claim.</h2>
         <p style="color:#444;line-height:1.6;">Thanks for telling us what you need. Here's how to get your free subscription:</p>
         <ol style="color:#444;line-height:1.8;margin:16px 0;padding-left:20px;">
-          <li><a href="https://app.quote-core.com/signup" style="color:#FF6B35;">Create your account here</a> (takes about a minute).</li>
-          <li>Sign-up ends at a pricing step. Feel free to explore the plans, but <strong style="color:#111;">don't pay anything</strong>, getting that far is all we need.</li>
-          <li>Reply to this email to tell us you've set up your account (just reply with the email you signed up with).</li>
-          <li>We activate your free $109 QuoteCore+ subscription and confirm by email. You won't have app access until then, that's normal.</li>
+          <li><a href="https://app.quote-core.com/signup" style="color:#FF6B35;">Create your Free Workspace here</a>. No card or plan selection is needed.</li>
+          <li>You can start using QuoteCore+ immediately on the free allowances, or use the optional Guided Walkthrough to learn the core workflow.</li>
+          <li>Reply to this email with the address you used for your workspace so we can apply the complimentary $109 subscription from this offer.</li>
+          <li>We will confirm by email once the complimentary subscription has been applied.</li>
         </ol>
         <div style="background:#f8f8f8;border-radius:8px;padding:16px;margin:24px 0;">
-          <p style="font-weight:700;margin:0 0 8px;color:#333;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;">While you wait, have a look around</p>
-          <p style="margin:0 0 8px;color:#555;line-height:1.6;font-size:15px;"><strong>Explore the app:</strong> open the <a href="https://quote-core.com/demo" style="color:#FF6B35;">interactive demo</a> and click through the real thing.</p>
-          <p style="margin:0 0 8px;color:#555;line-height:1.6;font-size:15px;"><strong>Book a walkthrough:</strong> a free 20-minute call where we show you how QuoteCore+ fits the way you already work. <a href="${WORKFLOW_CALL_URL}" style="color:#FF6B35;">Book here</a>.</p>
-          <p style="margin:0 0 8px;color:#555;line-height:1.6;font-size:15px;"><strong>Tell us what's missing:</strong> if something would be useful to you and other contractors, reply and tell us. If we build it, we'll add <strong>two extra months</strong> to your free subscription.</p>
-          <p style="margin:0;color:#555;line-height:1.6;font-size:15px;"><strong>Want it set up for you?</strong> <a href="https://quote-core.com/done-for-you-setup" style="color:#FF6B35;">Done For You Setup</a> takes your materials, labour rates and pricing and configures it all.</p>
+          <p style="font-weight:700;margin:0 0 8px;color:#333;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;">Two useful next steps</p>
+          <p style="margin:0 0 8px;color:#555;line-height:1.6;font-size:15px;"><strong>Use your Free Workspace:</strong> try QuoteCore+ on your own jobs, or open the optional Guided Walkthrough inside your account.</p>
+          <p style="margin:0 0 8px;color:#555;line-height:1.6;font-size:15px;"><strong>Talk it through with Shaun:</strong> book a free 25-minute call to explain how you currently work, see where QuoteCore+ could help, and get Shaun's #1 tip for winning more of the jobs you quote. <a href="${WORKFLOW_CALL_URL}" style="color:#FF6B35;">Book here</a>.</p>
+          <p style="margin:0;color:#555;line-height:1.6;font-size:15px;"><strong>Tell us what's missing:</strong> if something would be useful to you and other contractors, reply and tell us. If we build it, we'll add <strong>two extra months</strong> to your free subscription.</p>
         </div>
         <div style="background:#f8f8f8;border-radius:8px;padding:16px;margin:24px 0;">
           <p style="font-weight:700;margin:0 0 8px;color:#333;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;">What you told us</p>

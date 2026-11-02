@@ -221,17 +221,12 @@ export function SaveToAppButton({ documentType, documentData }: SaveToAppButtonP
               {authUser ? (
                 <>
                   You&apos;re signed in as <strong>{modal.email}</strong>{' '}
-                  but haven&apos;t set up your QuoteCore+ workspace yet. Complete your
-                  sign up and pick a plan - this {documentType} will be saved in your
-                  account, where you can edit it, send it to customers, and manage
-                  your business.
+                  but haven&apos;t created your QuoteCore+ Free Workspace yet. Create it now and this {documentType} will be saved there, ready to edit, send and keep connected to the rest of the job.
                 </>
               ) : (
                 <>
                   Your email <strong>{modal.email}</strong>{' '}
-                  doesn&apos;t have a QuoteCore+ account yet. Sign up and pick a plan -
-                  this {documentType} will be saved in your account, where you can
-                  edit it, send it to customers, and manage your business.
+                  doesn&apos;t have a QuoteCore+ Free Workspace yet. Create one now and this {documentType} will be saved there, ready to edit, send and keep connected to the rest of the job.
                 </>
               )}
             </p>
@@ -253,19 +248,18 @@ export function SaveToAppButton({ documentType, documentData }: SaveToAppButtonP
                     // T2: User is authenticated (shared .quote-core.com
                     // session) but has no company. Send them to the app's
                     // import endpoint - it detects the missing company and
-                    // redirects to /onboarding. After onboarding they land
+                    // provisions the Free Workspace when needed. They then land
                     // on the dashboard where DocDraftRestorer restores the
                     // draft via URL param / cookie / server fetch.
                     window.location.href = `${getAppOrigin()}/api/app/import-free-document?draft=${draftId}`;
                   } else {
-                    // T1: Anonymous user - send to the app-domain signup
-                    // (step 1 of the core signup flow).
+                    // Anonymous user - send to the Free Workspace signup. The signup page opens the shared modal automatically.
                     window.location.href = `${getAppOrigin()}/signup?ref=free-${documentType}-generator&draft=${draftId}`;
                   }
                 }}
                 className="w-full text-center px-5 py-2.5 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition-all"
               >
-                {authUser ? 'Complete sign up' : 'Save to QuoteCore+'}
+                {authUser ? 'Create my Free Workspace' : 'Save to my Free Workspace'}
               </button>
               <button
                 onClick={closeModal}

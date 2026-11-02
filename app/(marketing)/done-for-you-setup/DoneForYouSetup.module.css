@@ -18,7 +18,7 @@
 .eyebrow { color: #ff9b69; }
 .lightEyebrow { color: var(--orange-ink); }
 
-.hero { position: relative; overflow: hidden; padding: clamp(56px, 7vw, 98px) 0 48px; background: radial-gradient(ellipse 55% 55% at 80% 12%, rgba(255,107,53,.13), transparent 70%), radial-gradient(ellipse 45% 52% at 0% 100%, rgba(255,107,53,.10), transparent 76%), #0b0e13; }
+.hero { position: relative; overflow: hidden; padding: clamp(56px, 7vw, 98px) 0 48px; background: radial-gradient(ellipse 55% 55% at 80% 12%, rgba(255,107,53,.13), transparent 70%), radial-gradient(ellipse 45% 52% at 0% 100%, rgba(255,107,53,.10), transparent 76%), #0a0b10; }
 .heroGrid { position: absolute; inset: 0; opacity: .17; background-image: linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px); background-size: 54px 54px; mask-image: linear-gradient(to bottom, #000 0%, transparent 84%); pointer-events: none; }
 .hero::after { content: ''; position: absolute; top: 0; left: 15%; width: 70%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,121,61,.65), transparent); }
 .heroLayout { position: relative; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(390px, .68fr); gap: clamp(52px, 8vw, 110px); align-items: center; }
@@ -92,7 +92,7 @@
 .controlRule { height: 1px; margin: 24px 0; background: #e2e6eb; }
 .controlNote { margin: 0; color: #7a8492; font-size: 12px; line-height: 1.65; }
 
-.finalSection { position: relative; overflow: hidden; padding: clamp(64px, 8vw, 98px) 0; background: #0a0d12; text-align: center; }
+.finalSection { position: relative; overflow: hidden; padding: clamp(64px, 8vw, 98px) 0; background: #0a0b10; text-align: center; }
 .finalGlow { position: absolute; left: 50%; bottom: -190px; width: 780px; height: 390px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(ellipse,rgba(255,107,53,.20),rgba(255,107,53,.05) 43%,transparent 72%); filter: blur(10px); pointer-events: none; }
 .finalInner { position: relative; max-width: 900px; }
 .finalInner .eyebrow { justify-content: center; }
@@ -171,3 +171,37 @@
   .heroGrid, .hero::after, .offerCard::before, .controlCard::before, .finalGlow { display: none; }
   .offerCard, .processList li, .factorCard, .controlCard { border-color: CanvasText; }
 }
+
+/* 2026-11 Free Workspace / DFY conversion refresh */
+.tipStrip { display:flex; align-items:center; gap:12px; max-width:720px; margin-top:20px; padding:12px 14px; border:1px solid rgba(255,179,107,.23); border-radius:14px; background:linear-gradient(90deg,rgba(255,107,53,.11),rgba(255,107,53,.035)); }
+.tipStrip img { width:46px; height:46px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,.18); flex:0 0 46px; }
+.tipStrip p { margin:0; color:#c5ccd5; font-size:12.5px; line-height:1.52; }
+.tipStrip strong { color:#fff; }
+.sectionIntroSingle { max-width:850px; }
+.sectionIntroSingle h2 { margin:0; font-size:clamp(32px,3.45vw,48px); font-weight:650; line-height:1.085; letter-spacing:-.045em; text-wrap:balance; }
+.discoveryNote { display:grid; grid-template-columns:1fr auto; gap:24px; align-items:center; margin-top:24px; padding:18px 20px; border-radius:15px; background:#eff2f5; }
+.discoveryNote p { margin:0; color:#596273; font-size:13px; line-height:1.65; }
+.discoveryNote strong { color:#20242b; }
+.pricingGradient { color:#b63d0a; }
+.handoverLayout { display:grid; grid-template-columns:minmax(300px,.82fr) minmax(0,1.18fr); gap:clamp(48px,8vw,100px); align-items:start; }
+.shaunCard { padding:22px; border:1px solid #dfe3e9; border-radius:20px; background:#fff; box-shadow:0 22px 52px rgba(25,27,32,.055); }
+.shaunTop { display:flex; align-items:center; gap:14px; }
+.shaunTop img { width:66px; height:66px; border-radius:50%; object-fit:cover; }
+.shaunTop strong { display:block; color:#20242b; font-size:16px; }
+.shaunTop span { display:block; margin-top:4px; color:#697483; font-size:12px; }
+.shaunCard > p { margin:18px 0 0; color:#667282; font-size:13px; line-height:1.65; }
+.handoverCopy h2 { margin:0; font-size:clamp(32px,3.45vw,48px); font-weight:650; line-height:1.085; letter-spacing:-.045em; text-wrap:balance; }
+.handoverIntro { margin:18px 0 0; color:#697483; font-size:15px; line-height:1.7; }
+.choiceGrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:28px; }
+.choiceCard { padding:20px; border:1px solid #dfe3e9; border-radius:17px; background:#fff; }
+.choiceCard > span { color:#b63d0a; font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+.choiceCard h3 { margin:12px 0 7px; color:#20242b; font-size:18px; letter-spacing:-.025em; }
+.choiceCard p { margin:0; color:#687383; font-size:12.5px; line-height:1.6; }
+.supportBox { margin-top:12px; padding:17px 18px; border:1px solid #f1c6aa; border-radius:15px; background:linear-gradient(90deg,#fff4eb,#fff); }
+.supportBox strong { display:block; color:#20242b; font-size:14px; }
+.supportBox p { margin:6px 0 0; color:#667282; font-size:12.5px; line-height:1.58; }
+.finalTip { display:flex; align-items:center; justify-content:center; gap:12px; margin-top:20px; color:#9aa5b3; font-size:12px; }
+.finalTip img { width:42px; height:42px; border-radius:50%; object-fit:cover; }
+.finalTip strong { color:#f7f8fa; }
+@media (max-width: 900px) { .handoverLayout { grid-template-columns:1fr; } .discoveryNote { grid-template-columns:1fr; } }
+@media (max-width: 680px) { .choiceGrid { grid-template-columns:1fr; } .tipStrip { align-items:flex-start; } }

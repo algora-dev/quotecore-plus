@@ -104,8 +104,8 @@ export function buildReport(payload:TakeoffFinishPayload,specs:TakeoffComponentS
 export function quoteLines(report:ReportModel,includePrices:boolean):ConvertibleLine[]{
   if(report.issues.length) throw new Error('Check the highlighted measurements before creating a quote.');
   const measured=report.components.filter(c=>c.quantity>0);
-  if(!measured.length) return report.areas.filter(a=>a.surface>0).map(a=>({description:`${a.name} — measured ${report.trade==='roofing'?'surface':'area'} (unpriced)`,qty:a.surface,unit:report.areaUnit,rate:0}));
-  return measured.map(c=>({description:`${c.name}${includePrices&&c.example?' [EXAMPLE PRICE — REPLACE]':''}${c.packs!=null?` (${c.packs} packs; cost spread over measured quantity)`:''}`,
+  if(!measured.length) return report.areas.filter(a=>a.surface>0).map(a=>({description:`${a.name} - measured ${report.trade==='roofing'?'surface':'area'} (unpriced)`,qty:a.surface,unit:report.areaUnit,rate:0}));
+  return measured.map(c=>({description:`${c.name}${includePrices&&c.example?' [EXAMPLE PRICE: REPLACE]':''}${c.packs!=null?` (${c.packs} packs; cost spread over measured quantity)`:''}`,
     qty:c.quantity,unit:c.unit,rate:includePrices&&c.cost!=null?c.cost/c.quantity:0}));
 }
 export function quoteTransferUrl(report:ReportModel,includePrices:boolean,examplesAcknowledged=false):string{
@@ -123,7 +123,7 @@ function csvCell(value:string|number):string{
   return '"'+text.replace(/"/g,'""')+'"';
 }
 export function reportCsv(r:ReportModel):string{
-  const rows:(string|number)[][]=[['QuoteCore+ takeoff',r.trade],['Currency',r.currency],['Pricing',r.hasExamples?'Contains fictitious example prices — replace before quoting':'User rates / unpriced'],
+  const rows:(string|number)[][]=[['QuoteCore+ takeoff',r.trade],['Currency',r.currency],['Pricing',r.hasExamples?'Contains fictitious example prices. Replace before quoting':'User rates / unpriced'],
     ['Component','Measure type','Unit','Measured','Pitch adjusted','Including waste','Material cost','Labour cost','Estimated total','Price source']];
   r.components.forEach(c=>rows.push([c.name,c.type,c.unit,c.raw,c.pitched,c.quantity,c.material??'',c.labour??'',c.cost??'',c.example?'EXAMPLE':'User / unpriced']));
   if(!r.components.length)r.areas.forEach(a=>rows.push([a.name,'area',r.areaUnit,a.plan,a.surface,a.surface,'','','','Unpriced']));

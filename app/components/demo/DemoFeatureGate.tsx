@@ -45,7 +45,7 @@ export function DemoFeatureGate({ title, description, chapter, workspaceSlug, se
     } catch (cause) { if (mounted.current) setError(cause instanceof Error ? cause.message : 'Could not open the guide. Please try again.'); }
     finally { busy.current = false; if (mounted.current) setPending(false); }
   }
-  const label = !state ? 'Continue guided demo' : ready ? `Start ${chapter === 'smart-assistant' ? 'Smart Assistant' : 'Digital Takeoff'} demo` : `Continue: ${destinationTitle}`;
+  const label = !state ? 'Continue walkthrough' : ready ? `Start ${chapter === 'smart-assistant' ? 'Smart Assistant' : 'Digital Takeoff'} chapter` : `Continue: ${destinationTitle}`;
   if (compact) return <div data-qc-ui="v2"><QcButton variant="secondary" pending={pending} onClick={() => void start()}>{label}</QcButton>{error && <p role="alert" className="mt-2 max-w-xs text-xs text-[var(--qc-color-danger)]">{error}</p>}</div>;
   return <section data-qc-ui="v2" className="mx-auto max-w-xl p-5 sm:p-10"><div className="rounded-2xl border border-[var(--qc-border-divider)] bg-[var(--qc-bg-surface)] p-6 shadow-sm">
     <p className="text-xs font-bold uppercase tracking-wider text-[var(--qc-color-orange-ink)]">PART OF YOUR GUIDED DEMO</p><h1 className="mt-2 text-xl font-semibold text-[var(--qc-text-primary)]">{title}</h1><p className="mt-3 text-sm leading-6 text-[var(--qc-text-secondary)]">{description}</p>

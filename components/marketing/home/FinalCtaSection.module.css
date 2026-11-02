@@ -29,3 +29,6 @@
 }
 @media(max-width:380px) { .path, .path + .path { padding-left: 0; }.icon { display: none; }.section .actions > a, .section .actions > button { width: 100%; }.footer { font-size: 11px; } }
 @media(forced-colors:active) { .section::before { display: none; }.path + .path, .footer, .icon { border-color: CanvasText; } }
+/* Two deliberate conversion paths: Free Workspace or Shaun call. */
+.paths { grid-template-columns: repeat(2,minmax(0,1fr)); }
+@media (max-width: 760px) { .paths { grid-template-columns:1fr; gap:24px; } .path + .path { border-left:0; border-top:1px solid #e5dbd2; padding-left:0; padding-top:24px; } }

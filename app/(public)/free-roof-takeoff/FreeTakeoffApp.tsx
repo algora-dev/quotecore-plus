@@ -669,12 +669,12 @@ export function FreeTakeoffApp({
       if (!activeSpecs.length) throw new Error('Choose at least one component before adding a plan.');
       let file: File | null = raw;
       if (raw.type === 'application/pdf' || /\.pdf$/i.test(raw.name)) {
-        if (raw.size > 50 * 1024 * 1024) throw new Error('PDF too large — maximum 50 MB.');
+        if (raw.size > 50 * 1024 * 1024) throw new Error('PDF too large. Maximum 50 MB.');
         file = await pdfPicker.convertIfNeeded(raw);
         if (!file) return;
       }
       if (!ACCEPTED.includes(file.type)) throw new Error('Choose a PNG, JPG, WebP or PDF plan.');
-      if (file.size > MAX_IMAGE_BYTES) throw new Error('Image too large — maximum 10 MB.');
+      if (file.size > MAX_IMAGE_BYTES) throw new Error('Image too large. Maximum 10 MB.');
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader(); reader.onload = () => resolve(String(reader.result));
         reader.onerror = () => reject(new Error('Could not read that plan. Try another file.')); reader.readAsDataURL(file);

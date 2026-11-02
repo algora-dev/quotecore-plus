@@ -12,10 +12,10 @@ export type {TakeoffTrade} from './takeoff-report-model';
 export interface TakeoffOutputExtras {planDataUrl:string;elapsedMs:number;}
 const number=(n:number)=>n.toLocaleString(undefined,{maximumFractionDigits:2,minimumFractionDigits:0});
 const money=(n:number,currency:string)=>new Intl.NumberFormat('en-NZ',{style:'currency',currency,currencyDisplay:'code'}).format(n);
-function Benefits(){const externalCall=/^https:\/\//.test(workflowCallHref);return <div className={s.upsell} data-analytics-location="free_takeoff_result_app_bridge" data-analytics-surface="tool_result_bridge"><p className={s.eyebrow}>Keep the momentum</p><h3>Set it up once.<br/>Use it on every job.</h3><p>In the paid QuoteCore+ app, your work doesn’t end with this session.</p>
+function Benefits(){return <div className={s.upsell} data-analytics-location="free_takeoff_result_app_bridge" data-analytics-surface="tool_result_bridge"><p className={s.eyebrow}>Keep the momentum</p><h3>Set it up once.<br/>Use it on every job.</h3><p>In a QuoteCore+ Free Workspace, your work doesn’t end with this session.</p>
   <ul><li><Icon name="check"/>Save your component library and reuse your pricing.</li><li><Icon name="check"/>Keep takeoffs and documents together with your jobs.</li><li><Icon name="check"/>Create and send quotes, orders and invoices.</li></ul>
-  <ActionLink href="/demo" target="_blank" rel="noopener noreferrer" data-analytics-action="demo"><Icon name="play"/>Try the app demo</ActionLink>
-  <div className={s.upsellLinks}><a href={workflowCallHref} target={externalCall?'_blank':undefined} rel={externalCall?'noopener noreferrer':undefined} data-analytics-action="book_call">Free 20-minute workflow call</a><span>·</span><a href="/done-for-you-setup" target="_blank" rel="noopener noreferrer" data-analytics-action="done_for_you">Done For You Setup</a></div>
+  <ActionLink href={workflowCallHref} data-analytics-action="book_call"><Icon name="arrow"/>Book 25 minutes with Shaun</ActionLink>
+  <div className={s.upsellLinks}><a href="/signup" data-analytics-action="free_workspace">Create my Free Workspace</a></div>
  </div>;}
 function TransferDialog({report,onClose,onOpenQuote,trade}:{report:ReportModel;onClose:()=>void;onOpenQuote?:(url:string)=>void;trade:TakeoffTrade}){
  const [priced,setPriced]=useState(!report.hasExamples&&report.hasPrices),[ack,setAck]=useState(false);
@@ -54,11 +54,11 @@ export function TakeoffOutputView({payload,extras,unitSystem='metric',specs=[],t
    <div className={s.resultGrid}><div>
     <div className={s.stats}><div className={s.stat}><span>{trade==='roofing'?'Roof surface':'Measured area'}</span><strong>{number(report.surfaceArea)} <small>{report.areaUnit}</small></strong><small>{trade==='roofing'?'Pitch adjusted · before waste':'As drawn · before waste'}</small></div>
       <div className={s.stat}><span>Components used</span><strong>{report.components.length}</strong><small>{report.components.reduce((n,c)=>n+c.entries.length,0)} measured entries</small></div>
-      <div className={s.stat}><span>{report.hasExamples?'Example estimate':'Estimated cost'}</span><strong>{report.hasPrices?number(report.total):'—'}</strong><small>{currency} · before tax</small></div></div>
+      <div className={s.stat}><span>{report.hasExamples?'Example estimate':'Estimated cost'}</span><strong>{report.hasPrices?number(report.total):'–'}</strong><small>{currency} · before tax</small></div></div>
     {report.hasExamples&&<div className={s.notice}><Icon name="info"/><p><strong>Example prices are included.</strong> These figures teach the workflow; they are not market rates or a customer-ready quote.</p></div>}
     <div ref={paper} className={`${s.root} ${s.paper}`} data-takeoff-paper>
       <div className={s.paperHeader}><div><h2>{tradeTitle} takeoff report</h2><p>{new Date().toLocaleDateString('en-NZ',{day:'numeric',month:'long',year:'numeric'})} · {unitSystem==='squares'?'Roofing squares / feet':unitSystem==='imperial'?'Imperial':'Metric'} · {currency}</p></div><div className={s.paperMark}>QuoteCore<span>+</span></div></div>
-      {report.hasExamples&&<div className={s.notice}><strong>EXAMPLE PRICING — replace with your own rates before quoting.</strong></div>}
+      {report.hasExamples&&<div className={s.notice}><strong>EXAMPLE PRICING: replace with your own rates before quoting.</strong></div>}
       {!hasWork&&<div className={s.empty}><Icon name="ruler"/><h3>No measurements yet</h3><p>Return to your plan and add an area, length or counted item.</p><Button onClick={onBackToCanvas} data-print-hide>Back to measurements</Button></div>}
       {report.areas.map(a=><div key={a.id} className={s.areaSummary} data-print-keep><div><strong>{a.name}</strong><small>{areaNoun} outline{trade==='roofing'?` · pitch ${number(a.pitch)}°`:''}</small></div><div><strong>{number(a.surface)} {report.areaUnit}</strong>{trade==='roofing'&&<small>{number(a.plan)} {report.areaUnit} plan</small>}</div></div>)}
       {report.areas.length>0&&report.components.length===0&&<p className={s.help}>Outlines are measured but no priced components are assigned. You can transfer these areas as unpriced quote items.</p>}

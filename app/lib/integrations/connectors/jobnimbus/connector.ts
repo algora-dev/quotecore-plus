@@ -329,7 +329,7 @@ export class JobNimbusConnector implements Connector {
     try {
       const activityBody = {
         type: 'note',
-        title: 'Quote exported from Quote Core+',
+        title: 'Quote exported from QuoteCore+',
         notes: `Quote ${data.source.quoteNumber} exported to JobNimbus on ${new Date().toISOString()}`,
         related_to: { job_id: jobId },
       };
@@ -437,7 +437,7 @@ function buildJobDescription(
   }
 
   lines.push('');
-  lines.push(`Exported from Quote Core+ on ${new Date().toISOString()}`);
+  lines.push(`Exported from QuoteCore+ on ${new Date().toISOString()}`);
 
   return lines.join('\n');
 }

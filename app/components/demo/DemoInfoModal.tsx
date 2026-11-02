@@ -3,6 +3,8 @@ import { useRef, useState, type ReactNode } from 'react';
 import { QcButton, QcLinkButton } from '@/app/components/ui/v2/QcButton';
 import { QcDialog } from '@/app/components/ui/v2/QcDialog';
 import './demo-info.css';
+import { workflowCallHref } from '@/lib/booking';
+import { shaunCallPromiseShort } from '@/lib/marketing-conversion';
 
 type Slide = { eyebrow: string; title: string; body: ReactNode };
 
@@ -12,9 +14,8 @@ type Slide = { eyebrow: string; title: string; body: ReactNode };
  * modal explains what the user will do, why each step matters, what is limited
  * in the demo, and what to do next if they want to go further.
  */
-const CALLOUT_CTA = 'https://calendly.com/quote-core-info/meeting';
-const DFY_CTA = 'https://quote-core.com/done-for-you-setup';
-const ACCOUNT_CTA = 'https://quote-core.com/pricing';
+const CALLOUT_CTA = workflowCallHref.startsWith('http') ? workflowCallHref : `https://quote-core.com${workflowCallHref}`;
+const ACCOUNT_CTA = 'https://app.quote-core.com/signup';
 
 function CheckIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>;
@@ -57,7 +58,7 @@ export function DemoInfoModal({ open, welcomed, pending, onRequestClose, onBegin
 
   const slides: Slide[] = [
     {
-      eyebrow: 'WELCOME TO THE DEMO',
+      eyebrow: 'GUIDED WALKTHROUGH',
       title: 'See how the core workflow fits together',
       body: <>
         <p>You&apos;re inside <strong>QCP Roofing &amp; Construction</strong>, a fictional business with pricing and existing work already loaded. You can get straight to the useful parts instead of starting from an empty account.</p>
@@ -70,8 +71,8 @@ export function DemoInfoModal({ open, welcomed, pending, onRequestClose, onBegin
         </div>
         {bullets([
           'Follow the guide for the fastest path, or explore around as you go',
-          'Most demo data can be edited safely and you can reset the demo at any time',
-          'Your temporary demo workspace is available for up to 24 hours',
+          'The fictional workspace can be edited safely and reset at any time',
+          'Your temporary guided workspace is available for up to 24 hours',
         ])}
       </>,
     },
@@ -83,7 +84,7 @@ export function DemoInfoModal({ open, welcomed, pending, onRequestClose, onBegin
         <div className="qc-demo-info-journey">
           {journeyStep(1, 'Add your pricing', 'Create one Smart Component from pricing you already understand. You can also edit an existing component if you want to look deeper.')}
           {journeyStep(2, 'Use that pricing on a roof', 'Open a prepared Digital Takeoff and add the measurements needed for the component you just created.')}
-          {journeyStep(3, 'Prepare and send the quote', 'Switch the quote to a branded header template, edit line items if you want, save it, then send the demo quote to yourself.')}
+          {journeyStep(3, 'Prepare and send the quote', 'Switch the quote to a branded header template, edit line items if you want, save it, then send the fictional quote to yourself.')}
           {journeyStep(4, 'Try Smart Assistant', 'Ask your personal assistant to create a similar quote from roof areas, pitch and your component library, then make changes and check what needs your attention using voice or text.')}
         </div>
       </>,
@@ -94,8 +95,8 @@ export function DemoInfoModal({ open, welcomed, pending, onRequestClose, onBegin
       body: <>
         <div className="qc-demo-info-feature-grid">
           {featureCard('Smart Components', <>Enter your pricing once and make it reusable. Bring the information you already use, and the component handles the calculations. Edit it later whenever your pricing changes, then reuse the same building blocks across jobs, takeoffs and quotes.</>)}
-          {featureCard('Digital Takeoff', <>Measure directly on a plan instead of printing plans or rebuilding measurements elsewhere. The demo uses the manual workflow. In the full app, Scan Assist can help identify roof geometry, reduce repetitive measuring and make consistent results easier for less experienced team members.</>)}
-          {featureCard('Quotes and tracking', <>Control what the customer sees by changing the branded header and line items before you send. The demo send flow is simplified, but opening your emailed quote will show how QuoteCore+ can track customer activity.</>)}
+          {featureCard('Digital Takeoff', <>Measure directly on a plan instead of printing plans or rebuilding measurements elsewhere. The walkthrough uses the manual workflow. In the full app, Scan Assist can help identify roof geometry, reduce repetitive measuring and make consistent results easier for less experienced team members.</>)}
+          {featureCard('Quotes and tracking', <>Control what the customer sees by changing the branded header and line items before you send. The guided send flow is simplified, but opening your emailed quote will show how QuoteCore+ can track customer activity.</>)}
           {featureCard('Smart Assistant', <>Use voice or text to work with your account without clicking through every screen. It is especially useful when you work from your phone, spend time on site, or simply want a faster route to the result.</>)}
         </div>
         <p className="qc-demo-info-soft">In the full app, quoting can also include custom email subjects and messages, attachments, automatic follow-ups, and tracking when a quote is opened, accepted, declined or needs more detail.</p>
@@ -103,18 +104,18 @@ export function DemoInfoModal({ open, welcomed, pending, onRequestClose, onBegin
     },
     {
       eyebrow: 'WHAT IS AVAILABLE HERE',
-      title: 'Explore freely, with a few demo limits',
+      title: 'Explore freely, with a few walkthrough limits',
       body: <>
-        <p>A lot of the account is open for you to inspect, edit and experiment with. Some high-cost or guided features are intentionally limited so the demo stays safe and useful for everyone.</p>
+        <p>A lot of the account is open for you to inspect, edit and experiment with. Some high-cost or guided features are intentionally limited so the walkthrough stays safe and useful for everyone.</p>
         <div className="qc-demo-info-cols">
           <div className="qc-demo-info-col">
-            <h3>In this demo</h3>
+            <h3>In this walkthrough</h3>
             {bullets([
               'Digital Takeoff is available through the guided measuring task',
-              'Scan Assist is not available at full capability in the demo',
-              'Smart Assistant includes 9 demo tasks',
-              'You can send up to 2 demo emails per 24 hours, to yourself, with demo branding',
-              'You can reset the demo and start again if you want a clean workspace',
+              'Scan Assist is not available at full capability in the walkthrough',
+              'Smart Assistant includes 9 guided tasks',
+              'You can send up to 2 guided emails per 24 hours, to yourself, with clear fictional-data branding',
+              'You can reset the walkthrough and start again if you want a clean fictional workspace',
             ])}
           </div>
           <div className="qc-demo-info-col qc-demo-info-col-real">
@@ -134,7 +135,7 @@ export function DemoInfoModal({ open, welcomed, pending, onRequestClose, onBegin
       eyebrow: 'READY WHEN YOU ARE',
       title: 'Start with the guide, then explore at your own pace',
       body: <>
-        <p>The guide is the quickest way to understand how pricing, measuring, quoting and Smart Assistant connect. You can still look around between tasks, and you can reopen this overview any time from <strong>Demo info</strong> in the toolbar or from the guide menu.</p>
+        <p>The guide is the quickest way to understand how pricing, measuring, quoting and Smart Assistant connect. You can still look around between tasks, and you can reopen this overview any time from <strong>Walkthrough info</strong> in the toolbar or from the guide menu.</p>
         <div className="qc-demo-info-entry">
           <QcButton variant="primary" size="lg" pending={pending} onClick={onBeginGuide}>
             {welcomed ? 'Open the guide' : 'Begin the guide'}
@@ -143,7 +144,7 @@ export function DemoInfoModal({ open, welcomed, pending, onRequestClose, onBegin
             {welcomed ? 'Close' : 'Explore on my own'}
           </QcButton>
         </div>
-        <p className="qc-demo-info-entry-note">You cannot break the shared demo. If you get lost or want to start clean, use <strong>Start fresh</strong> to reset it.</p>
+        <p className="qc-demo-info-entry-note">You cannot break the guided workspace. If you get lost or want to start clean, use <strong>Start fresh</strong> to reset it.</p>
       </>,
     },
   ];
@@ -156,14 +157,14 @@ export function DemoInfoModal({ open, welcomed, pending, onRequestClose, onBegin
     <div className="qc-demo-info-head">
       <div className="qc-demo-info-head-copy">
         <p className="qc-demo-info-eyebrow">{slides[index].eyebrow}</p>
-        <p className="qc-demo-info-progress-label">Demo overview <span>{index + 1} of {slides.length}</span></p>
+        <p className="qc-demo-info-progress-label">Walkthrough overview <span>{index + 1} of {slides.length}</span></p>
       </div>
-      <QcButton ref={closeRef} variant="ghost" size="sm" className="qc-demo-info-close" aria-label="Close demo info" disabled={pending} onClick={onRequestClose}>
+      <QcButton ref={closeRef} variant="ghost" size="sm" className="qc-demo-info-close" aria-label="Close walkthrough info" disabled={pending} onClick={onRequestClose}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6l12 12" /></svg>
       </QcButton>
     </div>
     <div className="qc-demo-info-progress" aria-hidden="true"><span style={{ width: `${((index + 1) / slides.length) * 100}%` }} /></div>
-    <div className="qc-demo-info-carousel" role="group" aria-roledescription="carousel" aria-label="About this demo">
+    <div className="qc-demo-info-carousel" role="group" aria-roledescription="carousel" aria-label="About this walkthrough">
       <div className="qc-demo-info-track" style={{ transform: `translateX(-${index * 100}%)` }}>
         {slides.map((slide, i) => <section key={slide.eyebrow} className="qc-demo-info-slide" aria-hidden={i !== index} aria-label={`${i + 1} of ${slides.length}`}>
           <div className="qc-demo-info-slide-body">
@@ -175,16 +176,15 @@ export function DemoInfoModal({ open, welcomed, pending, onRequestClose, onBegin
     </div>
     <footer className="qc-demo-info-footer">
       <div className="qc-demo-info-conversion">
-        <span>Want to go further?</span>
+        <span>{shaunCallPromiseShort}</span>
         <div className="qc-demo-info-ctas">
-          <QcLinkButton variant="secondary" size="sm" href={CALLOUT_CTA} target="_blank" rel="noopener noreferrer">Book a free 20-min call</QcLinkButton>
-          <QcLinkButton variant="ghost" size="sm" href={DFY_CTA} target="_blank" rel="noopener noreferrer">Done-For-You setup</QcLinkButton>
-          <QcLinkButton variant="ghost" size="sm" href={ACCOUNT_CTA} target="_blank" rel="noopener noreferrer">Create your account</QcLinkButton>
+          <QcLinkButton variant="primary" size="sm" href={CALLOUT_CTA}>Book 25 minutes with Shaun</QcLinkButton>
+          <QcLinkButton variant="secondary" size="sm" href={ACCOUNT_CTA}>Create my Free Workspace</QcLinkButton>
         </div>
       </div>
       <div className="qc-demo-info-nav">
         <QcButton variant="ghost" size="sm" disabled={index === 0 || pending} onClick={() => setIndex(v => Math.max(0, v - 1))}>Back</QcButton>
-        <div className="qc-demo-info-dots" role="tablist" aria-label="Demo info slides">
+        <div className="qc-demo-info-dots" role="tablist" aria-label="Walkthrough info slides">
           {slides.map((slide, i) => <button key={slide.eyebrow} type="button" role="tab" aria-selected={i === index}
             aria-label={`Slide ${i + 1}: ${slide.title}`} className={i === index ? 'qc-demo-info-dot is-active' : 'qc-demo-info-dot'}
             disabled={pending} onClick={() => setIndex(i)} />)}

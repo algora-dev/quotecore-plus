@@ -4,6 +4,7 @@ import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import LazyYouTube from "@/components/LazyYouTube";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import TwoPathCta from "@/components/conversion/TwoPathCta";
 import { buildPageMetadata } from "@/app/lib/seo";
 import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
@@ -54,6 +55,7 @@ export default function ResearchIndexPage() {
           </div>
           <p className="mt-4 text-sm text-zinc-600">More videos on the <a href="https://www.youtube.com/@quotecoreplus" target="_blank" rel="noopener noreferrer" className="font-medium text-[#FF6B35] underline underline-offset-4">QuoteCore+ YouTube channel</a>.</p>
         </div>
+        <TwoPathCta location="research_index" className="mt-12" />
       </section>
       <SiteFooter />
     </>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import TwoPathCta from "@/components/conversion/TwoPathCta";
 import {
   buildPageMetadata,
   breadcrumbSchema,
@@ -107,7 +108,7 @@ export default function XeroIntegrationPage() {
                 export and import.
               </p>
               <p>
-                <Link href="/free-roof-takeoff">Try measuring a roof plan free</Link> ·{" "}
+                <Link href="/free-trial">Start in a Free Workspace</Link> ·{" "}
                 <a href="#connect-quotecore-to-xero">See the connection instructions</a>
               </p>
 
@@ -546,34 +547,9 @@ export default function XeroIntegrationPage() {
                 after edits, or payment-status updates back into QuoteCore+.
               </p>
 
-              <h3>Can I try the measurement and pricing tools without signing up?</h3>
+              <h3>Can I try QuoteCore+ before choosing a paid plan?</h3>
               <p>
-                Yes. Try the <Link href="/free-roof-takeoff">free roof takeoff tool</Link>{" "}
-                for plan measurement or the{" "}
-                <Link href="/measurement-to-quote-tool">
-                  Measurement-to-Quote Tool
-                </Link>{" "}
-                for pricing existing quantities. To connect Xero and export from a saved
-                quote, use your QuoteCore+ account.
-              </p>
-
-              <h2>Try the part of the workflow you want to improve</h2>
-              <p>
-                Still printing plans?{" "}
-                <Link href="/free-roof-takeoff">Measure a roof plan free</Link>.
-              </p>
-              <p>
-                Already have the measurements?{" "}
-                <Link href="/measurement-to-quote-tool">
-                  Try turning them into a priced estimate
-                </Link>
-                .
-              </p>
-              <p>
-                Ready to keep your jobs and pricing together?{" "}
-                <Link href="/pricing">Explore QuoteCore+ account options</Link>, or{" "}
-                <a href="https://app.quote-core.com/">open the app</a> and connect Xero
-                from your account settings.
+                Yes. Create a <Link href="/free-trial">Free Workspace</Link> and use QuoteCore+ on your own jobs with no card and no expiry. You can connect Xero from the workspace when the integration is available to your account, and upgrade only when you need more features, capacity or usage.
               </p>
               <p>
                 <strong>
@@ -582,24 +558,12 @@ export default function XeroIntegrationPage() {
               </p>
             </div>
 
-            <div className="mt-16 flex flex-col gap-3 rounded-[1.75rem] border border-[#FF6B35]/20 bg-[#FF6B35]/5 p-7 sm:flex-row sm:items-center sm:justify-between">
-              <p className="font-semibold text-zinc-950">
-                Ready to quote faster?
-              </p>
-              <div className="flex gap-3">
-                <Link
-                  href="/demo"
-                  className="inline-flex items-center justify-center rounded-full border border-zinc-300 bg-white px-5 py-2.5 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40"
-                >
-                  Get started
-                </Link>
-                <Link
-                  href="/free-roof-takeoff"
-                  className="inline-flex items-center justify-center rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
-                >
-                  Try the free takeoff tool
-                </Link>
-              </div>
+            <div className="mt-16 rounded-[1.75rem] border border-[#FF6B35]/20 bg-[#FF6B35]/5 p-7">
+              <TwoPathCta
+                location="xero_bottom"
+                title="Ready to quote faster and keep Xero for accounting?"
+                description="Create a Free Workspace and try the connected QuoteCore+ workflow, or talk through the way you work with Shaun first."
+              />
             </div>
           </article>
         </main>

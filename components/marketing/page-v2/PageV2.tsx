@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { MarketingButton } from '@/components/marketing/MarketingButton';
+import { FreeWorkspaceButton } from '@/components/marketing/FreeWorkspaceButton';
 import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -8,7 +9,7 @@ import s from './PageV2.module.css';
 export type FaqItem = { question: string; answer: string };
 export type RelatedItem = { href: string; title: string; body: string };
 
-type Action = { href: string; label: string; variant?: 'primary' | 'glass' | 'ghost' };
+type Action = { href: string; label: string; variant?: 'primary' | 'glass' | 'ghost'; freeWorkspace?: boolean };
 
 export function PageRoot({ children }: { children: ReactNode }) {
   return <div className={s.root}>{children}</div>;
@@ -51,8 +52,8 @@ export function Hero({ eyebrow, title, lead, body, primary, secondary, visual, p
           <p className={s.heroLead}>{lead}</p>
           {body ? <p className={s.heroBody}>{body}</p> : null}
           <div className={s.actions}>
-            <MarketingButton href={primary.href} variant={primary.variant ?? 'primary'} size="large" className={s.v2Button}>{primary.label}</MarketingButton>
-            {secondary ? <MarketingButton href={secondary.href} variant={secondary.variant ?? 'glass'} size="large" className={s.v2Button}>{secondary.label}</MarketingButton> : null}
+            {primary.freeWorkspace ? <FreeWorkspaceButton variant={primary.variant ?? 'primary'} size="large" className={s.v2Button}>{primary.label}</FreeWorkspaceButton> : <MarketingButton href={primary.href} variant={primary.variant ?? 'primary'} size="large" className={s.v2Button}>{primary.label}</MarketingButton>}
+            {secondary ? (secondary.freeWorkspace ? <FreeWorkspaceButton variant={secondary.variant ?? 'glass'} size="large" className={s.v2Button}>{secondary.label}</FreeWorkspaceButton> : <MarketingButton href={secondary.href} variant={secondary.variant ?? 'glass'} size="large" className={s.v2Button}>{secondary.label}</MarketingButton>) : null}
           </div>
           {proof.length ? <div className={s.heroProof}>{proof.map((item) => <span key={item}><CheckIcon />{item}</span>)}</div> : null}
         </div>
@@ -159,7 +160,7 @@ export function TextLink({ href, children }: { href: string; children: ReactNode
 }
 
 export function ConversionPaths({ items }: {
-  items: Array<{ title: string; body: string; href: string; label: string; kicker?: string }>;
+  items: Array<{ title: string; body: string; href: string; label: string; kicker?: string; freeWorkspace?: boolean }>;
 }) {
   return (
     <div className={s.conversionGrid}>
@@ -168,7 +169,7 @@ export function ConversionPaths({ items }: {
           {item.kicker ? <span className={s.cardKicker}>{item.kicker}</span> : null}
           <h3>{item.title}</h3>
           <p>{item.body}</p>
-          <TextLink href={item.href}>{item.label}</TextLink>
+          {item.freeWorkspace ? <FreeWorkspaceButton size="large" className={s.conversionAction}>{item.label}</FreeWorkspaceButton> : <MarketingButton href={item.href} variant="glass" size="large" className={s.conversionAction}>{item.label}</MarketingButton>}
         </article>
       ))}
     </div>
@@ -222,8 +223,8 @@ export function FinalCta({ eyebrow = 'QuoteCore+', title, body, primary, seconda
       <h2>{title}</h2>
       <p>{body}</p>
       <div className={s.actions}>
-        <MarketingButton href={primary.href} variant={primary.variant ?? 'primary'} size="large" className={s.v2Button}>{primary.label}</MarketingButton>
-        {secondary ? <MarketingButton href={secondary.href} variant={secondary.variant ?? 'glass'} size="large" className={s.v2ButtonDark}>{secondary.label}</MarketingButton> : null}
+        {primary.freeWorkspace ? <FreeWorkspaceButton variant={primary.variant ?? 'primary'} size="large" className={s.v2Button}>{primary.label}</FreeWorkspaceButton> : <MarketingButton href={primary.href} variant={primary.variant ?? 'primary'} size="large" className={s.v2Button}>{primary.label}</MarketingButton>}
+        {secondary ? (secondary.freeWorkspace ? <FreeWorkspaceButton variant={secondary.variant ?? 'glass'} size="large" className={s.v2ButtonDark}>{secondary.label}</FreeWorkspaceButton> : <MarketingButton href={secondary.href} variant={secondary.variant ?? 'glass'} size="large" className={s.v2ButtonDark}>{secondary.label}</MarketingButton>) : null}
       </div>
     </div>
   );

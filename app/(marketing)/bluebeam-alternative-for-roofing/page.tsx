@@ -19,12 +19,12 @@ const pageData: CompetitorPageData = {
     "sub": "Measure the roof, apply your saved pricing rules and produce the customer quote from the same job. Work on phone, tablet or desktop, with Smart Assistant for supported account questions and changes.",
     "qualifier": "Keep Bluebeam when you need its PDF editing, Studio collaboration, CAD workflows or established Excel links. QuoteCore+ is not a general PDF-document replacement.",
     "primaryCta": {
-      "href": "/demo",
-      "label": "Explore interactive demo"
+      "href": "/free-trial",
+      "label": "Free Workspace"
     },
     "ghostCta": {
       "href": "/free-roofing-takeoff-builder",
-      "label": "Use free roof takeoff"
+      "label": "Free Workspace"
     }
   },
   "quickAnswer": {
@@ -49,7 +49,7 @@ const pageData: CompetitorPageData = {
       },
       {
         "title": "You work between site and office",
-        "body": "You need the paid app on phone, tablet and desktop, not just a place to view documents."
+        "body": "You need a connected QuoteCore+ workspace on phone, tablet and desktop, not just a place to view documents."
       },
       {
         "title": "You want help without giving up control",
@@ -72,7 +72,7 @@ const pageData: CompetitorPageData = {
       },
       {
         "label": "Work from your phone",
-        "detail": "The paid app supports takeoff, saved jobs and quoting on phone, tablet and desktop.",
+        "detail": "QuoteCore+ supports takeoff, saved jobs and quoting on phone, tablet and desktop.",
         "positive": true
       },
       {
@@ -109,7 +109,7 @@ const pageData: CompetitorPageData = {
   },
   "workflow": {
     "heading": "From the measurement to the customer quote",
-    "intro": "Choose the entry point that fits the job. The paid app keeps the measurement, your pricing rules and customer documents connected.",
+    "intro": "Choose the entry point that fits the job. A QuoteCore+ workspace keeps the measurement, your pricing rules and customer documents connected.",
     "steps": [
       {
         "number": "01",
@@ -336,7 +336,7 @@ const pageData: CompetitorPageData = {
         },
         "qc": {
           "status": "yes",
-          "note": "Paid app: measure, price and quote on phone, tablet or desktop."
+          "note": "QuoteCore+: measure, price and quote on phone, tablet or desktop."
         }
       },
       {
@@ -425,10 +425,10 @@ const pageData: CompetitorPageData = {
     ]
   },
   "freeTool": {
-    "heading": "Try a useful tool before choosing the paid app",
-    "body": "Use the free roof takeoff tool with your own suitable plan or image. It is a standalone tool with its own device support and limits, not access to the complete paid app. The paid app adds saved setup, reusable pricing and connected jobs.",
+    "heading": "Try QuoteCore+ before choosing a paid plan",
+    "body": "Create a Free Workspace and use QuoteCore+ on your own jobs before deciding whether you need a paid plan. Your workspace keeps saved setup, reusable pricing and connected jobs together.",
     "primaryHref": "/free-roofing-takeoff-builder",
-    "primaryLabel": "Use free roof takeoff",
+    "primaryLabel": "Create a Free Workspace",
     "secondaryLinks": [
       {
         "label": "Free measurement-to-quote tool",
@@ -461,7 +461,7 @@ const pageData: CompetitorPageData = {
     },
     {
       "question": "Can I measure, price and quote from my phone in QuoteCore+?",
-      "answer": "Yes, in the paid app. Upload a plan, measure or use the reviewed AI scan workflow, apply saved pricing and prepare the quote on phone, tablet or desktop. Standalone free tools and the Roofing Takeoff Demo have separate device support and limits."
+      "answer": "Yes. In your QuoteCore+ workspace you can upload a plan, measure or use the reviewed AI scan workflow, apply saved pricing and prepare the quote on phone, tablet or desktop. Start in the Free Workspace and upgrade only if you need more features, capacity or usage."
     },
     {
       "question": "What can QuoteCore+ Smart Assistant do?",
@@ -469,7 +469,7 @@ const pageData: CompetitorPageData = {
     },
     {
       "question": "Is there a free QuoteCore+ app plan?",
-      "answer": "No. QuoteCore+ does not offer a full-app trial. The interactive app demo and separate free tools let you evaluate the workflow before subscribing. Current paid configurations range from US$29 to US$259/month and are built through the pricing tool."
+      "answer": "QuoteCore+ offers a real Free Workspace instead of a timed trial. Use it on your own jobs for as long as the free allowances suit you, with an optional Guided Walkthrough when you want help learning the workflow. Paid configurations currently range from US$29 to US$259/month and are created inside Billing if you decide to upgrade."
     },
     {
       "question": "Is switching from Bluebeam automatic?",
@@ -529,8 +529,8 @@ const pageData: CompetitorPageData = {
   ],
   "finalCta": {
     "heading": "Make the next measured job easier to quote",
-    "body": "Work with your measurements and your pricing, from site or office. Explore the prepared app demo first, then build a paid configuration if the workflow fits.",
-    "ctaLabel": "Explore interactive demo"
+    "body": "Work with your measurements and your pricing, from site or office. Start in a real Free Workspace, or talk through your current workflow with Shaun if you want help deciding what would actually make it faster.",
+    "ctaLabel": "Create a Free Workspace"
   }
 };
 

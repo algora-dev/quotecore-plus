@@ -56,7 +56,7 @@ export default function ContactPage() {
                 <h1 id="contact-title" className={styles.title}>How can we <span>help?</span></h1>
                 <p className={styles.lead}>Get an answer, book time with our team, or send us a message. Start with the option that gets you where you need to go fastest.</p>
                 <div className={styles.heroActions}>
-                  <MarketingButton href={bookingHref} variant="primary" size="large" icon={<CalendarIcon />} onClick={() => trackEvent("book_call_click", { source: "contact_hero" })}>Book a demo with our team</MarketingButton>
+                  <MarketingButton href={bookingHref} variant="primary" size="large" icon={<CalendarIcon />} onClick={() => trackEvent("book_call_click", { source: "contact_hero" })}>Book a free 25-minute call with Shaun</MarketingButton>
                   <MarketingButton href="#contact-form" variant="glass" size="large" icon={<MessageIcon />}>Send a message</MarketingButton>
                 </div>
               </div>
@@ -73,21 +73,20 @@ export default function ContactPage() {
               <article className={styles.routeCard}>
                 <span className={styles.routeIcon}><CalendarIcon /></span>
                 <span className={styles.routeNumber}>01</span>
-                <h2>Book a demo</h2>
-                <p>See QuoteCore+ in action and ask questions about how it fits your business.</p>
+                <h2>Talk it through with Shaun</h2>
+                <p>Tell Shaun how you currently work, see where QuoteCore+ could help, and take away his #1 tip for winning more quoted jobs.</p>
                 <span className={styles.routeLinks}>
-                  <a className={styles.routeLink} href={bookingHref} target={bookingHref.startsWith("#") ? undefined : "_blank"} rel={bookingHref.startsWith("#") ? undefined : "noopener noreferrer"} onClick={() => trackEvent("book_call_click", { source: "contact_route_demo" })}>Choose a time <ArrowIcon /></a>
-                  <a className={styles.routeLink} href="/demo" target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("contact_demo_click", { source: "contact_route_demo" })}>Try the demo yourself <ArrowIcon /></a>
+                  <a className={styles.routeLink} href={bookingHref} onClick={() => trackEvent("book_call_click", { source: "contact_route_demo" })}>Choose a time <ArrowIcon /></a>
                 </span>
               </article>
-              <a className={styles.routeCard} href="/done-for-you-setup" target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("contact_setup_click", { source: "contact_route_setup" })}>
+              <a className={styles.routeCard} href="/done-for-you-setup" onClick={() => trackEvent("contact_setup_click", { source: "contact_route_setup" })}>
                 <span className={styles.routeIcon}><SparkIcon /></span>
                 <span className={styles.routeNumber}>02</span>
                 <h2>Done-for-you setup</h2>
                 <p>Want help setting up pricing, components or your workflow? Book time with the team.</p>
                 <span className={styles.routeLink}>Get setup help <ArrowIcon /></span>
               </a>
-              <a className={styles.routeCard} href="/#questions" target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("contact_faq_click", { source: "contact_route_faq" })}>
+              <a className={styles.routeCard} href="/#questions" onClick={() => trackEvent("contact_faq_click", { source: "contact_route_faq" })}>
                 <span className={styles.routeIcon}><HelpIcon /></span>
                 <span className={styles.routeNumber}>03</span>
                 <h2>Find a quick answer</h2>
@@ -111,13 +110,13 @@ export default function ContactPage() {
               <p className={styles.lightEyebrow}>Before you contact us</p>
               <h2 id="answers-title">You might already be one click from the answer.</h2>
               <p>Some questions are quicker to solve without waiting for a reply. Here are the most common places to start.</p>
-              <MarketingButton href="/#questions" variant="glass" icon={<HelpIcon />} target="_blank" onClick={() => trackEvent("contact_faq_click", { source: "contact_answers" })}>View all FAQs</MarketingButton>
+              <MarketingButton href="/#questions" variant="glass" icon={<HelpIcon />} onClick={() => trackEvent("contact_faq_click", { source: "contact_answers" })}>View all FAQs</MarketingButton>
             </div>
 
             <div className={styles.questionList}>
               <details className={styles.question}>
-                <summary>Can I see QuoteCore+ before I speak to anyone?<span><ArrowIcon /></span></summary>
-                <p>Yes. You can explore the demo first, then book a call if you want help applying it to your own workflow.</p>
+                <summary>Can I try QuoteCore+ without speaking to anyone?<span><ArrowIcon /></span></summary>
+                <p>Yes. Create a Free Workspace with no card or expiry. You can use it on your own jobs and choose the optional Guided Walkthrough if you want a structured introduction.</p>
               </details>
               <details className={styles.question}>
                 <summary>Can you help set up my pricing and components?<span><ArrowIcon /></span></summary>

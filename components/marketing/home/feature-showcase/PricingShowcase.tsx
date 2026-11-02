@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { MarketingButton } from '../../MarketingButton';
+import { FreeWorkspaceButton } from '../../FreeWorkspaceButton';
 import { ShowcaseIcon } from './ShowcaseIcon';
 import type { ShowcaseEvent, ShowcaseFeature } from './showcase-types';
 import s from './FeatureShowcase.module.css';
@@ -147,8 +147,8 @@ export function PricingShowcase({ active, feature, demoHref, onEvent, onChapterC
           <ul className={s.benefits}>{story.benefit.split('|').map(point => <li key={point}><ShowcaseIcon name="check" size={15} /><span>{point}</span></li>)}</ul>
         </div>
         <div className={s.actions}>
-          <MarketingButton href={demoHref} variant="primary" size="large" className={s.demo} onClick={() => onEvent({ action: 'demo_click', feature: 'components', scene: chapters[chapter].id })}>Try the Demo<ShowcaseIcon name="arrow" size={18} /></MarketingButton>
-          <p>Explore a sample job. No signup.</p>
+          <FreeWorkspaceButton variant="primary" size="large" className={s.demo} icon={<ShowcaseIcon name="arrow" size={18} />}>Create Free Workspace</FreeWorkspaceButton>
+          <p>Try Smart Components in your own account. Guided walkthrough included.</p>
         </div>
       </div>
       <div className={s.pricingVisual} aria-busy={status === 'loading'}>

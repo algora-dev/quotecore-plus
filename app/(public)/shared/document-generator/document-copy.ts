@@ -8,7 +8,7 @@ export const DOCUMENT_COPY = {
     detailsTitle:'Who’s the quote for?', itemsTitle:'What’s included in the job?', itemsIntro:'Add each part of the job. We’ll calculate the totals as you go.',
     recipientPlaceholder:'Who are you quoting for?', total:'Quote total', notesTitle:'Notes & terms', notesHint:'Payment terms, scope and exclusions', footerPlaceholder:'Thank you for the opportunity to quote for your project.',
     assistQuestion:'What needs quoting?', assistPlaceholder:'For Alex at 24 Oak Street: 120 m² of roofing at 48 per m², 24 m of flashing at 22.50 per m, plus 280 for waste removal. Valid for 30 days.',
-    itemPlaceholder:'e.g. Roof covering — supply & install', action:'Generate quote', preview:'Preview quote',
+    itemPlaceholder:'e.g. Roof covering - supply & install', action:'Generate quote', preview:'Preview quote',
   },
   invoice: {
     label:'Invoice', noun:'invoice', recipient:'customer', recipientTitle:'Customer', intro:'The work. The details. An invoice that’s clear from the start.',
@@ -16,7 +16,7 @@ export const DOCUMENT_COPY = {
     detailsTitle:'Who are you invoicing?', itemsTitle:'What are you billing for?', itemsIntro:'Add the work, materials or services. We’ll calculate the totals as you go.',
     recipientPlaceholder:'Who should receive this invoice?', total:'Invoice total', notesTitle:'Notes & terms', notesHint:'Payment terms and additional information', footerPlaceholder:'Thank you for your business.',
     assistQuestion:'What needs invoicing?', assistPlaceholder:'Invoice Alex Morgan for 120 m² of roof covering at 48 per m², 24 m of flashing at 22.50 per m and waste removal at 280. Payment due in 14 days.',
-    itemPlaceholder:'e.g. Roofing work completed — supply & install', action:'Generate invoice', preview:'Preview invoice',
+    itemPlaceholder:'e.g. Roofing work completed - supply & install', action:'Generate invoice', preview:'Preview invoice',
   },
   order: {
     label:'Purchase order', noun:'purchase order', recipient:'supplier', recipientTitle:'Supplier', intro:'The right materials. Clear quantities. An order your supplier can act on.',

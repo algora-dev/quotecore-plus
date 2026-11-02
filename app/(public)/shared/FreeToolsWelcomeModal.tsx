@@ -8,8 +8,8 @@ import Link from 'next/link';
  * free tool (detected via `ref=free-*` URL param).
  *
  * Reassures the user that:
- * - Their output is saved in their account once they sign up and pick a plan
- * - Paid configurations from US$29/month; interactive demo available before subscribing
+ * - Their output can continue into a real Free Workspace
+ * - No card, plan selection or expiry is required to start
  * - Their document is saved and waiting for them
  * - It only takes 1 minute
  */
@@ -52,8 +52,8 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
   if (!visible) return null;
 
   const features = [
-    'Sign up in 1 minute, then pick your plan',
-    'Current configurations from US$29/month - interactive demo available',
+    'Create your Free Workspace in about a minute',
+    'No card, no plan selection and no expiry',
     'Save, edit, and send your documents',
     'Use all AI features inside the app',
     'Create unlimited quotes, orders, and invoices',
@@ -64,7 +64,7 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 md:p-8 animate-[fadeInUp_0.3s_ease-out]">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-orange-50 border border-orange-100 mb-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-50 border border-orange-100 mb-4">
             <svg className="w-6 h-6 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
             </svg>
@@ -83,7 +83,7 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
               <div>
                 <p className="text-sm font-medium text-slate-900">We&apos;ve saved your {docLabel}</p>
                 <p className="text-xs text-slate-600 mt-1">
-                  After you sign up and pick a plan, your {docLabel} will be loaded right into your workspace - ready to edit, send, or convert.
+                  After you create your Free Workspace, your {docLabel} will be loaded into it - ready to edit, send, or convert.
                 </p>
               </div>
             </div>
@@ -106,13 +106,13 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
         <button
           type="button"
           onClick={dismiss}
-          className="w-full text-center px-5 py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] transition-all"
+          className="w-full text-center px-5 py-3 bg-black text-white font-semibold rounded-xl hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] transition-all"
         >
-          Continue to sign up
+          Create my Free Workspace
         </button>
 
         <p className="mt-3 text-center text-xs text-slate-400">
-          Takes 1 minute · Current configurations from US$29/month · Interactive demo available
+          No card · No plan selection · Keep the Free Workspace as long as you want
         </p>
       </div>
 

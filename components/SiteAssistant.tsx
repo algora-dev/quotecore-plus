@@ -35,8 +35,13 @@ const quickQuestions = [
 ];
 
 const startCTA = {
-  label: "Start using QuoteCore+",
-  href: "/pricing",
+  label: "Create my Free Workspace",
+  href: "/signup",
+};
+
+const callCTA = {
+  label: "Book 25 minutes with Shaun",
+  href: "/contact",
 };
 
 const freeToolsCTA = {
@@ -54,8 +59,8 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
       text: "QuoteCore+ is roofing quoting, takeoff and job workflow software. Upload a roof plan and Roof Scan Assist can complete suitable, correctly calibrated roof geometry. Review the result and edit it if needed, then Smart Components calculate materials, labour and pricing. From a saved quote you can create, send and track quotes, orders and invoices - all from the same connected job. With preconfigured Smart Components, go from complex plan to quote in under 3 minutes for less than a dollar.",
       sectionLink: { label: "See How it works", href: "/#how-it-works" },
       links: [
+        callCTA,
         startCTA,
-        freeToolsCTA,
       ],
     };
   }
@@ -64,10 +69,10 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(trial|free trial|14 day|14-day|sign up|signup|register|try it|test it|demo|get started|start)/.test(message)) {
     return {
       sender: "assistant",
-      text: "Getting started is simple. Our free tools - takeoff builder, roofing calculator, quote generator and more - work instantly in your browser with no signup. For the full connected workflow (AI plan takeoff, Smart Components, material orders and invoicing), choose a paid plan and start in the app today. Explore the interactive demo or free tools before subscribing.",
+      text: "Getting started is simple. Create a real QuoteCore+ Free Workspace with no card, no plan selection and no expiry. Use it on your own jobs, or follow the optional Guided Walkthrough to learn the core workflow in a preconfigured fictional roofing business. Upgrade only when you need more features, capacity or usage.",
       links: [
+        callCTA,
         startCTA,
-        { label: "See how it works", href: "/#how-it-works" },
       ],
     };
   }
@@ -76,8 +81,8 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(price|pricing|cost|how much|plan|plans|tier|limit|upgrade|cancel|subscription|per month|per month|starter|lite|pro|premium)/.test(message)) {
     return {
       sender: "assistant",
-      text: "QuoteCore+ uses a configurable pricing builder rather than public fixed tiers. Current global configurations range from US$29 to US$259 per month, depending on the features and usage you choose. There is no full-app trial. Explore the interactive demo or free tools before subscribing.",
-      link: { label: "See full pricing details", href: "/#pricing" },
+      text: "Start with a Free Workspace and learn what actually helps your business before paying for anything. If you later need more features, capacity or usage, current paid configurations range from US$29 to US$259 per month and you build the exact plan inside Billing. Shaun can also talk through what you are likely to need on a free 25-minute call.",
+      links: [callCTA, { label: "See how pricing works", href: "/pricing" }],
     };
   }
 
@@ -87,7 +92,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
       sender: "assistant",
       text: "Smart Components are reusable roofing components that bundle together materials, waste allowances, labour rates, and pricing rules. Build a component once - like a concrete tile roof with underlay, battens, and fixings - and reuse it on every quote. They ensure consistency across quotes and save you from re-entering the same materials each time.",
       links: [
-        { label: "Try the Smart Component Creator (free)", href: "/free-smart-component-creator" },
+        callCTA,
         startCTA,
       ],
     };
@@ -98,7 +103,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
       sender: "assistant",
       text: "Components are reusable quote items you can save and reuse, including measurements, materials, labour, waste, and pricing rules. Smart Components take this further - they bundle a complete roofing assembly with all its materials and costs so you can drop it into a quote in seconds.",
       links: [
-        { label: "Try the Smart Component Creator (free)", href: "/free-smart-component-creator" },
+        callCTA,
         startCTA,
       ],
     };
@@ -199,10 +204,10 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(how do i|how to|can i|can you|do you have|does.*have|does.*support)/.test(message)) {
     return {
       sender: "assistant",
-      text: "QuoteCore+ handles the full workflow from measurement to payment - AI plan takeoff, Smart Components, quoting, material orders, invoicing, and customer acceptance tracking. The best way to see if it does what you need: try our free tools right now - no signup. If you like them, start in the paid app after exploring the demo or free tools.",
+      text: "QuoteCore+ handles the full workflow from measurement to payment - AI-assisted plan takeoff, Smart Components, quoting, material orders, invoicing and customer acceptance tracking. The easiest way to see whether it fits is to create a Free Workspace and try it on your own jobs, or spend 25 minutes with Shaun talking through how you work now.",
       links: [
+        callCTA,
         startCTA,
-        freeToolsCTA,
       ],
     };
   }
@@ -324,7 +329,8 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(contact|call|demo|speak|talk.*someone|talk.*human|help.*human|person|someone|support)/.test(message)) {
     return {
       sender: "assistant",
-      text: "Absolutely. Leave us a quick message and the team will get back to you.",
+      text: "Absolutely. You can book a free 25-minute call with Shaun to talk through how you currently work, where QuoteCore+ could help, and his #1 tip for winning more of the jobs you already quote. If you would rather send a message, you can do that here too.",
+      links: [callCTA, startCTA],
       showContact: true,
     };
   }
@@ -333,10 +339,10 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/\bfree\b/.test(message)) {
     return {
       sender: "assistant",
-      text: "Our free tools work instantly in your browser with no signup: takeoff builder, roofing calculator, smart component creator, quote generator, invoice generator, and PO generator. For the full connected app, build your configuration in the pricing tool. Current global configurations start at US$29/month, and you can explore the interactive demo before subscribing.",
+      text: "Our standalone free tools still work instantly in your browser with no signup. If you want the connected QuoteCore+ app, create a real Free Workspace with no card or expiry. Use it for as long as its free allowances suit you, then upgrade only if you need more features, capacity or usage.",
       links: [
+        callCTA,
         startCTA,
-        freeToolsCTA,
       ],
     };
   }

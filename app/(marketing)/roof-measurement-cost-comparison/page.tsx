@@ -3,6 +3,7 @@ import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import LazyYouTube from "@/components/LazyYouTube";
+import TwoPathCta from "@/components/conversion/TwoPathCta";
 
 export const metadata: Metadata = {
   title: "What Does a Roof Measurement or Quote Actually Cost? QuoteCore+ vs Per-Report Services",
@@ -23,10 +24,10 @@ export const metadata: Metadata = {
 const rows = [
   {
     service: "QuoteCore+",
-    model: "Configurable subscription (free tools separate)",
+    model: "Free Workspace, then configurable subscription if needed",
     cost: "Current global configurations range from US$29 to US$259/month; Roof Scan Assist usage depends on the selected allowance",
     detail:
-      "Measure your own plans or use Roof Scan Assist within the allowance you configure. Current paid configurations range from US$29 to US$259/month; the interactive demo and standalone free tools are available before subscribing.",
+      "Start with a real Free Workspace and use QuoteCore+ on your own jobs. If you later need more features, capacity or usage, paid configurations currently range from US$29 to US$259/month and the exact plan is built inside Billing.",
     highlight: true,
   },
   {
@@ -175,17 +176,12 @@ export default function RoofMeasurementCostComparison() {
             ))}
           </div>
 
-          <div className="mt-14 rounded-2xl border border-zinc-200 bg-zinc-50 px-8 py-10 text-center">
-            <h2 className="text-xl font-semibold">Try the measure-to-quote workflow yourself</h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-zinc-600">
-              Free tools, no signup. Current paid configurations start at US$29/month; explore the interactive demo before subscribing.
-            </p>
-            <Link
-              href="/demo"
-              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
-            >
-              Get started
-            </Link>
+          <div className="mt-14 rounded-2xl border border-zinc-200 bg-zinc-50 px-8 py-10">
+            <TwoPathCta
+              location="roof_measurement_cost_comparison_bottom"
+              title="Compare the cost with your own workflow."
+              description="Create a Free Workspace and use QuoteCore+ on your own jobs, or tell Shaun how you currently measure and quote and he can help you work out what the workflow would cost for your business."
+            />
           </div>
         </article>
         <SiteFooter />

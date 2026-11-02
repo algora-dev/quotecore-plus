@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { MarketingButton } from "@/components/marketing/MarketingButton";
+import { FreeWorkspaceButton } from "@/components/marketing/FreeWorkspaceButton";
 
 export type ConversionActionStyle = "primary" | "secondary" | "text";
 
@@ -8,6 +10,7 @@ export interface ConversionAction {
   style?: ConversionActionStyle;
   analyticsAction?: string;
   newTab?: boolean;
+  freeWorkspace?: boolean;
 }
 
 interface ConversionActionGroupProps {
@@ -17,18 +20,34 @@ interface ConversionActionGroupProps {
   className?: string;
 }
 
-const styles: Record<ConversionActionStyle, string> = {
-  primary:
-    "inline-flex min-h-11 items-center justify-center rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]",
-  secondary:
-    "inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-300 bg-white px-6 py-2.5 text-sm font-semibold text-zinc-900 transition-colors hover:border-[#FF6B35]/50 hover:bg-orange-50/40",
-  text:
-    "inline-flex min-h-11 items-center justify-center px-2 py-2.5 text-sm font-semibold text-[#BD4A1A] underline decoration-[#BD4A1A]/30 underline-offset-4 hover:decoration-[#BD4A1A]",
-};
+const textStyle =
+  "inline-flex min-h-11 items-center justify-center px-2 py-2.5 text-sm font-semibold text-[#B63D0A] underline decoration-[#B63D0A]/30 underline-offset-4 hover:decoration-[#B63D0A]";
 
 function externalProps(action: ConversionAction) {
-  const newTab = action.newTab ?? /^https:\/\//.test(action.href);
+  const newTab = action.newTab === true;
   return newTab ? { target: "_blank", rel: "noopener noreferrer" } : {};
+}
+
+function Action({ action }: { action: ConversionAction }) {
+  const analyticsAction = action.analyticsAction ?? action.label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  if (action.style === "text") {
+    return <a href={action.href} className={textStyle} data-analytics-action={analyticsAction} {...externalProps(action)}>{action.label}</a>;
+  }
+  if (action.freeWorkspace) {
+    return <FreeWorkspaceButton variant={action.style === "secondary" ? "glass" : "primary"} size="large" className="w-full sm:w-auto">{action.label}</FreeWorkspaceButton>;
+  }
+  return (
+    <MarketingButton
+      href={action.href}
+      variant={action.style === "primary" ? "primary" : "glass"}
+      size="large"
+      className="w-full sm:w-auto"
+      target={(externalProps(action) as { target?: string }).target}
+      rel={(externalProps(action) as { rel?: string }).rel}
+    >
+      <span data-analytics-action={analyticsAction}>{action.label}</span>
+    </MarketingButton>
+  );
 }
 
 export function ConversionActionGroup({
@@ -43,17 +62,7 @@ export function ConversionActionGroup({
       data-analytics-location={location}
       data-analytics-surface={surface}
     >
-      {actions.map((action) => (
-        <a
-          key={`${action.href}:${action.label}`}
-          href={action.href}
-          className={styles[action.style ?? "secondary"]}
-          data-analytics-action={action.analyticsAction ?? action.label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")}
-          {...externalProps(action)}
-        >
-          {action.label}
-        </a>
-      ))}
+      {actions.map((action) => <Action key={`${action.href}:${action.label}`} action={action} />)}
     </div>
   );
 }
@@ -86,23 +95,11 @@ export default function ConversionPanel({
       data-analytics-surface={surface}
     >
       <div className="mx-auto max-w-3xl text-center">
-        {eyebrow ? (
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#BD4A1A]">{eyebrow}</p>
-        ) : null}
+        {eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#B63D0A]">{eyebrow}</p> : null}
         <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">{title}</h2>
         <div className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-zinc-600 sm:text-base">{body}</div>
         <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
-          {actions.map((action) => (
-            <a
-              key={`${action.href}:${action.label}`}
-              href={action.href}
-              className={styles[action.style ?? "secondary"]}
-              data-analytics-action={action.analyticsAction ?? action.label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")}
-              {...externalProps(action)}
-            >
-              {action.label}
-            </a>
-          ))}
+          {actions.map((action) => <Action key={`${action.href}:${action.label}`} action={action} />)}
         </div>
         {footer ? <div className="mt-4 text-xs leading-5 text-zinc-500 sm:text-sm">{footer}</div> : null}
       </div>

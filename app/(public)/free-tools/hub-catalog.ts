@@ -5,7 +5,6 @@ import { TOOL_REGISTRY, type FreeTool } from './tool-registry';
 export type HubCategory = 'measure' | 'calculate' | 'documents';
 export const SITE_ORIGIN = 'https://quote-core.com';
 export const HUB_URL = `${SITE_ORIGIN}/free-tools`;
-export const DEMO_HREF = '/takeoff-demo';
 export const CATEGORIES: {id:HubCategory; title:string; description:string; detail:string; featured:string[]}[] = [
   {id:'measure',title:'Measure & price',description:'From a plan or measurements you already have.',detail:'Roofing · Cladding · Flooring',featured:['free-digital-takeoff','measurement-to-quote-tool']},
   {id:'calculate',title:'Calculate',description:'Areas, materials, roof pitch, angles and cuts.',detail:'Quantities · Dimensions · Costs',featured:['free-roofing-calculator','free-construction-calculator','free-birds-mouth-calculator']},
@@ -24,7 +23,7 @@ export const FAQS = [
   {question:'Can I measure a roofing, cladding or flooring plan?',answer:'Yes. Digital Takeoff lets you upload a PDF or image, calibrate it against a known dimension, and trace areas and lengths. Choose roofing, cladding or flooring at the start. Check the scale and all measurements before relying on the result.',href:'/free-digital-takeoff',link:'Open Digital Takeoff'},
   {question:'Are the example component prices real market rates?',answer:'No. The example libraries use fictitious prices so you can see how components work. Replace material, labour and waste allowances with your own rates before quoting a customer.'},
   {question:'Can I make a quote, purchase order or invoice as a PDF?',answer:'Yes. Each generator lets you review your document, then print or save it as a PDF. A free, confirmed account removes QuoteCore+ document branding and provides a higher shared daily allowance.',href:'/free-quote-generator',link:'Create a free quote'},
-  {question:'What is different about the paid QuoteCore+ app?',answer:'The free tools solve individual tasks. The paid app gives you saved pricing and component libraries, job records and a connected workflow for takeoffs, quotes, orders and invoices. Explore the demo for free before deciding whether the full app fits your business.',href:DEMO_HREF,link:'Try the QuoteCore+ demo'},
+  {question:'What is different about a QuoteCore+ Free Workspace?',answer:'The free tools solve individual tasks. A Free Workspace gives you a real QuoteCore+ account with saved jobs, reusable pricing and a connected workflow for takeoffs, quotes, orders and invoices. You can keep using it free and only upgrade when you need more features, capacity or usage.',href:'/free-trial',link:'See the Free Workspace'},
 ];
 export function categoryOf(tool: FreeTool): HubCategory {
   if(['free-quote-generator','free-invoice-generator','free-purchase-order-generator'].includes(tool.id)) return 'documents';

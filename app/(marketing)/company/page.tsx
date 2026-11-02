@@ -7,6 +7,7 @@ import { SITE_URL } from "@/lib/seo/site-url";
 import { ORG_NAME, ORG_LEGAL_NAME, ORG_EMAIL, ORG_LINKEDIN } from "@/app/lib/seo";
 
 import { workflowCallHref } from '@/lib/booking';
+import TwoPathCta from '@/components/conversion/TwoPathCta';
 export const metadata: Metadata = {
   title: "About QuoteCore+ | Construction Quoting Software Company",
   description:
@@ -70,7 +71,7 @@ const facts = [
   { label: "Supported trades", value: "Roofing, cladding, flooring, fencing, landscaping, general construction" },
   { label: "Pricing model", value: "Configurable monthly subscription from US$29/month" },
   { label: "Support", value: "Email and in-app support" },
-  { label: "Evaluation", value: "Interactive app demo and standalone free tools before subscribing" },
+  { label: "Evaluation", value: "Free Workspace with an optional Guided Walkthrough" },
 ];
 
 export default function CompanyPage() {
@@ -187,8 +188,8 @@ export default function CompanyPage() {
               <p className="mt-2 text-sm text-zinc-600">Email support via the in-app help or contact form. Response during UK business hours.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-900">Book a demo</h3>
-              <p className="mt-2 text-sm text-zinc-600"><a href={workflowCallHref} target="_blank" rel="noopener noreferrer" className="text-[#BD4A1A] hover:underline">Book a free 20-minute call</a></p>
+              <h3 className="font-semibold text-slate-900">Talk to Shaun</h3>
+              <p className="mt-2 text-sm text-zinc-600"><a href={workflowCallHref} className="text-[#BD4A1A] hover:underline">Book a free 25-minute call</a> and talk through how you work today.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">YouTube</h3>
@@ -199,18 +200,10 @@ export default function CompanyPage() {
 
         {/* CTA */}
         <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight">Explore the interactive demo</h2>
-            <p className="mt-2 text-zinc-600">Free tools with no signup. Current paid configurations start at US$29/month; explore the interactive demo before subscribing.</p>
-            <a
-              href="/demo"
-              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
-            >
-              Explore the interactive demo
-            </a>
-            <p className="mt-4 text-sm text-zinc-500">
-              <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>
-            </p>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10">
+            <h2 className="text-2xl font-semibold tracking-tight">Start with the route that suits you.</h2>
+            <p className="mt-2 text-zinc-600">Create a Free Workspace and try QuoteCore+ yourself, or talk it through with Shaun before deciding what you need.</p>
+            <TwoPathCta location="company_cta" className="mt-6" />
           </div>
         </section>
 

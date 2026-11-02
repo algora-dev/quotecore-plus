@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { workflowCallHref } from "@/lib/booking";
 
 const BASE_URL = "https://quote-core.com";
 const SALES_RESOURCES_URL = "https://www.t3labs.tech/sales-resources";
@@ -9,9 +10,9 @@ const SALES_RESOURCES_URL = "https://www.t3labs.tech/sales-resources";
 const QC = {
   home: "/",
   features: "/features",
-  pricing: "/pricing",
+  freeWorkspace: "/free-trial",
+  call: workflowCallHref,
   dfy: "/done-for-you-setup",
-  freeTools: "/free-tools",
   tutorials: "/tutorials",
   guides: "/resources/quotecore-guides",
   digitalTakeoff: "/features/digital-roof-takeoff",
@@ -23,7 +24,7 @@ const QC = {
 export const metadata: Metadata = {
   title: "QuoteCore+ Sales Guide | QuoteCore",
   description:
-    "Sales guide for QuoteCore+ reps: who to target, what to listen for, how to qualify Done-For-You setup, self-serve referrals and free-tool opportunities.",
+    "Sales guide for QuoteCore+ reps: who to target, what to listen for, when to book a 25-minute call with Shaun, and when to send a prospect into a Free Workspace.",
   alternates: { canonical: `${BASE_URL}/careers` },
   openGraph: {
     title: "QuoteCore+ Sales Guide | QuoteCore",
@@ -60,35 +61,24 @@ const pathCards = [
   {
     number: "01",
     eyebrow: "PRIMARY PATH",
-    title: "Done-For-You",
-    who: "They need a better system, but setup and migration will stop them.",
+    title: "25 minutes with Shaun",
+    who: "They want help understanding how QuoteCore+ could fit the way they already work.",
     action:
-      "Show them that they do not have to rebuild everything themselves. We can configure their QuoteCore+ account around the agreed parts of the way they already measure, price and quote.",
-    next: "Open the Done-For-You page and move a qualified prospect toward the assisted fit-call or handoff process.",
-    href: QC.dfy,
-    cta: "Open Done-For-You setup",
+      "Book the call. Shaun will ask how they currently measure, price and quote, identify where QuoteCore+ could make that faster or easier, and work out whether Done For You is worth considering.",
+    next: "The call is useful even if they never buy. They also leave with Shaun's #1 tip for winning more of the jobs they already quote.",
+    href: QC.call,
+    cta: "Book 25 minutes with Shaun",
   },
   {
     number: "02",
-    eyebrow: "SECONDARY PATH",
-    title: "Self-serve",
-    who: "They like the product and are comfortable configuring it themselves.",
+    eyebrow: "SELF-SERVE PATH",
+    title: "Free Workspace",
+    who: "They would rather explore the product themselves before deciding what they need.",
     action:
-      "Show the product, the feature that matches their pain and the relevant tutorial. Then use the rep-specific signup link or code issued to you so an eligible signup can be attributed correctly.",
-    next: "Do not force Done-For-You onto a contractor who genuinely wants to self-serve.",
-    href: QC.pricing,
-    cta: "Open plans and trial",
-  },
-  {
-    number: "03",
-    eyebrow: "VALUE-FIRST PATH",
-    title: "Free tools",
-    who: "They are worried it is too technical, not ready to spend, or not ready to switch systems.",
-    action:
-      "The free tools combine a selection of the app's features and work exactly the same way. A prospect can test the system on their next real job for free, with no signup and nothing to pay. They can even keep using the free tools as their new workflow; the app joins everything together, saves it in one place and adds more.",
-    next: "If they are simply not interested, the free tools are still a clean, no-strings exit that solves real problems and teaches them how the app works.",
-    href: QC.freeTools,
-    cta: "Open free tools",
+      "Send them into a real Free Workspace. There is no card or expiry, and the optional Guided Walkthrough is there if they want a structured introduction before using their own jobs.",
+    next: "They can keep using the free version while it is enough, then create a paid plan inside Billing only when they need more features, capacity or usage.",
+    href: QC.freeWorkspace,
+    cta: "Create a Free Workspace",
   },
 ];
 
@@ -107,7 +97,6 @@ const resourceGroups = [
     links: [
       ["Digital Roof Takeoff", QC.digitalTakeoff],
       ["Roof Scan Assist", QC.aiScan],
-      ["Free tools", QC.freeTools],
     ],
   },
   {
@@ -119,22 +108,18 @@ const resourceGroups = [
     ],
   },
   {
-    title: "They like it but switching sounds painful",
-    body: "This is the Done-For-You trigger. Do not bury it under more product features.",
-    links: [["Done-For-You setup", QC.dfy]],
+    title: "They want help deciding what fits",
+    body: "Do not bury the prospect under more product links. Book the 25-minute call with Shaun and let the conversation determine whether self-serve or Done For You makes more sense.",
+    links: [["Book 25 minutes with Shaun", QC.call]],
   },
   {
     title: "They want to learn it themselves",
-    body: "Use the tutorial library and in-app Q guidance to show that self-serve customers have a clear learning path.",
+    body: "Start with the Free Workspace, then use the tutorial library and in-app guidance when they want more detail.",
     links: [
+      ["Create a Free Workspace", QC.freeWorkspace],
       ["Tutorials", QC.tutorials],
       ["Q in-app assistant docs", QC.qDocs],
     ],
-  },
-  {
-    title: "They are not ready to buy",
-    body: "Send the free tool that matches the pain. They can quote a real job with it, free and without an account, so the demonstration does the selling for you.",
-    links: [["Free tools directory", QC.freeTools]],
   },
 ];
 
@@ -145,15 +130,15 @@ const faqs = [
   },
   {
     q: "When should I lead with Done-For-You?",
-    a: "When the contractor is a strong product fit but time, migration, pricing setup or learning a new system is the real objection. That is the main commercial opportunity this page is designed around.",
+    a: "Do not lead with a package price. Lead with the 25-minute call. If setup, migration, pricing configuration or training is the real objection, Shaun can scope Done For You after learning how the contractor currently works.",
   },
   {
     q: "What if they want to set everything up themselves?",
-    a: "Let them. Use the self-serve path, the relevant tutorials and the rep-specific link or code supplied to you. Do not create friction by forcing an assisted package onto someone who does not need it.",
+    a: "Let them. Send them into the Free Workspace using the rep-specific referral link or code supplied to you. They can use their own jobs, try the optional Guided Walkthrough and decide later whether they need more capacity or a paid plan.",
   },
   {
-    q: "What if they do not want to spend anything?",
-    a: "Give them a relevant free tool. The free tools are part of the sales system because they solve real problems and let prospects experience the QuoteCore+ approach before they are ready for the full app.",
+    q: "What if they are not ready to spend anything?",
+    a: "That is exactly what the Free Workspace is for. They can create a real account with no card and no expiry, use it within the free allowances and upgrade only if they later need more features, capacity or usage.",
   },
   {
     q: "Does Roof Scan Assist replace checking the takeoff?",
@@ -225,7 +210,7 @@ export default function CareersPage() {
         {[
           ["target", "Who to target"],
           ["qualify", "Qualify"],
-          ["paths", "3 paths"],
+          ["paths", "2 paths"],
           ["dfy", "DFY"],
           ["resources", "Resources"],
           ["credit", "Credit"],
@@ -255,14 +240,13 @@ export default function CareersPage() {
           </p>
 
           <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-500">
-            Your job is to recognise the pain, qualify the contractor and choose the right next step: we set it up for them, they set it up themselves, or you leave them with a genuinely useful free tool.
+            Your job is to recognise the pain, qualify the contractor and choose one of two next steps: book the 25-minute call with Shaun, or send them into a Free Workspace to explore for themselves.
           </p>
 
-          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+          <div className="mt-8 grid gap-4 lg:grid-cols-2">
             {[
-              ["01", "Done-For-You", "Best opportunity", "They need it, but setup and migration will stop them."],
-              ["02", "Self-serve", "Easy referral", "They like it and are happy to configure it themselves."],
-              ["03", "Free tools", "Value-first exit", "They are not ready to buy, so give them something useful."],
+              ["01", "25 minutes with Shaun", "Primary path", "They want help understanding what would actually make their workflow faster."],
+              ["02", "Free Workspace", "Self-serve path", "They would rather explore the real app themselves before deciding what they need."],
             ].map(([n, title, tag, body]) => (
               <a
                 key={n}
@@ -407,9 +391,9 @@ export default function CareersPage() {
       <section id="paths" className="qc-anchor border-b border-slate-200">
         <div className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 sm:py-16">
           <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#BD4A1A]">4. Choose the path</p>
-          <h2 className="mt-3 max-w-4xl text-3xl font-bold text-slate-900">Every qualified conversation should end in one of these three places.</h2>
+          <h2 className="mt-3 max-w-4xl text-3xl font-bold text-slate-900">Every qualified conversation should end in one of these two places.</h2>
 
-          <div className="mt-7 grid gap-4 lg:grid-cols-3">
+          <div className="mt-7 grid gap-4 lg:grid-cols-2">
             {pathCards.map((path) => (
               <div
                 key={path.number}
@@ -448,46 +432,36 @@ export default function CareersPage() {
             The customer wants the outcome. They do not want another setup project.
           </h2>
           <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600">
-            This is where Done-For-You matters. The pitch is not "learn our software." It is "show us how you already work and we will configure the agreed setup around that workflow, then teach you using your own account."
+            Done For You is not a fixed tier you sell from a menu. Everything starts with the 25-minute call. Tell Shaun how the contractor currently works, work out how much pricing and configuration is involved, which QuoteCore+ features and usage they are likely to need, and what kind of handover suits them.
           </p>
 
           <div className="mt-7 grid gap-4 lg:grid-cols-2">
             <div className="rounded-2xl border border-[#FF6B35]/35 bg-[#FF6B35]/5 p-6">
-              <p className="text-xs font-semibold uppercase tracking-[.14em] text-[#BD4A1A]">Done-For-You Estimating Setup</p>
-              <p className="mt-3 text-3xl font-bold text-slate-900">$499</p>
-              <p className="mt-1 text-xs text-slate-400">one-time</p>
+              <p className="text-xs font-semibold uppercase tracking-[.14em] text-[#BD4A1A]">Done For You setup</p>
+              <p className="mt-3 text-3xl font-bold text-slate-900">$499+</p>
+              <p className="mt-2 text-sm leading-7 text-slate-600">The final price is scoped to the actual work. A solo operator with a small pricing library is a very different setup from a larger business with more products, rules, users and usage.</p>
               <div className="mt-5">
                 <CheckList
                   items={[
-                    "Up to 20 custom components",
-                    "Material pricing configured",
-                    "Labour rates added",
-                    "Waste rules where required",
-                    "QuoteCore+ account setup",
-                    "Personalised walkthrough and training",
-                    "6 months of your agreed QuoteCore+ subscription included",
-                    "6 months setup and product support",
+                    "Pricing and agreed workflow configured for them",
+                    "3 months of the QuoteCore+ subscription their setup needs",
+                    "Personalised handover using their configured account",
+                    "3 months of ongoing support",
                   ]}
                 />
               </div>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-              <p className="text-xs font-semibold uppercase tracking-[.14em] text-slate-400">Complete Done-For-You Setup</p>
-              <p className="mt-3 text-3xl font-bold text-slate-900">$999</p>
-              <p className="mt-1 text-xs text-slate-400">one-time</p>
+              <p className="text-xs font-semibold uppercase tracking-[.14em] text-slate-400">What the call determines</p>
               <div className="mt-5">
                 <CheckList
                   items={[
-                    "Everything in the core setup",
-                    "Up to 60 custom components",
-                    "Larger material and pricing setup",
-                    "More complex labour and waste configuration",
-                    "Help organising larger pricing lists or catalogues",
-                    "More detailed workflow configuration",
-                    "Personalised training on their own setup",
-                    "6 months of your agreed QuoteCore+ subscription included",
-                    "6 months setup and product support",
+                    "How they measure, price and quote today",
+                    "Which QuoteCore+ features would actually help",
+                    "How much pricing and configuration work is involved",
+                    "Expected feature usage and capacity",
+                    "Live one-to-one or a custom recorded handover",
                   ]}
                 />
               </div>
@@ -497,13 +471,10 @@ export default function CareersPage() {
           <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-6">
             <h3 className="text-xl font-semibold text-slate-900">What the rep does</h3>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Recognise the fit, uncover the setup objection, explain the Done-For-You path and make the handoff. You do not need to design the customer's component library, migrate their data or promise technical scope on the call.
+              Recognise the fit and book the call. Do not promise scope or a fixed package price. Shaun learns how the contractor works, then a tailored proposal can be sent after the call for them to accept or decline in their own time.
             </p>
-            <PageLink
-              href={QC.dfy}
-              className="qc-button mt-5 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-6 text-sm font-semibold text-white"
-            >
-              Open the live Done-For-You page →
+            <PageLink href={QC.call} className="qc-link mt-5 inline-flex text-sm font-semibold text-[#BD4A1A]">
+              Book 25 minutes with Shaun →
             </PageLink>
           </div>
         </div>
@@ -537,18 +508,6 @@ export default function CareersPage() {
             ))}
           </div>
 
-          <div className="mt-5 rounded-2xl border border-[#FF6B35]/30 bg-[#FF6B35]/5 p-6">
-            <h3 className="text-xl font-semibold text-slate-900">Free tools are a real sales path.</h3>
-            <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">
-              Two reasons they matter. First, they are a free, low-risk way to demonstrate the app: the core tools are built from the app's own features, work exactly the same way and can be used without an account, so a hesitant prospect can quote their next real job with the actual system before spending anything. Second, if they are not interested or not spending right now, they are a genuine no-strings parting gift that still solves problems and teaches how the app works.
-            </p>
-            <PageLink
-              href={QC.freeTools}
-              className="qc-link mt-4 inline-flex text-sm font-semibold text-[#BD4A1A]"
-            >
-              Browse the free tools directory →
-            </PageLink>
-          </div>
         </div>
       </section>
 
@@ -582,7 +541,7 @@ export default function CareersPage() {
           <div className="mt-5 rounded-2xl border border-[#FF6B35]/30 bg-[#FF6B35]/5 p-6">
             <p className="text-sm font-semibold text-slate-900">Rep link or code not issued yet?</p>
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              Do not invent one and do not promise tracking that is not active. Contact T3 Labs for the current referral process before sending a paid signup.
+              Do not invent one and do not promise tracking that is not active. Contact T3 Labs for the current referral process before sending a Free Workspace signup.
             </p>
           </div>
         </div>
@@ -594,21 +553,16 @@ export default function CareersPage() {
           <h2 className="mt-3 text-3xl font-bold text-slate-900">Keep the sales conversation simple.</h2>
 
           <div className="mt-7 rounded-3xl border border-[#FF6B35]/30 bg-[#FF6B35]/5 p-6 sm:p-8">
-            <div className="grid gap-5 lg:grid-cols-3">
+            <div className="grid gap-5 lg:grid-cols-2">
               <div>
                 <p className="text-xs font-bold text-[#BD4A1A]">IF</p>
-                <p className="mt-2 text-xl font-semibold text-slate-900">They need it but setup is the objection</p>
-                <p className="mt-2 text-sm text-slate-600">→ Done-For-You</p>
+                <p className="mt-2 text-xl font-semibold text-slate-900">They want help, have setup concerns or are unsure what they need</p>
+                <p className="mt-2 text-sm text-slate-600">→ Book 25 minutes with Shaun. Done For You can be scoped from there if it makes sense.</p>
               </div>
               <div>
                 <p className="text-xs font-bold text-[#BD4A1A]">IF</p>
-                <p className="mt-2 text-xl font-semibold text-slate-900">They want to configure it themselves</p>
-                <p className="mt-2 text-sm text-slate-600">→ Rep link / code + self-serve</p>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-[#BD4A1A]">IF</p>
-                <p className="mt-2 text-xl font-semibold text-slate-900">They are not ready to buy</p>
-                <p className="mt-2 text-sm text-slate-600">→ Give them a useful free tool</p>
+                <p className="mt-2 text-xl font-semibold text-slate-900">They want to explore and configure it themselves</p>
+                <p className="mt-2 text-sm text-slate-600">→ Send the rep link / code into the Free Workspace.</p>
               </div>
             </div>
           </div>

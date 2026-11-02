@@ -30,14 +30,14 @@ export async function generateMetadata(): Promise<Metadata> {
   if (isMarketingDomain) {
     return {
       title: 'Construction Quoting & Roofing Estimating Software | QuoteCore+',
-      description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice, all in one platform. Explore the interactive demo and free tools, or get help configuring QuoteCore+ around your business.',
+      description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice in one connected workflow. Create a Free Workspace, or book a free 25-minute call with Shaun to talk through how you work.',
       alternates: {
         canonical: 'https://quote-core.com/',
         languages: hreflangLanguages('/'),
       },
       openGraph: {
         title: 'Construction Quoting & Roofing Estimating Software | QuoteCore+',
-        description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice, all in one platform. Explore the interactive demo and free tools, or get help configuring QuoteCore+ around your business.',
+        description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice in one connected workflow. Create a Free Workspace, or book a free 25-minute call with Shaun to talk through how you work.',
         url: 'https://quote-core.com/',
         siteName: 'QuoteCore+',
         type: 'website',
@@ -136,7 +136,7 @@ export default async function Home() {
             className={`${controls.button} ${controls.primary} ${controls.large} ${loginActions.heroShadow}`}
           >
             <span className={controls.icon} aria-hidden="true"><Icon name="arrow" /></span>
-            <span>Sign up</span>
+            <span>Create Free Workspace</span>
           </Link>
           <Link
             href={marketingLink}

@@ -41,9 +41,9 @@ const faqs = [
       "Yes. Done For You Setup is our configuration service, scoped from US$499 per customer. You earn 30% of the setup fee once it is collected, and it stacks with subscription commission if that customer also subscribes.",
   },
   {
-    question: "Is there a demo I can show people?",
+    question: "What is the best link to share with someone who wants to try QuoteCore+?",
     answer:
-      "Yes. The interactive demo at quote-core.com/demo walks through the real app with no signup and no account. It is the easiest thing you can share with an audience that wants to see the product before committing to anything.",
+      "Send them to the Free Workspace. It gives them a real QuoteCore+ account with no card and no expiry, and they can open the optional Guided Walkthrough inside it if they want help learning the workflow before using their own jobs.",
   },
   {
     question: "Can I ask for a different deal?",
@@ -56,14 +56,9 @@ const faqs = [
       "No. We consider creators, industry professionals, publishers, communities, agencies, outbound operators and people with a credible distribution strategy. A small, relevant audience can be more valuable than a large unrelated one.",
   },
   {
-    question: "Do I have to promote the free tools?",
+    question: "Can I still share QuoteCore+ free tools?",
     answer:
-      "No. You can promote QuoteCore in whatever approved way suits your audience or strategy. Free tools are simply one low-friction option that gives people something useful immediately.",
-  },
-  {
-    question: "What if someone uses a free tool and upgrades later?",
-    answer:
-      "Some people discover QuoteCore through a free tool and only upgrade weeks later. Make sure your audience knows your discount code so they use it when they eventually purchase. That is how the purchase is attributed to you.",
+      "Yes. The standalone tools can be useful supporting content, but the main product link should be the Free Workspace so people enter the same QuoteCore+ journey and can choose their plan later from inside the account.",
   },
   {
     question: "Where can I read more about how selling QuoteCore+ works?",
@@ -124,17 +119,17 @@ const promoteWays = [
   },
   {
     title: "TikTok / Instagram / Shorts",
-    desc: "Demonstrate a free calculator, AI quote generation, before/after workflows. Mention your code.",
+    desc: "Show before-and-after quoting workflows, useful features or short job examples. Point people to the Free Workspace and mention your code.",
     icon: "M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z",
   },
   {
     title: "Newsletter / Email",
-    desc: "Free tool of the week, contractor software recommendations, quoting and pricing tips.",
+    desc: "Contractor software recommendations, quoting and pricing tips, workflow examples and Free Workspace invitations.",
     icon: "M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75",
   },
   {
     title: "Blog / SEO",
-    desc: "Best estimating tools, free contractor calculators, quoting app comparisons, margin guides.",
+    desc: "Best estimating tools, quoting app comparisons, roofing workflow guides and practical pricing content.",
     icon: "M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25",
   },
   {
@@ -144,7 +139,7 @@ const promoteWays = [
   },
   {
     title: "Direct Outreach",
-    desc: "Email, calls, DMs, local trade networks. Lead with the demo or a useful free tool instead of a sales pitch.",
+    desc: "Email, calls, DMs and local trade networks. Lead with the Free Workspace or a useful conversation about how the contractor currently works.",
     icon: "M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z",
   },
 ];
@@ -160,14 +155,9 @@ const whoProfiles = [
 ];
 
 const whatToPromote = [
-  { title: "Interactive Demo", href: "/demo", desc: "The full app in a guided walkthrough. No signup, no account. The easiest link to share." },
-  { title: "The QuoteCore+ App", href: "/pricing", desc: "The full quoting and job management platform, from US$29/month." },
-  { title: "Done For You Setup", href: "/done-for-you-setup", desc: "From US$499 one-off. We configure their whole account. Pays 30% once collected." },
-  { title: "Free Quote Generator", href: "/free-quote-generator", desc: "Create professional quotes in minutes with no account needed." },
-  { title: "Free Margin Calculator", href: "/free-margin-calculator", desc: "Help trades price jobs profitably." },
-  { title: "Roofing & Takeoff Tools", href: "/free-roof-takeoff", desc: "Upload a plan, measure a roof, price materials." },
-  { title: "Free Calculators Hub", href: "/free-calculators", desc: "The full library of free construction calculators." },
-  { title: "Invoice Generator", href: "/free-invoice-generator", desc: "Free professional invoices for contractors." },
+  { title: "Free Workspace", href: "/free-trial", desc: "The main product entry point. Real QuoteCore+ account, no card, no expiry, with an optional Guided Walkthrough inside." },
+  { title: "Done For You Setup", href: "/done-for-you-setup", desc: "From US$499. Shaun scopes the setup around the customer and you earn 30% of the collected setup fee." },
+  { title: "Pricing", href: "/pricing", desc: "Explain the public US$29-US$259 monthly range. Customers create the exact plan they need from inside their workspace." },
 ];
 
 const discountTradeoff = [
@@ -397,16 +387,15 @@ export default function DistributorsPage() {
           </div>
         </section>
 
-        {/* Free tools angle */}
+        {/* Low-friction entry */}
         <section className="mt-20 bg-zinc-50 py-16 md:mt-28 md:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-3xl text-center">
               <h2 className={H2}>You do not have to start with a sales pitch</h2>
               <p className="mt-4 text-[17px] leading-[1.75] text-zinc-600">
-                Instead of asking someone to immediately pay for software, share something useful first: the interactive demo, a free
-                quote generator, a margin calculator, a roof measurement tool. Someone might discover QuoteCore through a free tool
-                today, create a free account later, and upgrade weeks afterwards. It is the lowest-friction way to start, but only one of
-                many.
+                You do not need to ask someone to buy software on first contact. The simplest product entry is the Free Workspace: a real
+                QuoteCore+ account with no card and no expiry. They can use their own jobs, open the Guided Walkthrough if they want help,
+                and decide later whether they need a paid plan or Done For You setup.
               </p>
               <p className="mt-4 rounded-2xl border border-zinc-200 bg-white p-6 text-left text-[15px] leading-[1.7] text-zinc-700">
                 <strong className="text-zinc-950">Your code matters.</strong> Your personal discount code gives referred customers 5% off
@@ -423,10 +412,7 @@ export default function DistributorsPage() {
             <div className="mx-auto max-w-2xl text-center">
               <h2 className={H2}>Promote the part of QuoteCore that fits your audience</h2>
               <p className={`mt-4 ${CARD_BODY}`}>
-                A roofing audience may respond to the demo or a free roof tool. A small-business audience may care about quotes and
-                invoices. Another partner may prefer to promote the full QuoteCore+ app or Done For You setups directly, through reviews,
-                tutorials, client recommendations, newsletters, social, blogs or outreach. Free tools are the lowest-friction entry
-                point, not a requirement.
+                Keep the commercial message simple. Lead people into the Free Workspace when they want to try QuoteCore+, or into Done For You when they want Shaun to configure it with them. Pricing is there for people who want to understand the range before they start. Standalone free tools can still support your content, but they are not the main product journey.
               </p>
             </div>
             <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -508,7 +494,7 @@ export default function DistributorsPage() {
                 "Your unique referral link",
                 "Your personal discount code",
                 "Your 5% customer discount allowance",
-                "Links to the demo, tools and products",
+                "Links to the Free Workspace, pricing and Done For You",
                 "Screenshots and brand assets",
                 "Tutorials and content to share",
                 "Promotion ideas to get you started",

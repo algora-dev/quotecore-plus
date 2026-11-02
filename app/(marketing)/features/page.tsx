@@ -58,8 +58,8 @@ export default function FeaturesPage() {
         eyebrow="QuoteCore+ features"
         title={<>The complete estimating and quoting workflow, <strong>connected.</strong></>}
         lead="Take measurements, apply your own pricing rules, build the customer quote, send and track it, then carry accepted work into orders and invoices. Use the quick interactive tour or scroll through the workflow in detail below."
-        primary={{ href: '/demo', label: 'Explore the interactive demo' }}
-        secondary={{ href: '/pricing', label: 'Build your plan' }}
+        primary={{ href: workflowCallHref, label: 'Book 25 minutes with Shaun' }}
+        secondary={{ href: '/signup', label: 'Create my free workspace', freeWorkspace: true }}
         proof={['Measure or enter quantities', 'Use your own pricing logic', 'Keep the job connected after the quote']}
         visual={<ProductFrame src="/marketing/current-ux/job-space-overview.webp" alt="Current QuoteCore+ Job Space overview with the connected job workflow" width={2048} height={1112} eager caption="Job Space keeps the job, pricing and document workflow together instead of splitting the work across disconnected tools." />}
       />
@@ -68,7 +68,7 @@ export default function FeaturesPage() {
         <Container>
           <SectionHeader eyebrow="Quick product tour" title="Prefer to click through? Explore the core workflow in a few minutes." lead="This is the same interactive feature showcase used on the homepage. Use the tabs and examples for the short version, then continue below for a detailed scroll-through of the workflow." />
         </Container>
-        <WorkflowExplorer demoHref="/demo" />
+        <WorkflowExplorer demoHref="/signup" />
       </Section>
 
       <Section>
@@ -183,9 +183,8 @@ export default function FeaturesPage() {
         <Container>
           <SectionHeader eyebrow="Choose your next step" title="Choose the next step that suits you" lead="Use the route that answers what you need to know next." />
           <ConversionPaths items={[
-            { title: 'Explore the interactive app demo', body: 'Open a prepared QuoteCore+ roofing workspace and explore the current workflow at your own pace.', href: '/demo', label: 'Explore the demo' },
-            { title: 'Book a tailored 20-minute demo', body: 'Tell us how you currently work and we will screen-share a workflow that is relevant to your trade and questions.', href: workflowCallHref, label: 'Book a tailored demo' },
-            { title: 'Build your plan', body: 'Choose the workload and tools your business needs and see the current monthly price before you continue.', href: '/pricing', label: 'Build your configuration' },
+            { title: 'Create your Free Workspace', body: 'Use QuoteCore+ on your own jobs, try every feature within the free allowances and use the optional Guided Walkthrough when you want a structured introduction.', href: '/signup', label: 'Create my free workspace', freeWorkspace: true },
+            { title: 'Talk it through with Shaun', body: 'Tell Shaun how you currently work, see where QuoteCore+ could make measuring and quoting faster or easier, and take away his #1 tip for winning more quoted jobs.', href: workflowCallHref, label: 'Book 25 minutes with Shaun' },
           ]} />
         </Container>
       </Section>
@@ -197,13 +196,12 @@ export default function FeaturesPage() {
             { href: '/features/smart-assistant', title: 'Smart Assistant', body: 'Use voice or text to draft, revise and retrieve, with the result left reviewable.' },
             { href: '/features/offcut-optimiser', title: 'Offcut Optimiser', body: 'Turn long-run roof geometry into suggested cutting plans and a realistic material allowance.' },
             { href: '/features/smart-components', title: 'Smart Components', body: 'See how your own material, labour, waste and pricing rules become reusable.' },
-            { href: '/measurement-to-quote-tool', title: 'Measurement-to-Quote', body: 'Already have quantities? Try the free pricing workflow.' },
             { href: '/done-for-you-setup', title: 'Done For You Setup', body: 'Want help translating your existing pricing into QuoteCore+?' },
           ]} />
         </Container>
       </Section>
 
-      <FinalCta title="One workflow. Start at the part that matters to you." body="Explore the prepared app demo, build a pricing configuration or start with a free tool. QuoteCore+ keeps the measure-to-price workflow connected when you are ready to go further." primary={{ href: '/demo', label: 'Explore the interactive demo' }} secondary={{ href: '/pricing', label: 'Build your plan' }} />
+      <FinalCta title="One workflow. Start at the part that matters to you." body="Create a Free Workspace and try the workflow on your own jobs, or talk it through with Shaun if you want help deciding where QuoteCore+ could save you the most time." primary={{ href: workflowCallHref, label: 'Book 25 minutes with Shaun' }} secondary={{ href: '/signup', label: 'Create my free workspace', freeWorkspace: true }} />
       <div style={{ height: 72 }} />
     </PageScaffold>
   );

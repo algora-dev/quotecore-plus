@@ -57,7 +57,7 @@ export function DoneForYouSection({ config = {}, detailsHref = '/done-for-you-se
             <span className={`${d.titleLine} ${d.titleOrange}`}>Your pricing.</span>
             <span className={`${d.titleLine} ${d.titleGrey}`}>We can take care of the setup for <span className={d.titleOrange}>you.</span></span>
           </h2>
-          <p className={d.intro}>Show us how you currently price and quote. We’ll configure your QuoteCore+ account around that workflow, guide you through using it on your own jobs, and be available to help for the next three months.</p>
+          <p className={d.intro}>Tell Shaun how you currently price and quote. If Done For You makes sense, we’ll configure QuoteCore+ around that workflow, hand it over using your own jobs, and stay available for the next three months.</p>
           <ul className={d.benefits}>
             <li><Icon name="check" size={16} />Configured for you</li>
             <li><Icon name="check" size={16} />Guided on your jobs</li>
@@ -68,10 +68,10 @@ export function DoneForYouSection({ config = {}, detailsHref = '/done-for-you-se
               See How Done For You Works
             </MarketingButton>
             <MarketingButton href={bookingHref || detailsHref} variant="glass" size="large" className={`${s.button} ${d.secondaryCta}`}>
-              {bookingHref ? 'Book a Free 20-Minute Call' : 'Explore Done For You Setup'}
+              {bookingHref ? 'Book a Free 25-Minute Call' : 'Explore Done For You Setup'}
             </MarketingButton>
           </div>
-          <p className={d.reassurance}>Free 20-minute discovery call. No obligation.</p>
+          <p className={d.reassurance}>Free 25-minute call with Shaun. No obligation. You’ll also get his #1 tip for winning more of the jobs you quote.</p>
         </div>
         <FounderVideo videoSrc={config.videoSrc} youtubeId={config.youtubeId} captionsSrc={config.captionsSrc} preview={preview} />
       </div>

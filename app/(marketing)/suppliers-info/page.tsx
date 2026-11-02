@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { MarketingButton } from "@/components/marketing/MarketingButton";
 
 export const metadata: Metadata = {
   title: "Supplier Partnership | Roofing Supplier Network",
@@ -173,18 +174,8 @@ export default function SuppliersPage() {
               QuoteCore+ connects roofing suppliers with contractors who are actively quoting, ordering, and buying materials every day. No directory listing. No middleman. Just your products in the workflow where purchasing decisions happen.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <a
-                href="/contact"
-                className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
-              >
-                Get in touch
-              </a>
-              <a
-                href="#benefits"
-                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition"
-              >
-                See how it works
-              </a>
+              <MarketingButton href="/contact" variant="primary" size="large">Get in touch</MarketingButton>
+              <MarketingButton href="#benefits" variant="glass" size="large">See how it works</MarketingButton>
             </div>
           </div>
         </section>
@@ -370,18 +361,7 @@ export default function SuppliersPage() {
               If you supply quality roofing materials to your area, and you want to grow, we want to work with you.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <a
-                href="/contact"
-                className="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
-              >
-                Get in touch
-              </a>
-              <a
-                href="/free-tools"
-                className="px-4 py-2 text-sm font-medium rounded-full border border-zinc-700 text-zinc-300 hover:bg-zinc-900 transition"
-              >
-                Explore free tools
-              </a>
+              <MarketingButton href="/contact" variant="primary" size="large">Get in touch</MarketingButton>
             </div>
           </div>
         </section>

@@ -1,21 +1,18 @@
 "use client";
 
-import { trackEvent } from "@/lib/analytics";
+import { FreeWorkspaceButton } from "@/components/marketing/FreeWorkspaceButton";
+import { MarketingButton } from "@/components/marketing/MarketingButton";
+import { workflowCallHref } from "@/lib/booking";
+import { freeWorkspaceLabel, shaunCallLabelShort, shaunCallPromiseShort } from "@/lib/marketing-conversion";
 
 /**
- * Shared demo entry card. Deep-links into /takeoff-demo with the mode
- * pre-selected (?mode=ai | ?mode=manual - handled by DemoTakeoff).
- *
- * variant="hero"   - full-width aspect-video card (homepage hero)
- * variant="inline" - compact horizontal card (blogs, calculators, CTA areas)
- *
- * primaryMode lets a placement emphasise one button (e.g. AI on the
- * Roof Scan Assist feature page) - the other stays as secondary.
+ * Historical name retained for import compatibility. This is now the shared
+ * Free Workspace acquisition card. The focused public takeoff demo still
+ * exists, but is no longer used as the main product-acquisition CTA.
  */
 export default function DemoCTACard({
   location,
   variant = "hero",
-  primaryMode,
   className = "",
 }: {
   location: string;
@@ -23,123 +20,34 @@ export default function DemoCTACard({
   primaryMode?: "ai" | "manual";
   className?: string;
 }) {
-  const go = (mode: "ai" | "manual") => {
-    trackEvent("demo_tool_click", { location, mode: mode === "ai" ? "ai_scan" : "manual" });
-  };
-
-  const Buttons = ({ compact = false }: { compact?: boolean }) => (
-    <div className={`flex flex-col gap-2 ${compact ? "" : "sm:flex-row"}`}>
-      <a
-        href="/takeoff-demo?mode=ai"
-        onClick={() => go("ai")}
-        className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold transition-colors ${
-          primaryMode === "manual"
-            ? "border border-white/60 bg-white/10 text-white backdrop-blur-sm hover:bg-white hover:text-zinc-950"
-            : "bg-[#FF6B35] text-white hover:bg-[#E55A28]"
-        }`}
-      >
-        Try Roof Scan Assist
-      </a>
-      <a
-        href="/takeoff-demo?mode=manual"
-        onClick={() => go("manual")}
-        className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold transition-colors ${
-          primaryMode === "ai"
-            ? "border border-white/60 bg-white/10 text-white backdrop-blur-sm hover:bg-white hover:text-zinc-950"
-            : "bg-[#FF6B35] text-white hover:bg-[#E55A28]"
-        }`}
-      >
-        Try Manual Digital Measure
-      </a>
+  const actions = (
+    <div className="flex flex-col gap-2 sm:flex-row">
+      <MarketingButton href={workflowCallHref} variant="primary" size="large" className="flex-1">{shaunCallLabelShort}</MarketingButton>
+      <FreeWorkspaceButton variant="glass" size="large" className="flex-1">{freeWorkspaceLabel}</FreeWorkspaceButton>
     </div>
   );
 
   if (variant === "inline") {
     return (
-      <div className={`group overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`}>
-        <div className="flex flex-col sm:flex-row">
-          <div className="relative h-36 w-full shrink-0 overflow-hidden bg-white sm:h-auto sm:w-52">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/takeoff-demo/roofplan-baseline.png"
-              alt="Roof plan used in the QuoteCore+ interactive takeoff demo"
-              className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
-              loading="lazy"
-              width={1280}
-              height={720}
-            />
-            <span className="absolute left-2 top-2 inline-flex items-center rounded-full bg-[#FF6B35] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-              Interactive demo
-            </span>
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-3 p-5">
-            <p className="text-base font-semibold leading-snug text-zinc-950">
-              Try our real system in 30 seconds or less
-            </p>
-            <p className="text-sm leading-6 text-zinc-600">
-              The same takeoff workstation that&apos;s in the app. No sign-in needed.
-            </p>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <a
-                href="/takeoff-demo?mode=ai"
-                onClick={() => go("ai")}
-                className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-                  primaryMode === "manual"
-                    ? "border border-zinc-300 text-zinc-900 hover:border-[#FF6B35]/40 hover:bg-orange-50"
-                    : "bg-[#FF6B35] text-white hover:bg-[#E55A28]"
-                }`}
-              >
-                Try Roof Scan Assist
-              </a>
-              <a
-                href="/takeoff-demo?mode=manual"
-                onClick={() => go("manual")}
-                className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-                  primaryMode === "ai"
-                    ? "border border-zinc-300 text-zinc-900 hover:border-[#FF6B35]/40 hover:bg-orange-50"
-                    : "bg-[#FF6B35] text-white hover:bg-[#E55A28]"
-                }`}
-              >
-                Try Manual Measure
-              </a>
-            </div>
-          </div>
+      <div className={`overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${className}`} data-analytics-location={location}>
+        <div className="p-5 sm:p-6">
+          <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#B63D0A]">25 minutes with Shaun</span>
+          <p className="mt-2 text-lg font-semibold leading-snug text-zinc-950">Tell Shaun how you work. Find the fastest useful next step.</p>
+          <p className="mt-2 text-sm leading-6 text-zinc-600">Prefer to explore first? Create a real Free Workspace with no card or expiry and see what fits your business.</p>
+          <div className="mt-4">{actions}</div>
+          <p className="mt-3 text-xs leading-5 text-zinc-500">{shaunCallPromiseShort}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`group relative w-full max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.10)] ${className}`}>
-      <div className="relative aspect-video w-full overflow-hidden bg-white">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/takeoff-demo/roofplan-baseline.png"
-          alt="Roof plan used in the QuoteCore+ interactive takeoff demo"
-          className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
-          loading="eager"
-          width={1280}
-          height={720}
-        />
-        {/* Gradient overlay for legibility */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" aria-hidden="true" />
-
-        {/* Corner badge */}
-        <span className="absolute left-4 top-4 inline-flex items-center rounded-full bg-[#FF6B35] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-          Interactive demo
-        </span>
-
-        {/* Copy overlay */}
-        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-4 sm:p-5">
-          <p className="text-base font-semibold leading-snug text-white sm:text-lg">
-            Try our real system in 30 seconds or less
-          </p>
-          <p className="hidden text-sm leading-6 text-zinc-200 sm:block">
-            Scan this sample roof plan with AI or measure it yourself - the same takeoff workstation that&apos;s in the app. No sign-in needed.
-          </p>
-          <Buttons />
-        </div>
-      </div>
+    <div className={`relative w-full max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 bg-[radial-gradient(circle_at_top_right,rgba(255,107,53,.13),transparent_38%),#fff] p-6 shadow-[0_18px_45px_rgba(15,23,42,0.10)] sm:p-8 ${className}`} data-analytics-location={location}>
+      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#B63D0A]">25 minutes with Shaun</span>
+      <h3 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950">Tell Shaun how you work. See what would actually make it faster.</h3>
+      <p className="mt-3 text-sm leading-6 text-zinc-600 sm:text-base">Prefer to explore yourself? Create a real Free Workspace with no card or expiry and see what fits your business.</p>
+      <div className="mt-6">{actions}</div>
+      <p className="mt-4 text-xs leading-5 text-zinc-500">{shaunCallPromiseShort}</p>
     </div>
   );
 }

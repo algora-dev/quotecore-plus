@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
+import TwoPathCta from '@/components/conversion/TwoPathCta';
 import { siteUrl, buildBreadcrumbSchema } from '@/lib/schema';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
 
@@ -126,9 +127,9 @@ export default function CustomSolutionsPage() {
               <p className="mt-3 text-xs text-slate-500">
                 Or{' '}
                 <Link href="/pricing" className="font-medium text-[#BD4A1A] hover:underline">
-                  build your configuration
+                  see how pricing works
                 </Link>{' '}
-                around the features and usage you need.
+                before creating the exact plan you need inside your workspace.
               </p>
             </div>
           </div>
@@ -192,20 +193,18 @@ export default function CustomSolutionsPage() {
             that&rsquo;s the point where a bespoke build makes sense, and T3 Labs will
             tell you honestly which it is.
           </p>
-          <div className="mt-6 flex flex-wrap gap-4">
-            <Link
-              href="/demo"
-              className="inline-block rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.45)]"
-            >
-              Explore the interactive demo
-            </Link>
-            <Link
-              href="/blog/custom-roofing-quoting-software"
-              className="inline-block rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-900 transition-all hover:border-slate-400 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-            >
+          <div className="mt-7">
+            <TwoPathCta
+              title="Start with the easier option."
+              description="Create a Free Workspace and see what QuoteCore+ can already handle, or tell Shaun how you work and he can help you work out whether configuration or something genuinely bespoke makes more sense."
+            />
+          </div>
+          <p className="mt-5 text-sm text-slate-500">
+            Want more context first?{' '}
+            <Link href="/blog/custom-roofing-quoting-software" className="font-semibold text-[#BD4A1A] hover:underline">
               Read: Built or Configured?
             </Link>
-          </div>
+          </p>
         </section>
 
         {/* Who is T3 Labs */}

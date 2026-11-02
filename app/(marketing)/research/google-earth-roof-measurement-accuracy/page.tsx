@@ -9,7 +9,7 @@ import { buildPageMetadata } from "@/app/lib/seo";
 import { studyRoofs, type StudyRoof } from "./study-data";
 import RoofDetails from "./roof-details";
 import LazyYouTube from "@/components/LazyYouTube";
-import { workflowCallHref } from "@/lib/booking";
+import TwoPathCta from "@/components/conversion/TwoPathCta";
 
 const STUDY_PATH = "/research/google-earth-roof-measurement-accuracy";
 const CSV_PATH = "/downloads/quote-core-google-earth-roof-measurement-study-2026.csv";
@@ -453,22 +453,12 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
 
       {/* Final CTA */}
       <section className="pb-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="rounded-2xl bg-black px-6 py-12 text-center sm:px-12" data-analytics-location="google_earth_research_final" data-analytics-surface="research_final_cta">
-          <h2 className="text-3xl font-semibold tracking-tight text-white">Don&apos;t take our word for it. Test it on your next roof.</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-zinc-400">Before you drive to your next reroof just to measure it, try the same process we used in this study. Find the property remotely, complete the takeoff for free, save your numbers, then compare them with what you find on site.</p>
-          <div className="mx-auto mt-8 max-w-3xl">
-            <p className="mb-3 text-sm font-semibold text-white">Watch the full walkthrough: free roof takeoff from Google Maps to quote</p>
-            <LazyYouTube
-              videoId="RIKlvOG_xdc"
-              title="How to Measure a Roof from Google Maps for Free - Full Roof Takeoff + Quote"
-            />
+        <div className="rounded-2xl bg-black px-6 py-12 sm:px-12" data-analytics-location="google_earth_research_final" data-analytics-surface="research_final_cta">
+          <h2 className="text-3xl font-semibold tracking-tight text-white">Put the measurement workflow into the rest of the job.</h2>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400">The study is about measurement accuracy. QuoteCore+ connects that measurement work to your own pricing, the customer quote and the rest of the quoting workflow.</p>
+          <div className="mt-7">
+            <TwoPathCta location="google_earth_accuracy_study" />
           </div>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <a href="/free-roof-takeoff" data-analytics-action="free_takeoff" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.5)]">Measure a Roof Free</a>
-            <a href="/demo" data-analytics-action="demo" className="inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:border-zinc-500">See the connected app demo</a>
-          </div>
-          <p className="mt-4 text-xs text-zinc-500">Free · no card · no measurement-report fee</p>
-          <p className="mt-4 text-sm text-zinc-400">Want to compare the workflow with the way you currently measure and quote? <a href={workflowCallHref} target={workflowCallHref.startsWith("http") ? "_blank" : undefined} rel={workflowCallHref.startsWith("http") ? "noopener noreferrer" : undefined} data-analytics-action="book_call" className="font-semibold text-white underline decoration-white/30 underline-offset-4 hover:decoration-white">Book a free 20-minute workflow call.</a></p>
         </div>
       </div></section>
 

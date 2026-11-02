@@ -1,26 +1,20 @@
 import ConversionPanel, { ConversionActionGroup } from "@/components/conversion/ConversionPanel";
 import { workflowCallHref } from "@/lib/booking";
+import { freeWorkspaceLabel, shaunCallLabel, shaunCallPromiseShort } from "@/lib/marketing-conversion";
 
-export function CommercialHeroActions({
-  location,
-  demoHref = "/demo",
-  demoLabel = "Explore the interactive demo",
-}: {
-  location: string;
-  demoHref?: string;
-  demoLabel?: string;
-}) {
+export function CommercialHeroActions({ location }: { location: string; demoHref?: string; demoLabel?: string }) {
   return (
-    <ConversionActionGroup
-      location={location}
-      surface="commercial_hero_actions"
-      className="mt-10"
-      actions={[
-        { href: demoHref, label: demoLabel, style: "primary", analyticsAction: "demo" },
-        { href: workflowCallHref, label: "Book a free 20-minute call", style: "secondary", analyticsAction: "book_call" },
-        { href: "/pricing", label: "See pricing", style: "text", analyticsAction: "pricing" },
-      ]}
-    />
+    <div className="mt-10" data-analytics-location={location} data-analytics-surface="commercial_hero_actions">
+      <ConversionActionGroup
+        location={location}
+        surface="commercial_hero_action_buttons"
+        actions={[
+          { href: workflowCallHref, label: shaunCallLabel, style: "primary", analyticsAction: "book_call" },
+          { href: "/signup", label: freeWorkspaceLabel, style: "secondary", analyticsAction: "free_workspace", freeWorkspace: true },
+        ]}
+      />
+      <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-zinc-500">{shaunCallPromiseShort}</p>
+    </div>
   );
 }
 
@@ -28,7 +22,6 @@ export function CommercialFinalCta({
   location,
   title,
   body,
-  demoHref = "/demo",
 }: {
   location: string;
   title: string;
@@ -43,11 +36,10 @@ export function CommercialFinalCta({
       title={title}
       body={body}
       actions={[
-        { href: demoHref, label: "Explore the interactive demo", style: "primary", analyticsAction: "demo" },
-        { href: workflowCallHref, label: "Book a free 20-minute workflow call", style: "secondary", analyticsAction: "book_call" },
-        { href: "/pricing", label: "See current pricing", style: "text", analyticsAction: "pricing" },
+        { href: workflowCallHref, label: shaunCallLabel, style: "primary", analyticsAction: "book_call" },
+        { href: "/signup", label: freeWorkspaceLabel, style: "secondary", analyticsAction: "free_workspace", freeWorkspace: true },
       ]}
-      footer={<>Want the system configured around your business? <a href="/done-for-you-setup" className="font-medium text-zinc-700 underline underline-offset-4" data-analytics-action="done_for_you">See Done For You setup.</a></>}
+      footer={shaunCallPromiseShort}
     />
   );
 }

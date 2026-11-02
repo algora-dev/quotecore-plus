@@ -3,13 +3,14 @@ import Script from "next/script";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import TwoPathCta from "@/components/conversion/TwoPathCta";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 import { SITE_URL } from "@/lib/seo/site-url";
 
 export const metadata: Metadata = {
   title: "Trust and Security",
   description:
-    "How QuoteCore+ protects your data: encrypted storage, row-level security, free tools with no signup, clear subscription terms, cancellation controls, and data export options.",
+    "How QuoteCore+ protects your data: encrypted storage, row-level security, a no-expiry Free Workspace, clear subscription terms, cancellation controls, and data export options.",
   alternates: {
     canonical: "https://quote-core.com/trust",
     languages: hreflangLanguages("/trust"),
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Trust and Security",
     description:
-      "How QuoteCore+ protects your data: encrypted storage, row-level security, free tools with no signup, clear subscription terms, cancellation controls, and data export options.",
+      "How QuoteCore+ protects your data: encrypted storage, row-level security, a no-expiry Free Workspace, clear subscription terms, cancellation controls, and data export options.",
     url: "https://quote-core.com/trust",
     siteName: "QuoteCore+",
     type: "website",
@@ -58,8 +59,8 @@ const securityFacts = [
 
 const planFacts = [
   {
-    title: "Try the workflow before subscribing",
-    body: "Use the interactive app demo or standalone free tools to evaluate QuoteCore+ before starting a paid subscription.",
+    title: "Start with a Free Workspace",
+    body: "Create a real QuoteCore+ workspace with no card and no expiry. Use it on your own jobs, and open the optional Guided Walkthrough whenever you want help learning the workflow.",
   },
   {
     title: "Manage your subscription",
@@ -217,17 +218,11 @@ export default function TrustPage() {
         </section>
 
         {/* CTA */}
-        <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight">Get started</h2>
-            <p className="mt-2 text-zinc-600">Free tools with no signup. Current paid configurations start at US$29/month; explore the interactive demo before subscribing. Cancel anytime.</p>
-            <a href="/demo" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-              Explore the interactive demo
-            </a>
-            <p className="mt-4 text-sm text-zinc-500">
-              <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>
-            </p>
-          </div>
+        <section className="mx-auto max-w-4xl px-6 pb-24 lg:px-8">
+          <TwoPathCta
+            title="Start without committing to a plan."
+            description="Create a Free Workspace with no card and no expiry, or talk through your workflow with Shaun before deciding what QuoteCore+ needs to look like for your business."
+          />
         </section>
 
         <SiteFooter />

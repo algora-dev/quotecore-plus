@@ -9,9 +9,7 @@ import { validYouTubeId, type HomepageConfig } from './homepage-config';
 import n from './ExploreNextSteps.module.css';
 
 /** Small, optional next steps directly after the feature showcase. */
-export function ExploreNextSteps({ config, pricingHref = '/pricing', setupHref = '/#setup' }: {
-  config: HomepageConfig; pricingHref?: string; setupHref?: string;
-}) {
+export function ExploreNextSteps({ config }: { config: HomepageConfig }) {
   const panelId = useId();
   const [expanded, setExpanded] = useState(false);
   const [modal, setModal] = useState<'video' | 'quiz' | null>(null);
@@ -73,6 +71,6 @@ export function ExploreNextSteps({ config, pricingHref = '/pricing', setupHref =
       </div>
     </div>
     {modal === 'video' && <OverviewVideoDialog config={config} onClose={() => setModal(null)} />}
-    <FitQuizDialog open={modal === 'quiz'} onClose={() => setModal(null)} demoHref={config.demoHref} pricingHref={pricingHref} setupHref={setupHref} />
+    <FitQuizDialog open={modal === 'quiz'} onClose={() => setModal(null)} />
   </section>;
 }

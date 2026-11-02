@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { FreeWorkspaceButton } from '@/components/marketing/FreeWorkspaceButton';
 
 /**
  * DEMO Guide Me - lightweight multi-step tutorial modal for the takeoff demo.
@@ -177,17 +178,14 @@ export function DemoLimitModal({ open, title, body, onClose }: { open: boolean; 
           <h3 className="text-base font-semibold text-slate-900">{title}</h3>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
           <div className="mt-6 flex flex-col gap-2">
-            <a
-              href="/signup?source=takeoff-demo"
-              className="w-full inline-flex items-center justify-center rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
-            >
-              Sign up for free
-            </a>
+            <FreeWorkspaceButton variant="primary" size="large" className="w-full">
+              Create a Free Workspace
+            </FreeWorkspaceButton>
             <button
               onClick={onClose}
-              className="w-full py-2.5 text-sm font-medium text-slate-600 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+              className="w-full min-h-11 rounded-xl border border-slate-300 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
             >
-              Continue with the demo
+              Continue with the sample
             </button>
           </div>
         </div>

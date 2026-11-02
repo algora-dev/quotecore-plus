@@ -36,7 +36,7 @@ export function AccountDialog({intent,account,auth,onClose,prepare,onVerified,no
         <p className={s.authFine}>No password or payment card needed. Confirm your email to activate the benefits.</p>
       </form>
       {intent==='signin'&&<Disclosure title="Already use a password?" subtitle="Sign in with your existing details"><form onSubmit={e=>{e.preventDefault();void run(async()=>{ready(null);await auth.password(email,password);const verified=await account.refresh();if(verified)onVerified();else setMessage('Please confirm your email to activate your free-tool benefits.');});}}><Field label="Email" type="email" autoComplete="username" required value={email} onChange={e=>setEmail(e.target.value)}/><Field label="Password" type="password" autoComplete="current-password" required value={password} onChange={e=>setPassword(e.target.value)}/><Button type="submit" variant="primary" pending={busy}>Sign in</Button></form></Disclosure>}
-      <p className={s.authSeparate}><Icon name="shield"/>This is a free tools account. The full QuoteCore+ app is a separate paid product.</p>
+      <p className={s.authSeparate}><Icon name="shield"/>This is your free-tools account. When you want the connected app, you can create a separate QuoteCore+ Free Workspace with no card or expiry.</p>
       <p className={s.authTerms}>By continuing, you agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</p>
     </>:stage==='email'?<>
       <div className={s.emailIllustration}><Icon name="message"/><Icon name="check"/></div>

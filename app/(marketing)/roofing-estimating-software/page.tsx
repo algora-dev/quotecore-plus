@@ -15,11 +15,11 @@ import {
 export const metadata: Metadata = {
   title: "Roofing Estimating Software | QuoteCore+",
   description:
-    "Roofing estimating software with digital takeoff on phone, tablet or desktop, Roof Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Configurations from US$29/month through the pricing builder.",
+    "Roofing estimating software with digital takeoff on phone, tablet or desktop, Roof Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Start in a Free Workspace, then upgrade only if you need more features, capacity or usage.",
   openGraph: {
     title: "Roofing Estimating Software | QuoteCore+",
     description:
-      "Roofing estimating software with digital takeoff on phone, tablet or desktop, Roof Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Configurations from US$29/month through the pricing builder.",
+      "Roofing estimating software with digital takeoff on phone, tablet or desktop, Roof Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Start in a Free Workspace, then upgrade only if you need more features, capacity or usage.",
     url: "/roofing-estimating-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -179,24 +179,12 @@ export default function RoofingEstimatingSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure roofs on site or in the office - phone, tablet or desktop - with Roof Scan Assist, calculate materials and labour automatically with Smart Components&#8482;, and turn estimates into quotes without re-entering data. Configurations from US$29/month through the pricing builder.
+              Measure roofs on site or in the office - phone, tablet or desktop - with Roof Scan Assist, calculate materials and labour automatically with Smart Components&#8482;, and turn estimates into quotes without re-entering data. Start in a Free Workspace, then upgrade only if you need more features, capacity or usage.
             </p>
 
             <CommercialHeroActions location="roofing_estimating_hero" />
 
-            <p className="mt-3 text-sm text-zinc-500">Free tools stay free. The demo and workflow call are available before subscribing.</p>
-
-            {/* Two entry paths */}
-            <div className="mx-auto mt-6 grid max-w-3xl gap-3 text-left sm:grid-cols-2">
-              <a href="/free-roof-takeoff" className="rounded-xl border border-zinc-200 bg-white px-5 py-4 transition-colors hover:border-[#FF6B35]/40">
-                <p className="text-sm font-semibold text-zinc-950">Measure the roof yourself</p>
-                <p className="mt-1 text-sm leading-6 text-zinc-600">Upload a plan or image and measure roof areas, ridges, hips and valleys - in square feet, roofing squares or m². <span className="text-[#BD4A1A]">Try the free roof takeoff tool &rarr;</span></p>
-              </a>
-              <a href="/measurement-to-quote-tool" className="rounded-xl border border-zinc-200 bg-white px-5 py-4 transition-colors hover:border-[#FF6B35]/40">
-                <p className="text-sm font-semibold text-zinc-950">Already have the roof measurements?</p>
-                <p className="mt-1 text-sm leading-6 text-zinc-600">From a site measure, plan takeoff, aerial/satellite image or a third-party measurement report - Smart Components calculate materials, labor, waste, pitch and selling price. <span className="text-[#BD4A1A]">Open Measurement-to-Quote &rarr;</span></p>
-              </a>
-            </div>
+            <p className="mt-3 text-sm text-zinc-500">No card and no expiry. Use the Free Workspace for as long as its allowances suit you.</p>
           </div>
         </section>
 
@@ -524,15 +512,6 @@ export default function RoofingEstimatingSoftwarePage() {
               <p className="font-semibold text-zinc-950">Smart Components&#8482;</p>
               <p className="mt-1 text-sm text-zinc-600">
                 Reusable components that store pricing, labour, waste and quantities.
-              </p>
-            </a>
-            <a
-              href="/free-tools"
-              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-            >
-              <p className="font-semibold text-zinc-950">Free tools</p>
-              <p className="mt-1 text-sm text-zinc-600">
-                Roofing calculators, quote and invoice generators - free, no signup.
               </p>
             </a>
             <a

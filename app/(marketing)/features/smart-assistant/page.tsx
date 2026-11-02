@@ -78,8 +78,8 @@ export default function SmartAssistantPage() {
         eyebrow="AI estimating assistant for contractors - V1 Beta"
         title={<>Tell your estimating software what you want done.</>}
         lead="Smart Assistant gives QuoteCore+ a conversational interface. Use voice or text instead of learning where every screen, field and action lives. In V1 Beta it can draft or revise quotes, retrieve authorised account information and propose supported pricing changes, with the result left for you to review."
-        primary={{ href: '/demo', label: 'Try Smart Assistant in the demo' }}
-        secondary={{ href: bookingHref, label: 'Book a tailored 20-minute demo' }}
+        primary={{ href: bookingHref, label: 'Book 25 minutes with Shaun' }}
+        secondary={{ href: '/signup', label: 'Create my free workspace', freeWorkspace: true }}
         proof={['Voice or text', 'Built for mobile and desktop', 'Review, edit or discard the result']}
         visual={<ProductFrame src="/marketing/current-ux/smart-assistant-workspace.webp" alt="QuoteCore+ Smart Assistant alongside the estimating workspace" width={1635} height={962} eager caption="Smart Assistant is a conversational controller for the QuoteCore+ workflow, not a separate generic chatbot or voice note tool." />}
       />
@@ -194,11 +194,10 @@ export default function SmartAssistantPage() {
 
       <Section>
         <Container>
-          <SectionHeader eyebrow="Try the easier interface" title="Use the interactive demo yourself, or let us show how Smart Assistant fits the way your business already quotes." lead="The prepared demo shows the current QuoteCore+ experience. A tailored screen-share shows where the assistant can remove work for your workflow." />
+          <SectionHeader eyebrow="Try the easier interface" title="Use Smart Assistant in your Free Workspace, or talk through your workflow with Shaun." lead="Start with the real app and see what conversational tasks are useful to you. If you want help finding the highest-value use cases, talk through the way you currently quote with Shaun." />
           <ConversionPaths items={[
-            { title: 'Explore the interactive app demo', body: 'Open the prepared roofing workspace and try the current QuoteCore+ experience at your own pace.', href: '/demo', label: 'Explore the demo' },
-            { title: 'Book a tailored 20-minute demo', body: 'Tell us how your team measures, prices and quotes and we will show where the assistant can remove work. No obligation.', href: bookingHref, label: 'Book a tailored demo' },
-            { title: 'Build your configuration', body: 'Choose the Smart Assistant allowance that fits how often you expect to use conversational tasks.', href: '/pricing', label: 'See pricing' },
+            { title: 'Create your Free Workspace', body: 'Try Smart Assistant alongside the normal QuoteCore+ workflow and use the optional Guided Walkthrough if you want a structured introduction first.', href: '/signup', label: 'Create my free workspace', freeWorkspace: true },
+            { title: 'Talk it through with Shaun', body: 'Tell Shaun how you currently measure, price and quote, see where QuoteCore+ could remove work, and take away his #1 tip for winning more quoted jobs.', href: bookingHref, label: 'Book 25 minutes with Shaun' },
           ]} />
         </Container>
       </Section>
@@ -218,7 +217,7 @@ export default function SmartAssistantPage() {
         </Container>
       </Section>
 
-      <FinalCta title="Stop learning the clicks. Start with what you want done." body="Try Smart Assistant by voice or text, keep the result reviewable and use the normal QuoteCore+ interface whenever direct control is the better option." primary={{ href: '/demo', label: 'Try the interactive demo' }} secondary={{ href: bookingHref, label: 'Book a tailored 20-minute demo' }} />
+      <FinalCta title="Stop learning the clicks. Start with what you want done." body="Try Smart Assistant by voice or text, keep the result reviewable and use the normal QuoteCore+ interface whenever direct control is the better option." primary={{ href: bookingHref, label: 'Book 25 minutes with Shaun' }} secondary={{ href: '/signup', label: 'Create my free workspace', freeWorkspace: true }} />
       <div style={{ height: 72 }} />
     </PageScaffold>
   );

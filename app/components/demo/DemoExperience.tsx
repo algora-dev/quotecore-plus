@@ -14,6 +14,7 @@ import { useDemoSession } from './useDemoSession';
 import { DemoUnitChoice } from './DemoUnitChoice';
 import { DemoInfoModal } from './DemoInfoModal';
 import { workflowCallHref } from '@/lib/booking';
+import { shaunCallPromiseShort } from '@/lib/marketing-conversion';
 import './demo-experience.css';
 
 type Props = { workspaceSlug: string; sessionId: string; expiresAt: string; initialState: DemoGuideState };
@@ -175,8 +176,8 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     quoteSeen.current = key;
     if (previous === undefined || previous === key || key === 'sent') return;
     setQuoteNotice(responded
-      ? `Your demo customer ${guidedQuote.status} the quote. Its status in your account has updated.`
-      : 'Your demo customer opened the quote. It now shows a Viewed status in your account.');
+      ? `Your fictional customer ${guidedQuote.status} the quote. Its status in the guided workspace has updated.`
+      : 'Your fictional customer opened the quote. It now shows a Viewed status in the guided workspace.');
     setOpen(true);
     router.refresh();
   }, [guidedQuote, router]);
@@ -269,10 +270,10 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     resetBusy.current = true; setResetting(true); setError('');
     try {
       const result = await demoRequest<{ slug: string }>('/api/demo/reset', demoJsonRequest({ sessionId, confirm: 'RESET', system: resetUnits }), 135_000);
-      if (!safeDemoHref(`/${result.slug}`, result.slug)) throw new Error('The fresh workspace could not be opened. Check /demo before trying again.');
+      if (!safeDemoHref(`/${result.slug}`, result.slug)) throw new Error('The fresh walkthrough workspace could not be opened. Return to the Guided Walkthrough launcher before trying again.');
       window.location.assign(`/${result.slug}`);
     } catch (cause) {
-      if (alive.current) setError(`${cause instanceof Error ? cause.message : 'Could not reset the demo.'} If the result is unclear, open the demo entry to check before resetting again.`);
+      if (alive.current) setError(`${cause instanceof Error ? cause.message : 'Could not reset the walkthrough.'} If the result is unclear, return to the Guided Walkthrough launcher before resetting again.`);
       resetBusy.current = false; if (alive.current) setResetting(false);
     }
   }
@@ -317,9 +318,10 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     } finally { if (alive.current) setCopying(false); }
   }
   const accountHref = normalAccountHref(mounted ? window.location.hostname : '');
+  const callHref = workflowCallHref.startsWith('http') ? workflowCallHref : `https://quote-core.com${workflowCallHref}`;
   const stepCopy = step?.event === 'email.sent' && location.inCustomerEditor
     ? 'Press *Save Quote* at the top of the editor. In Job Space, choose *Send Quote* and enter the address you want to receive it.'
-    : step?.event === 'email.sent' ? 'Choose *Send Quote* in this Job Space. Enter your email address and send the demo quote.'
+    : step?.event === 'email.sent' ? 'Choose *Send Quote* in this Job Space. Enter your email address and send the fictional quote.'
     : assistantNeedsDraft ? 'This lesson edits a draft created by the Assistant. First use the create request below, or skip this lesson to try finding work instead.'
     : step?.copy;
   const assistantInstruction = step?.event === 'assistant.created'
@@ -339,9 +341,9 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
 
   const overlays = <div data-qc-ui="v2" className="qc-demo-overlays" data-assistant-open={assistantOpen} data-assistant-chapter={assistantStep}>
     <p className="qc-demo-announcement" role="status" aria-live="polite" aria-atomic="true">{state.welcomed && state.mode === 'guided' && !expired ? `${chapter.title}: ${step?.title ?? 'chapter finished'}. ${progress.done} lessons completed${progress.skipped ? `, ${progress.skipped} skipped` : ''}.` : ''}</p>
-    {!open && !expired && !mobileNotice && <button ref={trigger} className="qc-demo-reopen" type="button" onClick={showGuidance} aria-expanded={false} aria-controls="qc-demo-guide"><span>Demo guide</span><small>{progress.handled}/{progress.total} lessons · Resume</small></button>}
+    {!open && !expired && !mobileNotice && <button ref={trigger} className="qc-demo-reopen" type="button" onClick={showGuidance} aria-expanded={false} aria-controls="qc-demo-guide"><span>Guided walkthrough</span><small>{progress.handled}/{progress.total} lessons · Resume</small></button>}
     {assistantOpen && open && !expired && <QcButton className="qc-demo-assistant-return" variant="secondary" onClick={() => window.dispatchEvent(new Event('qc-hide-assistant'))}>Hide Assistant to see the guide</QcButton>}
-    {showGuide && <aside id="qc-demo-guide" ref={widget} tabIndex={-1} className="qc-demo-guide" aria-label="QuoteCore+ demo guide" style={position ? { left: position.x, top: position.y, right: 'auto', bottom: 'auto' } : undefined}>
+    {showGuide && <aside id="qc-demo-guide" ref={widget} tabIndex={-1} className="qc-demo-guide" aria-label="QuoteCore+ Guided Walkthrough" style={position ? { left: position.x, top: position.y, right: 'auto', bottom: 'auto' } : undefined}>
       <header className="qc-demo-guide-head" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}>
         <button type="button" className="qc-demo-drag" aria-label="Move guide with arrow keys. Escape resets its position." onKeyDown={event => {
           if (event.key === 'Escape') { event.stopPropagation(); setPosition(null); }
@@ -349,7 +351,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
           if (delta[event.key] && widget.current) { event.preventDefault(); const rect = widget.current.getBoundingClientRect(); setPosition(clampGuidePosition({ x: rect.left + delta[event.key].x, y: rect.top + delta[event.key].y }, rect.width, rect.height, window.innerWidth, window.innerHeight)); }
         }}><span aria-hidden="true">⠿</span></button>
         <div><span>CHAPTER {chapterIndex + 1} OF 4</span><strong>{chapter.title}</strong></div><div className="qc-demo-menu"><button type="button" className="qc-demo-menu-btn" aria-haspopup="menu" aria-expanded={menuOpen} aria-label="Guide menu" onClick={() => setMenuOpen(v => !v)}><span aria-hidden="true" /><span aria-hidden="true" /><span aria-hidden="true" /></button>
-        {menuOpen && <div className="qc-demo-menu-pop" role="menu"><button type="button" role="menuitem" className="qc-demo-menu-item" onClick={() => { setMenuOpen(false); setInfoOpen(true); }}>Demo info</button><QcLinkButton variant="ghost" size="sm" className="qc-demo-menu-item" role="menuitem" href={`/${workspaceSlug}/demo-guide`}>All chapters</QcLinkButton><button type="button" role="menuitem" className="qc-demo-menu-item" onClick={() => { setPosition(null); setMenuOpen(false); }}>Reset position</button></div>}</div>
+        {menuOpen && <div className="qc-demo-menu-pop" role="menu"><button type="button" role="menuitem" className="qc-demo-menu-item" onClick={() => { setMenuOpen(false); setInfoOpen(true); }}>Walkthrough info</button><QcLinkButton variant="ghost" size="sm" className="qc-demo-menu-item" role="menuitem" href={`/${workspaceSlug}/demo-guide`}>All chapters</QcLinkButton><button type="button" role="menuitem" className="qc-demo-menu-item" onClick={() => { setPosition(null); setMenuOpen(false); }}>Reset position</button></div>}</div>
       </header>
       <div className="qc-demo-progress" role="progressbar" aria-label="Guide lessons handled" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.handled} aria-valuetext={`${progress.done} completed, ${progress.skipped} skipped, ${progress.total} total`}><i style={{ width: `${100 * progress.handled / progress.total}%` }} /></div>
       <button type="button" className="qc-demo-hide" onClick={collapse} aria-label="Hide the demo guide"><span>Hide guide</span><span aria-hidden="true">▾</span></button>
@@ -401,7 +403,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
           {step.event === 'email.sent' && location.onPage && features && !features.selfSend && <p className="qc-demo-note" role="status">Email delivery is switched off on this deployment. Skip this optional lesson to continue to Smart Assistant.</p>}
           {!reviewing && !required && !assistantFoundReady && <QcButton className="qc-demo-skip" variant="ghost" size="sm" disabled={pending} onClick={() => void runCommand({ action: 'skip' })}>Skip this optional lesson</QcButton>}
         </> : <>
-          <p className="qc-demo-eyebrow">{finished ? 'DEMO COMPLETE' : 'CHAPTER FINISHED'}</p><h2>{finished ? 'Well done. That’s a real quote, built your way.' : `${chapter.title} complete`}</h2>
+          <p className="qc-demo-eyebrow">{finished ? 'WALKTHROUGH COMPLETE' : 'CHAPTER FINISHED'}</p><h2>{finished ? 'Well done. That’s a real quote, built your way.' : `${chapter.title} complete`}</h2>
           <p>{finished ? 'You set up pricing, measured a roof, prepared a customer quote and put Smart Assistant to work. And you’ve only scratched the surface.' : 'Your progress is saved. Continue when you’re ready.'}</p>
           <div className="qc-demo-actions">{nextChapter && !finished ? <QcButton variant="primary" pending={pending} onClick={() => void runCommand({ action: 'chapter', chapter: nextChapter.id }, true)}>Continue to {nextChapter.title}</QcButton> : <QcButton variant="primary" onClick={() => setCompleteOpen(true)}>See what’s next</QcButton>}</div>
         </>}
@@ -412,29 +414,29 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
         ? <QcButton variant="secondary" onClick={() => window.dispatchEvent(new Event('qc-open-assistant'))}>{assistantOpen ? 'Smart Assistant result is open' : 'Review result in Smart Assistant'}</QcButton>
         : <><QcButton variant="primary" disabled={copying || !units} onClick={() => void copyPrompt(true)}>{copying ? 'Copying…' : assistantOpen ? 'Copy example & return to Assistant' : 'Copy example & open Assistant'}</QcButton>{copyStatus.startsWith('Clipboard') && <QcButton variant="secondary" onClick={() => window.dispatchEvent(new Event('qc-open-assistant'))}>Open Assistant without copying</QcButton>}</>}</div></div>}
           </aside>}
-    <QcDialog open={resetOpen && (!expired || resetting)} pending={resetting} onRequestClose={() => setResetOpen(false)} title={resetting ? 'Preparing your fresh demo' : 'Start this demo again?'} description={resetting ? 'Keep this tab open while we prepare your fictional workspace.' : 'This removes your demo edits and guide progress. Choose the units for the fresh workspace. AI and email allowances do not renew.'}
-      footer={!resetting && <div className="qc-demo-actions"><QcButton variant="primary" disabled={!resetUnits} onClick={() => void reset()}>Replace my demo &amp; start fresh</QcButton><QcButton variant="ghost" onClick={() => setResetOpen(false)}>Keep my current demo</QcButton></div>}>
+    <QcDialog open={resetOpen && (!expired || resetting)} pending={resetting} onRequestClose={() => setResetOpen(false)} title={resetting ? 'Preparing your fresh walkthrough' : 'Start this walkthrough again?'} description={resetting ? 'Keep this tab open while we prepare your fictional workspace.' : 'This removes your walkthrough edits and guide progress. Choose the units for the fresh workspace. AI and email allowances do not renew.'}
+      footer={!resetting && <div className="qc-demo-actions"><QcButton variant="primary" disabled={!resetUnits} onClick={() => void reset()}>Start fresh walkthrough</QcButton><QcButton variant="ghost" onClick={() => setResetOpen(false)}>Keep current walkthrough</QcButton></div>}>
       {!resetting && <DemoUnitChoice value={resetUnits} onChange={setResetUnits} />}{error && <p role="alert" className="qc-demo-error">{error}</p>}
     </QcDialog>
     <QcDialog open={mobileNotice && !expired && !resetting} onRequestClose={closeMobileNotice} title="Mobile user heads up" description="Digital takeoff and the smart assistant work in your browser, well enough to test. They just don't fit the screen optimally there. In the main mobile app they get the full experience, designed for that screen. Everything else works great right here."
-      footer={<div className="qc-demo-actions"><QcButton variant="primary" onClick={closeMobileNotice}>Start the demo</QcButton></div>} />
-    <QcDialog open={expired && !resetting} onRequestClose={() => window.location.assign('/demo')} title="This demo has ended" description="It expired or was reset in another tab. Start fresh to try again. AI and email allowances carry over.">
-      <div className="qc-demo-actions"><QcLinkButton variant="primary" href="/demo">Open a fresh demo</QcLinkButton><QcLinkButton variant="ghost" href={accountHref}>Get your own account</QcLinkButton></div>
+      footer={<div className="qc-demo-actions"><QcButton variant="primary" onClick={closeMobileNotice}>Start the walkthrough</QcButton></div>} />
+    <QcDialog open={expired && !resetting} onRequestClose={() => window.location.assign('/demo')} title="This walkthrough has ended" description="It expired or was reset in another tab. Start fresh to try again. AI and email allowances carry over.">
+      <div className="qc-demo-actions"><QcLinkButton variant="primary" href="/demo">Open a fresh walkthrough</QcLinkButton><QcLinkButton variant="ghost" href={accountHref}>Create my Free Workspace</QcLinkButton></div>
     </QcDialog>
     <QcDialog open={completeOpen && !expired} onRequestClose={() => setCompleteOpen(false)} size="lg" labelledBy="qc-demo-complete-title" className="qc-demo-complete-dialog"
       footer={<div className="qc-demo-complete-actions">
-        <QcLinkButton variant="primary" href="https://quote-core.com/pricing" target="_blank" rel="noopener noreferrer">Explore pricing</QcLinkButton>
+        <QcLinkButton variant="primary" href={callHref}>Book 25 minutes with Shaun</QcLinkButton>
         <div className="qc-demo-complete-row">
-          <QcLinkButton variant="secondary" href="https://quote-core.com/done-for-you-setup" target="_blank" rel="noopener noreferrer">See Done-For-You packages</QcLinkButton>
-          <QcLinkButton variant="secondary" href={workflowCallHref} target="_blank" rel="noopener noreferrer">Book a free 20-minute call</QcLinkButton>
+          <QcLinkButton variant="secondary" href={accountHref}>Create my Free Workspace</QcLinkButton>
         </div>
-        <QcButton variant="ghost" onClick={() => setCompleteOpen(false)}>Continue exploring the demo</QcButton>
+        <p className="qc-demo-complete-note">{shaunCallPromiseShort}</p>
+        <QcButton variant="ghost" onClick={() => setCompleteOpen(false)}>Continue exploring the walkthrough</QcButton>
       </div>}>
       <div className="qc-demo-complete">
         <div className="qc-demo-complete-hero">
           <span className="qc-demo-complete-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12.5 4.2 4.2L19 7" /></svg></span>
           <div>
-            <p className="qc-demo-complete-eyebrow">Demo complete</p>
+            <p className="qc-demo-complete-eyebrow">Walkthrough complete</p>
             <h2 id="qc-demo-complete-title">Nice work. You just ran the real QuoteCore+ workflow.</h2>
             <p className="qc-demo-complete-sub">Everything you did is how QuoteCore+ runs day to day. The full app adds your own component library and branding, purchase orders and invoices, automatic quote follow-ups and integrations.</p>
           </div>
@@ -444,7 +446,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
             <div key={item.id} className="qc-demo-complete-chapter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" /></svg><div><strong>{item.title}</strong><span>{result.done}/{result.total} completed{result.skipped ? ` · ${result.skipped} skipped` : ''}</span></div></div>
           ); })}
         </div>
-        <p className="qc-demo-complete-note">Your saved work stays in this demo until it expires. Come back any time.</p>
+        <p className="qc-demo-complete-note">Your guided work stays in this fictional workspace until it expires. Come back any time.</p>
       </div>
     </QcDialog>
     <DemoInfoModal open={infoOpen && !expired && !resetting && !mobileNotice} welcomed={state.welcomed} pending={pending}
@@ -460,5 +462,5 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
       }} />
   </div>;
 
-  return <><div className="qc-demo-banner"><strong>DEMO</strong><span className="qc-demo-banner-context">{demoSystemLabel(units ?? undefined)}<span> · Until {expiryLabel}</span></span><button type="button" onClick={showGuidance} aria-expanded={showGuide} aria-controls="qc-demo-guide">Guide</button><button type="button" onClick={() => setInfoOpen(true)}>Demo info</button><button type="button" onClick={beginReset} disabled={expired || resetting}>Start fresh</button><a href={accountHref}>Get your own account</a></div>{mounted && createPortal(overlays, portalHost ?? document.body)}</>;
+  return <><div className="qc-demo-banner"><strong>GUIDED</strong><span className="qc-demo-banner-context">{demoSystemLabel(units ?? undefined)}<span> · Until {expiryLabel}</span></span><button type="button" onClick={showGuidance} aria-expanded={showGuide} aria-controls="qc-demo-guide">Guide</button><button type="button" onClick={() => setInfoOpen(true)}>Walkthrough info</button><button type="button" onClick={beginReset} disabled={expired || resetting}>Start fresh</button><a href={accountHref}>Free Workspace</a></div>{mounted && createPortal(overlays, portalHost ?? document.body)}</>;
 }

@@ -6,7 +6,7 @@
   --orange-ink: #b63d0a;
   --orange: #ff6b35;
   --orange-bright: #ff8a3d;
-  --focus-canvas: #0b0d10;
+  --focus-canvas: #0a0b10;
   --focus-surface: #12151a;
   --focus-raised: #181c22;
   --focus-text: #f7f8fa;
@@ -787,3 +787,14 @@ button.optionalNextAction:hover { border-color: #ffb36b; background: #ffffff12; 
 
 .heroDevice { margin-top: 18px; }
 .demoDevice { margin-bottom: 18px; }
+
+/* 2026-11 conversion refresh: founder identity directly under the hero CTA. */
+.heroFounderStrip { display:flex; align-items:center; gap:11px; max-width:520px; margin-top:18px; }
+.heroFounderStrip img { width:44px; height:44px; border-radius:50%; object-fit:cover; border:1px solid rgba(25,27,32,.12); box-shadow:0 5px 15px rgba(25,27,32,.08); }
+.heroFounderStrip p { display:grid; grid-template-columns:auto 1fr; column-gap:8px; row-gap:1px; margin:0; min-width:0; }
+.heroFounderStrip strong { color:#191b20; font-size:12px; font-weight:700; }
+.heroFounderStrip span { color:#596273; font-size:11px; }
+.heroFounderStrip em { grid-column:1 / -1; margin-top:2px; color:#303641; font-size:11.5px; line-height:1.45; font-style:normal; }
+.heroTip { display:flex; align-items:center; gap:7px; max-width:510px; margin-top:10px; color:#b63d0a; font-size:11px; font-weight:650; line-height:1.5; }
+.heroTip svg { flex:0 0 auto; }
+@media (max-width: 960px) { .heroGrid { grid-template-columns:1fr; gap:28px; padding-block:20px 54px; } .heroCopy { max-width:720px; padding-bottom:16px; } }

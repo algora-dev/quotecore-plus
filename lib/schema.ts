@@ -16,7 +16,7 @@ export function buildPricingOffers(currency: "USD" = "USD") {
     offerCount: 1,
     availability: "https://schema.org/InStock",
     category: "Configurable monthly subscription",
-    description: `Build a QuoteCore+ monthly configuration around workload and selected tools. Current public configurations range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax} per month.`,
+    description: `Paid QuoteCore+ configurations currently range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax} per month. Create a Free Workspace first, then build the exact plan inside Billing when you know which features and usage you need.`,
   };
 }
 

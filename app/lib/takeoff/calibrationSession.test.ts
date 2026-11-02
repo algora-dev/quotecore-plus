@@ -21,7 +21,6 @@ const IMAGE: CalibrationImageDescriptor = {
   pageId: 'page-1',
   imageRevision: 'rev-1',
   frameKey: 'frame-1',
-  frameKey: 'frame-1',
   sourceWidth: 4000,
   sourceHeight: 3000,
   sceneWidth: 2000,

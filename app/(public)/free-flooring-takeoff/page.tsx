@@ -32,7 +32,7 @@ const FAQS = [
   {
     question: 'Do I need to create an account?',
     answer:
-      'No. You can upload a plan, measure it, and get the full output without an account. Use the free Quote Generator to continue with a document, or explore the paid QuoteCore+ app for saved jobs and reusable pricing.',
+      'No. You can upload a plan, measure it, and get the full output without an account. Use the free Quote Generator to continue with a document, or create a QuoteCore+ Free Workspace for saved jobs and reusable pricing.',
   },
   {
     question: 'What is a flooring takeoff?',
@@ -62,7 +62,7 @@ const FAQS = [
   {
     question: 'Are my plans or measurements saved?',
     answer:
-      'No. Nothing is saved and the session refreshes every time you leave. Your plan is used only for that takeoff session. Download your report before closing the page, or open your quantities in the free Quote Generator. Saved libraries and jobs are available in the paid app.',
+      'No. Nothing is saved and the session refreshes every time you leave. Your plan is used only for that takeoff session. Download your report before closing the page, or open your quantities in the free Quote Generator. Saved libraries and jobs are available in a QuoteCore+ Free Workspace.',
   },
 ];
 
@@ -95,7 +95,7 @@ const TRUST_POINTS = [
   'No signup required',
   'No credit card',
   'Metric & imperial',
-  'Session only — download your results',
+  'Session only. Download your results',
 ];
 
 const MEASUREMENTS = [

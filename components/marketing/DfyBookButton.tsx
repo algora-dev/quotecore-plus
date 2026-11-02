@@ -11,7 +11,7 @@ function CalendarIcon() {
 /**
  * Done-For-You booking CTA. Books via the dedicated DFY calendar
  * (NEXT_PUBLIC_DFU_BOOKING_URL, never the product-demo calendar) and falls
- * back to /contact so the CTA is never dead. Opens in a new tab.
+ * back to /contact so the CTA is never dead.
  */
 export function DfyBookButton({ cta, label, size = 'default' }: {
   cta: 'hero' | 'pricing' | 'final';

@@ -28,33 +28,36 @@ export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationC
     <header className="qc-home-heading">
       <div><p className="qc-eyebrow">{isDemo ? 'Your demo' : 'Your workspace'}</p><h1>{isDemo ? 'Welcome to your demo workspace' : <>Welcome {newUser ? '' : 'back, '}{firstName}</>}</h1>
         <p>Measure with confidence. Price your work. Send a great quote.</p></div>
-      <Link href={`${base}/tutorials`} prefetch={false} className="qc-button" data-qc-variant="glass"><QcIcon name="help" /> Tutorials</Link>
+      <div className="flex flex-wrap items-center gap-2">
+        {newUser && !isDemo ? <a href="/demo" target="_blank" rel="noopener noreferrer" className="qc-button" data-qc-variant="primary"><QcIcon name="help" /> Guided walkthrough</a> : null}
+        <Link href={`${base}/tutorials`} prefetch={false} className="qc-button" data-qc-variant="glass"><QcIcon name="help" /> Tutorials</Link>
+      </div>
     </header>
     {!isDemo && <section className="qc-home-start" aria-labelledby="qc-home-start-title">
-      <div className="qc-home-start-copy"><span className="qc-eyebrow">{pricingFirst ? 'Build your pricing system' : resume ? 'Pick up where you left off' : 'Start something new'}</span>
-        <h2 id="qc-home-start-title">{pricingFirst ? 'Make QuoteCore use your prices' : resume ? 'Continue your work' : 'What are we pricing today?'}</h2>
+      <div className="qc-home-start-copy"><span className="qc-eyebrow">{pricingFirst ? 'Start with your pricing' : resume ? 'Pick up where you left off' : 'Start something new'}</span>
+        <h2 id="qc-home-start-title">{pricingFirst ? 'Make QuoteCore+ use your prices' : resume ? 'Continue your work' : 'What are we pricing today?'}</h2>
         <p>{pricingFirst
-          ? 'Open a familiar Smart Component, test a measurement, then enter your own costs. Set up once and reuse your pricing on every job.'
+          ? 'Add the materials, labour and pricing you already use. Set it up once, then reuse it across your own jobs.'
           : resume ? `Return to ${resume.title}. Your other jobs and starting options are below.`
           : 'Already measured the job? Start a quote. Need quantities first? Open your plan in takeoff.'}</p>
         <div className="qc-home-start-actions">
           <Link href={pricingFirst ? `${base}/components?learn=1` : resume ? resume.href : canCreateQuote ? `${base}/quotes/new` : `${base}/quotes`} prefetch={false}
             className="qc-button" data-qc-variant="primary" data-qc-size="lg">
             <QcIcon name={pricingFirst ? 'pricing' : resume ? 'quote' : 'plus'} />
-            {pricingFirst ? 'Set up your pricing' : resume ? 'Continue this job' : canCreateQuote ? 'New quote' : 'Open quotes'}<QcIcon name="arrow" />
+            {pricingFirst ? 'Add your pricing' : resume ? 'Continue this job' : canCreateQuote ? 'New quote' : 'Open quotes'}<QcIcon name="arrow" />
           </Link>
           {(pricingFirst || resume) && <Link href={canCreateQuote ? `${base}/quotes/new` : `${base}/quotes`} prefetch={false} className="qc-button" data-qc-variant="ghost">
             {canCreateQuote ? 'Start a new job' : 'Open quotes'}
           </Link>}
           <div className="qc-home-measure">{measureAction}</div>
         </div>
-        {pricingFirst && <p className="qc-home-pricing-note">Starter rates are examples, not recommended prices. Already using your company&apos;s pricing? Go straight to a job.</p>}
+        {pricingFirst && <p className="qc-home-pricing-note">Want to learn with a prepared fictional roofing business first? Open the Guided Walkthrough above, then come back to your clean workspace whenever you want.</p>}
       </div>
-      <div className="qc-home-process" aria-label={pricingFirst ? 'Check a component, make your own, price a job' : 'Measure, price, quote'}>
-        {(pricingFirst ? (['pricing','library','quote'] as const) : (['measure','pricing','quote'] as const)).map((name, index) => <div key={name}>
+      <div className="qc-home-process" aria-label={pricingFirst ? 'Add pricing, measure a job, send a quote' : 'Measure, price, quote'}>
+        {(pricingFirst ? (['pricing','measure','quote'] as const) : (['measure','pricing','quote'] as const)).map((name, index) => <div key={name}>
           <span className="qc-home-process-icon"><QcIcon name={name} /></span>
-          <strong>{(pricingFirst ? ['Try one','Make your own','Price a job'] : ['Measure','Price','Quote'])[index]}</strong>
-          <span>{(pricingFirst ? ['Test a familiar item','Use your costs','Apply measurements'] : ['Capture the job','Use your pricing','Make it yours'])[index]}</span>
+          <strong>{(pricingFirst ? ['Add pricing','Measure a job','Send a quote'] : ['Measure','Price','Quote'])[index]}</strong>
+          <span>{(pricingFirst ? ['Use your real costs','Apply it to a job','Make it yours'] : ['Capture the job','Use your pricing','Make it yours'])[index]}</span>
         </div>)}
       </div>
     </section>}

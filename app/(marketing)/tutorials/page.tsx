@@ -244,22 +244,15 @@ export default function TutorialsPage() {
           </div>
 
           {/* Explore features */}
-          <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-16 grid gap-4">
             <a href="/features" className="rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-slate-900">Explore features</p>
               <p className="mt-1 text-sm text-slate-500">Digital takeoff, Roof Scan Assist, Smart Components, sending and tracking, and more.</p>
             </a>
-            <a href="/demo" className="rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-slate-900">Explore the interactive demo</p>
-              <p className="mt-1 text-sm text-slate-500">Free tools, no signup. Explore the interactive demo before subscribing to the paid app.</p>
-            </a>
-            <a href="/free-tools" className="rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-slate-900">Free tools</p>
-              <p className="mt-1 text-sm text-slate-500">Roofing calculators, takeoff builder, and document generators.</p>
-            </a>
+
           </div>
         </section>
-        {/* Demo card */}
+        {/* Conversion card */}
         <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
           <DemoCTACard location="tutorials_bottom" variant="inline" className="mx-auto max-w-2xl" />
         </section>

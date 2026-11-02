@@ -43,7 +43,7 @@ export function ComponentBuilderModal({initial,measurementSystem='metric',trade=
         {draft.pitchEnabled&&<label className={s.formField}><span>Pitch factor</span><select value={draft.pitchType} onChange={e=>change('pitchType',e.target.value as 'rafter'|'valley_hip')}><option value="rafter">Rafter / roof surface</option><option value="valley_hip">Hip / valley</option></select><small>Uses the pitch of the roof area the measurement belongs to.</small></label>}</>}
       </div></details>
     {issues.length>0&&<div className={s.error} role="alert"><strong>Check these settings</strong><ul>{issues.map(i=><li key={i}>{i}</li>)}</ul></div>}
-    <p className={s.help}>This library is for this session. The paid app saves reusable components and pricing between jobs.</p>
+    <p className={s.help}>This library is for this session. A QuoteCore+ Free Workspace saves reusable components and pricing between jobs.</p>
    </div>
  </Dialog>;
 }

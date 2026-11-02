@@ -3,15 +3,17 @@
 import { useState } from "react";
 import { FreeToolsAuthButton } from "./FreeToolsAuthButton";
 import { trackEvent } from "@/lib/analytics";
+import { MarketingButton } from "@/components/marketing/MarketingButton";
+import { FreeWorkspaceButton } from "@/components/marketing/FreeWorkspaceButton";
+import { workflowCallHref } from "@/lib/booking";
+import { shaunCallLabelShort } from "@/lib/marketing-conversion";
 
 const navItems = [
   { label: "Home", href: "/" },
   { label: "How it works", href: "/#how-it-works" },
   { label: "Services", href: "/services" },
-  { label: "Pricing", href: "/#pricing" },
-  { label: "Blog", href: "/blog" },
-  { label: "Contact us", href: "/contact" },
   { label: "Pricing", href: "/pricing" },
+  { label: "Blog", href: "/blog" },
 ];
 
 /**
@@ -24,19 +26,11 @@ const navItems = [
 export default function FreeToolsHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const headerButton =
-    "inline-flex h-11 min-w-[138px] items-center justify-center rounded-full px-5 text-sm transition-colors duration-200";
-
-  const contactButton =
-    `${headerButton} pill-shimmer border border-zinc-300 bg-white font-medium text-zinc-900 shadow-[0_6px_24px_rgba(255,255,255,0.18)_inset,0_10px_30px_rgba(0,0,0,0.04)] backdrop-blur-3xl hover:border-[#FF6B35]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2`;
-
-  const signupButton =
-    `${headerButton} bg-[#FF6B35] font-semibold text-white shadow-[0_14px_34px_rgba(255,107,53,0.22)] hover:bg-[#E55A28] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2`;
-
   const menuButton =
-    "pill-shimmer inline-flex h-12 w-12 items-center justify-center rounded-full border border-zinc-300 bg-white text-zinc-900 shadow-[0_8px_22px_rgba(15,23,42,0.08)] transition-colors duration-200 hover:border-[#FF6B35]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2";
+    "pill-shimmer inline-flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-300 bg-white text-zinc-900 shadow-[0_8px_22px_rgba(15,23,42,0.08)] transition-colors duration-200 hover:border-[#FF6B35]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B63D0A] focus-visible:ring-offset-2";
 
   return (
+    <>
     <header className="sticky top-0 z-50 border-b border-white/60 bg-white/72 shadow-[0_8px_30px_rgba(255,255,255,0.25)_inset,0_12px_40px_rgba(0,0,0,0.05)] backdrop-blur-[24px]">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
         <a href="/" className="flex items-center gap-3" aria-label="QuoteCore+ home">
@@ -44,17 +38,24 @@ export default function FreeToolsHeader() {
         </a>
 
         <div className="flex items-center gap-3">
-          {/* Free tools auth button - primary CTA */}
+          {/* Free-tools account utility; commercial CTAs sit beside it. */}
           <FreeToolsAuthButton />
 
-          <div className="hidden items-center gap-3 md:flex">
-            <a
-              href="/contact"
-              className={contactButton}
-              onClick={() => trackEvent("contact_click", { location: "nav" })}
+          <div className="hidden items-center gap-2 lg:flex">
+            <MarketingButton
+              href={workflowCallHref}
+              variant="primary"
+              onClick={() => trackEvent("workflow_call_click", { location: "free-tools-nav" })}
             >
-              Contact us
-            </a>
+              {shaunCallLabelShort}
+            </MarketingButton>
+            <FreeWorkspaceButton
+              variant="glass"
+              className="hidden xl:inline-flex"
+              onClick={() => trackEvent("free_workspace_click", { location: "free-tools-nav" })}
+            >
+              Free Workspace
+            </FreeWorkspaceButton>
           </div>
 
           <button
@@ -97,17 +98,26 @@ export default function FreeToolsHeader() {
               ))}
             </div>
           </div>
-          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 pb-6 pt-2 sm:flex-row lg:px-8">
-            <a
-              href="/contact"
-              className="pill-shimmer inline-flex min-h-12 flex-1 items-center justify-center rounded-full border border-zinc-300 bg-white px-5 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40"
-              onClick={() => { trackEvent("contact_click", { location: "nav-menu" }); setMenuOpen(false); }}
+          <div className="mx-auto grid max-w-7xl gap-3 px-6 pb-6 pt-2 sm:grid-cols-2 lg:px-8">
+            <MarketingButton
+              href={workflowCallHref}
+              variant="primary"
+              className="w-full"
+              onClick={() => { trackEvent("workflow_call_click", { location: "free-tools-nav-menu" }); setMenuOpen(false); }}
             >
-              Contact us
-            </a>
+              {shaunCallLabelShort}
+            </MarketingButton>
+            <FreeWorkspaceButton
+              variant="glass"
+              className="w-full"
+              onClick={() => { trackEvent("free_workspace_click", { location: "free-tools-nav-menu" }); setMenuOpen(false); }}
+            >
+              Create my Free Workspace
+            </FreeWorkspaceButton>
           </div>
         </div>
       )}
     </header>
+    </>
   );
 }

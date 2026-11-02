@@ -165,7 +165,7 @@
 .noResults{border:1px dashed var(--line);padding:30px;margin-top:15px;border-radius:12px;font-size:14px}
 .noResults>a{font-size:13px;margin-left:16px;text-decoration:underline}
 .noResults svg{width:14px;height:14px}
-/* A quieter, specific bridge to the paid application. */
+/* A quieter, specific bridge to the QuoteCore+ workspace. */
 .appSection{padding:76px 0;background:radial-gradient(ellipse at 100% 100%,rgba(255,107,53,.1),transparent 53%),var(--focus-canvas)}
 .appLayout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:60px;align-items:center}
 .appSection .eyebrow{font-size:10px;letter-spacing:1.6px}

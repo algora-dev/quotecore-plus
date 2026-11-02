@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
-import { MarketingButton } from '../../MarketingButton';
+import { FreeWorkspaceButton } from '../../FreeWorkspaceButton';
 import { CapturePanel } from './CapturePanel';
 import { DocumentsShowcase } from './DocumentsShowcase';
 import { FollowUpShowcase } from './FollowUpShowcase';
@@ -235,8 +235,8 @@ export function FeatureShowcase({ id = 'workflow', config = homepageConfig, init
                     
                   </div>
                   <div className={s.actions}>
-                    <MarketingButton href={href} variant="primary" size="large" className={s.demo} onClick={() => emit({ action: 'demo_click', feature: feature.id, scene: scene.id })}>Try the Demo<ShowcaseIcon name="arrow" size={18} /></MarketingButton>
-                    <p>Explore a sample job. No signup.</p>
+                    <FreeWorkspaceButton variant="primary" size="large" className={s.demo} icon={<ShowcaseIcon name="arrow" size={18} />}>Create Free Workspace</FreeWorkspaceButton>
+                    <p>Try these features in your own account. Guided walkthrough included.</p>
                   </div>
                 </div>
 

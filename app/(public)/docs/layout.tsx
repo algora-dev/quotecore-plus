@@ -31,7 +31,7 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
               <span>Log in</span>
             </Link>
             <Link href="/signup" className={`${controls.button} ${controls.primary}`}>
-              <span>Sign up</span>
+              <span>Free Workspace</span>
             </Link>
           </div>
         </div>

@@ -26,7 +26,7 @@ export function validYouTubeId(value: string): string {
 }
 
 export const homepageConfig: HomepageConfig = {
-  demoHref: '/demo',
+  demoHref: '/free-trial',
   bookingHref: workflowCallHref,
   youtubeId: validYouTubeId(process.env.NEXT_PUBLIC_HOMEPAGE_YOUTUBE_ID ?? ''),
   videoTitle: 'See how QuoteCore+ works for you',

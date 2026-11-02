@@ -7,7 +7,8 @@ import CompetitorVideo from "./competitor-video";
 import PricingViewTracker from "./pricing-tracker";
 import { VIDEOS } from "@/lib/videos";
 import { publicPricing } from "@/lib/public-pricing";
-import { homepageConfig } from "@/components/marketing/home/homepage-config";
+import { workflowCallHref } from "@/lib/booking";
+import { freeWorkspaceLabel, shaunCallLabel, shaunCallPromiseShort } from "@/lib/marketing-conversion";
 
 /**
  * Shared server layout for competitor alternative pages.
@@ -448,17 +449,17 @@ export default function CompetitorPage({
             </div>
 
             <div className="rounded-[1.5rem] border border-orange-200 bg-white px-7 py-7 shadow-[0_0_8px_rgba(255,107,53,0.08)]">
-              <h3 className="text-lg font-semibold">Build the configuration you need</h3>
+              <h3 className="text-lg font-semibold">Try QuoteCore+ before you pay for a plan</h3>
               <p className="mt-3 text-sm leading-6 text-zinc-600">
-                Build a monthly setup around the features and usage you need. Current global configurations range from US${publicPricing.monthlyMin} to US${publicPricing.monthlyMax} per month.
+                Create a real Free Workspace, use it on your own jobs and learn which features actually help. Current paid configurations range from US${publicPricing.monthlyMin} to US${publicPricing.monthlyMax} per month when you need more features, capacity or usage.
               </p>
               <ul className="mt-5 space-y-3 text-sm leading-6 text-zinc-600">
-                <li><span className="font-medium text-zinc-900">One public pricing path.</span> The pricing builder creates your configuration around the features and usage you need.</li>
-                <li><span className="font-medium text-zinc-900">No full-app trial.</span> Explore the interactive app demo or standalone free tools before subscribing.</li>
-                <li><span className="font-medium text-zinc-900">Free tools are separate.</span> They do not create a saved paid-app workspace.</li>
+                <li><span className="font-medium text-zinc-900">No card and no expiry.</span> Keep using the Free Workspace for as long as its allowances suit your business.</li>
+                <li><span className="font-medium text-zinc-900">Guided when useful.</span> An optional Guided Walkthrough teaches the core workflow inside a preconfigured fictional roofing business.</li>
+                <li><span className="font-medium text-zinc-900">Exact plan later.</span> Build your paid configuration inside Billing only when you know what you need.</li>
               </ul>
               <div className="mt-6">
-                <TrackedCta slug={slug} location="pricing_quote_core" href="/pricing" label="Build your QuoteCore+ plan" />
+                <TrackedCta slug={slug} location="pricing_quote_core" href="/signup" label={freeWorkspaceLabel} freeWorkspace />
               </div>
             </div>
           </div>
@@ -703,29 +704,14 @@ export default function CompetitorPage({
           )}
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <TrackedCta
-              slug={slug}
-              location="hero"
-              href={data.hero.primaryCta.href}
-              label={data.hero.primaryCta.label}
-            />
-            {data.hero.ghostCta && (
-              <TrackedCta
-                slug={slug}
-                location="hero"
-                href={data.hero.ghostCta.href}
-                label={data.hero.ghostCta.label}
-                variant="ghost"
-              />
-            )}
+            <TrackedCta slug={slug} location="hero" href={workflowCallHref} label={shaunCallLabel} />
+            <TrackedCta slug={slug} location="hero" href="/signup" label={freeWorkspaceLabel} variant="ghost" freeWorkspace />
           </div>
-          <p className="mt-3 text-sm text-zinc-500">
-            The paid app works on phone, tablet and desktop. Standalone free tools have their own device support and limits. QuoteCore+ does not offer a full-app trial.
-          </p>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-zinc-500">{shaunCallPromiseShort}</p>
         </div>
       </section>
 
-      {order.map((key) => (
+      {order.filter((key) => key !== "freeTool").map((key) => (
         <Fragment key={key}>
           {key === "workflow" && threeWays && <ThreeWaysToWork {...threeWays} />}
           {sections[key]}
@@ -737,39 +723,10 @@ export default function CompetitorPage({
         <h2 className="text-3xl font-semibold sm:text-5xl">{data.finalCta.heading}</h2>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-600">{data.finalCta.body}</p>
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <TrackedCta
-            slug={slug}
-            location="final_cta"
-            href="/demo"
-            label="Explore the interactive demo"
-          />
-          <TrackedCta
-            slug={slug}
-            location="final_cta"
-            href="/free-roofing-takeoff-builder"
-            label="Try free roof takeoff"
-            variant="ghost"
-          />
-          <TrackedCta
-            slug={slug}
-            location="final_cta"
-            href={homepageConfig.bookingHref || "/contact"}
-            label="Book a tailored demo"
-            variant="ghost"
-          />
+          <TrackedCta slug={slug} location="final_cta" href={workflowCallHref} label={shaunCallLabel} />
+          <TrackedCta slug={slug} location="final_cta" href="/signup" label={freeWorkspaceLabel} variant="ghost" freeWorkspace />
         </div>
-        <p className="mt-4 text-sm text-zinc-500">Current paid configurations are built in the pricing tool. Free tools are separate and available without signup.</p>
-        <div className="mx-auto mt-12 max-w-2xl rounded-2xl border border-zinc-200 bg-zinc-50 p-6 text-left">
-          <h3 className="text-lg font-semibold">Want to test takeoff specifically?</h3>
-          <p className="mt-3 text-sm leading-7 text-zinc-600">
-            Explore the existing sample-plan takeoff flow. This demonstrates takeoff
-            only, not the complete paid app or Smart Assistant. Its device support
-            is separate from the mobile paid app.
-          </p>
-          <div className="mt-5">
-            <TrackedCta slug={slug} location="roofing_takeoff_demo" href="/takeoff-demo" label="Try focused takeoff demo" variant="ghost" />
-          </div>
-        </div>
+        <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-zinc-500">{shaunCallPromiseShort}</p>
       </section>
     </div>
   );

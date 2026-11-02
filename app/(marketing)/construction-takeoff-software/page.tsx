@@ -4,6 +4,7 @@ import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { CommercialFinalCta } from "@/components/conversion/CommercialConversion";
+import TwoPathCta from "@/components/conversion/TwoPathCta";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 import {
   buildSoftwareApplicationSchema,
@@ -14,7 +15,7 @@ import {
 export const metadata: Metadata = {
   title: "Construction Takeoff Software - Measure PDF Plans Digitally | QuoteCore+",
   description:
-    "Digital construction takeoff software for PDF plans and images. Measure roof, siding/cladding and flooring areas, lengths and quantities on phone, tablet or desktop, then feed them into materials, labour and pricing. Try the takeoff tools free - no signup.",
+    "Digital construction takeoff software for PDF plans and images. Measure roof, siding/cladding and flooring areas, lengths and quantities on phone, tablet or desktop, then feed them into materials, labour and pricing. Create a Free Workspace and try the connected takeoff workflow on your own jobs.",
   openGraph: {
     title: "Construction Takeoff Software - Measure PDF Plans Digitally | QuoteCore+",
     description:
@@ -63,7 +64,7 @@ const faqs = [
   {
     question: "Can I take off plans on my phone or tablet?",
     answer:
-      "In the paid app, yes. The full takeoff workflow - upload, calibrate, measure, Roof Scan Assist on roofs, save and continue - runs on phones and tablets, not just desktop. The free browser takeoff tools are the quickest way to try the measurement workflow; the full mobile workflow is part of the paid app.",
+      "Yes. The full QuoteCore+ takeoff workflow runs on phones and tablets as well as desktop. Create a Free Workspace to use Digital Takeoff and Roof Scan Assist inside the connected app workflow.",
   },
   {
     question: "Is this only for roofing?",
@@ -139,25 +140,7 @@ export default function ConstructionTakeoffSoftwarePage() {
               roofs, siding/cladding, floors and other measured work, then turn the measurements into materials,
               labour, pricing and professional estimates or quotes.
             </p>
-            <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center" data-analytics-location="construction_takeoff_hero" data-analytics-surface="commercial_hero_actions">
-              <a
-                href="/free-construction-takeoff-tools"
-                data-analytics-action="free_takeoff_tools"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-[#E55A28]"
-              >
-                Try the free takeoff tools
-              </a>
-              <a
-                href="/demo"
-                data-analytics-action="demo"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-zinc-300 bg-white px-8 py-3 text-base font-semibold text-zinc-900 transition-colors hover:border-[#FF6B35]/40"
-              >
-                Explore the app demo
-              </a>
-            </div>
-            <p className="mt-3 text-sm text-zinc-500">
-              Free tools need no signup. Current paid configurations start at US$29/month; explore the interactive demo before subscribing.
-            </p>
+            <TwoPathCta location="construction_takeoff_hero" className="mt-10" />
           </div>
         </section>
 
@@ -179,9 +162,7 @@ export default function ConstructionTakeoffSoftwarePage() {
             <li><strong className="text-zinc-950">Quoting / proposal</strong> = turning the priced result into the customer-facing estimate, quote, bid or proposal.</li>
           </ul>
           <p className="mt-5 text-lg leading-8 text-zinc-600">
-            QuoteCore+ covers the whole chain - but each stage also works on its own, and the core takeoff tools are
-            free without an account. In the paid app, takeoff runs on phone, tablet and desktop, so you can measure on
-            site and continue at the office.
+            QuoteCore+ covers the whole chain, but each stage can still be used independently. In your Free Workspace, takeoff runs on phone, tablet and desktop, so you can measure on site and continue at the office.
           </p>
         </section>
 
@@ -243,24 +224,6 @@ export default function ConstructionTakeoffSoftwarePage() {
           </div>
         </section>
 
-        {/* Try the workflow free */}
-        <section className="bg-zinc-50 py-16">
-          <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
-            <h2 className="text-3xl font-semibold sm:text-4xl">Try the workflow free</h2>
-            <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-zinc-600">
-              Use your own plan, calibrate the scale and measure real areas and lengths - no signup, no credit card,
-              real output you can use. The full app adds saving, reusable component libraries, AI where applicable,
-              and the connected job and document workflow.
-            </p>
-            <a
-              href="/free-construction-takeoff-tools"
-              className="mt-8 inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-[#E55A28]"
-            >
-              See all free construction takeoff tools
-            </a>
-          </div>
-        </section>
-
         {/* Full app workflow */}
         <section className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-4xl">The full app workflow</h2>
@@ -287,7 +250,7 @@ export default function ConstructionTakeoffSoftwarePage() {
           <CommercialFinalCta
             location="construction_takeoff_workflow_bridge"
             title="Measure first. Keep the rest of the job connected."
-            body="Use the free tools when you only need the takeoff. When you want the measurements to continue into reusable pricing, quotes, orders and invoices, try the app demo or talk through your workflow with us."
+            body="Create a Free Workspace to keep measurements connected to reusable pricing, quotes, orders and invoices, or talk through your current takeoff workflow with Shaun."
           />
         </section>
 
@@ -326,11 +289,9 @@ export default function ConstructionTakeoffSoftwarePage() {
           <div className="mx-auto max-w-4xl px-6 lg:px-8">
             <h2 className="text-2xl font-semibold">Keep exploring</h2>
             <ul className="mt-4 space-y-2 text-zinc-600">
-              <li><Link href="/free-construction-takeoff-tools" className={link}>Free construction takeoff tools</Link> - measure your own plans, no signup</li>
               <li><Link href="/roofing-takeoff-software" className={link}>Roofing takeoff software</Link> - roof measurement from PDF plans</li>
               <li><Link href="/construction-quoting-software" className={link}>Contractor estimating &amp; quoting software</Link> - the connected workflow</li>
               <li><Link href="/blog/how-to-measure-pdf-plans" className={link}>How to measure PDF plans</Link> - the step-by-step guide</li>
-              <li><Link href="/free-tools" className={link}>All free tools</Link> - calculators, generators and takeoff tools</li>
             </ul>
           </div>
         </section>

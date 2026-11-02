@@ -23,7 +23,7 @@ const commonHeadings: CalculatorProfile['headings'] = {
   angles: { title: 'See how the two surfaces meet.', subtitle: 'The finished included angle and the bend from flat, side by side.' },
 };
 const commonFaqs = [
-  { q: 'Are these calculators free?', a: 'Yes. The calculations, copy, CSV and print tools run in your browser without signing up. Reusing a Smart Component in the paid QuoteCore+ app is a separate next step.' },
+  { q: 'Are these calculators free?', a: 'Yes. The calculations, copy, CSV and print tools run in your browser without signing up. Reusing a Smart Component in a QuoteCore+ Free Workspace is an optional next step.' },
   { q: 'What happens when I change units?', a: 'Existing dimensions and per-unit material rates are converted. Metric uses metres for lengths and millimetres for small details; imperial uses feet and inches. Currency changes only the currency label, not the exchange rate.' },
   { q: 'Can I turn the result into a quote?', a: 'Yes. Send a length, area or priced material to the Free Quote Generator and review the details there. Tax, margin and delivery are not included in the calculator estimate. Cut depths and angles are not transferred as material quantities.' },
 ];

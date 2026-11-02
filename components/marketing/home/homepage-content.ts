@@ -5,7 +5,7 @@ export interface HomepageFaq {
   id: string;
   question: string;
   answer: string;
-  link?: { label: string; destination: 'demo' | 'pricing' | 'setup' };
+  link?: { label: string; destination: 'pricing' | 'setup' };
 }
 
 /** Visible answers and the homepage FAQ schema share this single source. */
@@ -13,7 +13,7 @@ export const homepageFaqs: HomepageFaq[] = [
   {
     id: 'getting-started',
     question: 'Do I need to be tech savvy to use QuoteCore+?',
-    answer: 'QuoteCore+ is designed to make roofing estimating and quoting straightforward. You can explore a prepared job in the demo, with personal setup and training available if you’d like a hand getting started.',
+    answer: 'No. Create a Free Workspace and use it on your own jobs, or follow the optional guided walkthrough to learn the core workflow in around 10 to 15 minutes. If you want more help, Shaun can talk you through the way you currently work.',
   },
   {
     id: 'own-pricing',
@@ -23,25 +23,24 @@ export const homepageFaqs: HomepageFaq[] = [
   {
     id: 'measurements',
     question: 'Do I need a plan to create a quote?',
-    answer: 'No. In QuoteCore+, you can enter measurements you already have or build a quote from individual items. When you have a plan, the digital takeoff tools let you measure it on screen.',
+    answer: 'No. You can enter measurements you already have or build a quote from individual items. When you need to measure the job, the digital takeoff tools let you measure a plan or image on screen.',
   },
   {
     id: 'subscription',
-    question: 'Do I have to pay for every feature?',
-    answer: 'No. Choose the tools your business needs and build your QuoteCore+ subscription around them. The pricing tool shows your options.',
-    link: { label: 'Explore subscription pricing', destination: 'pricing' },
+    question: 'Do I have to choose a paid plan before I start?',
+    answer: 'No. Start with a Free Workspace. Try the features first and upgrade only when you need more features, capacity or usage. Your exact plan is built inside Billing when you are ready.',
+    link: { label: 'See how QuoteCore+ pricing works', destination: 'pricing' },
   },
   {
     id: 'setup-and-training',
     question: 'Can you set it up and show me how to use it?',
-    answer: 'Yes. Done For You Setup starts with a free 20-minute chat about your business. We’ll agree a paid setup package before configuring your account and training you using your own jobs.',
+    answer: 'Yes. Done For You starts with a free 25-minute call with Shaun. Tell him how you work, then decide whether you want us to configure the account and hand it over live or with a custom recorded walkthrough.',
     link: { label: 'Explore Done For You Setup', destination: 'setup' },
   },
   {
-    id: 'interactive-demo',
-    question: 'Can I try it before choosing a subscription?',
-    answer: 'Yes. The QuoteCore+ interactive demo gives you a prepared roofing workspace with sample jobs to explore. Try measuring, explore the job pricing and see the customer quote before choosing a subscription.',
-    link: { label: 'Try the interactive demo', destination: 'demo' },
+    id: 'free-workspace',
+    question: 'Can I try QuoteCore+ before paying?',
+    answer: 'Yes. The Free Workspace is a real account with no expiry. Use it on your own jobs and try the optional guided walkthrough, which uses a fictional roofing business to teach the core workflow.',
   },
 ];
 

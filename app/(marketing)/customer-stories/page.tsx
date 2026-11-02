@@ -3,6 +3,7 @@ import Script from "next/script";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import TwoPathCta from "@/components/conversion/TwoPathCta";
 import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
@@ -107,22 +108,19 @@ export default function CustomerStoriesPage() {
               <h3 className="font-semibold text-slate-900">Trust and Security</h3>
               <p className="mt-1 text-sm text-zinc-600">How we protect your data and respect your business.</p>
             </a>
-            <a href="/demo" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <h3 className="font-semibold text-slate-900">Explore the interactive demo</h3>
-              <p className="mt-1 text-sm text-zinc-600">Free tools, no signup. Explore the interactive demo before subscribing to the paid app.</p>
+            <a href="/free-trial" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <h3 className="font-semibold text-slate-900">Free Workspace</h3>
+              <p className="mt-1 text-sm text-zinc-600">Use QuoteCore+ on your own jobs for as long as you want, with an optional guided walkthrough inside.</p>
             </a>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight">Try it yourself</h2>
-            <p className="mt-2 text-zinc-600">Free tools, no signup. Explore the interactive demo before subscribing to the paid app.</p>
-            <a href="/demo" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-              Explore the interactive demo
-            </a>
-          </div>
+        <section className="mx-auto max-w-4xl px-6 pb-24 lg:px-8">
+          <TwoPathCta
+            title="See what QuoteCore+ could change for your business."
+            description="Create a Free Workspace and try it on your own jobs, or spend 25 minutes with Shaun talking through how you currently work and where the workflow could be faster."
+          />
         </section>
 
         <SiteFooter />
