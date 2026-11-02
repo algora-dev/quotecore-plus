@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+﻿import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { calculatePublicRoofTakeoff, parseQueryInput, toResultQuery } from '@/app/(public)/free-roofing-takeoff-builder/public-contract';
 import { roofTakeoffSchema } from '@/app/(public)/free-roofing-takeoff-builder/schema';
@@ -38,7 +38,7 @@ async function createServer(origin: string, withHostOutline: boolean, withFreeTo
     ? `${freeToolsInstructions} Use get_roof_takeoff_schema only when numeric Roof Takeoff Builder input semantics are unclear. Use calculate_roof_takeoff only when the user already has numeric roof measurements or explicitly asks for the deterministic calculation; do not use it instead of start_roof_takeoff for an attached plan. Actual measurements are not pitch-adjusted; plan measurements are.`
     : 'Use get_roof_takeoff_schema when input semantics are unclear. Use calculate_roof_takeoff to calculate and return the provided resultUrl. Actual measurements are not pitch-adjusted; plan measurements are.' + (withHostOutline ? ' ' + SERVER_INSTRUCTIONS : '');
   const server = new McpServer(
-  { name: 'quotecore-free-tools', version: '1.2.1' },
+  { name: 'quotecore-free-tools', version: '1.2.2' },
     { instructions },
   );
 
@@ -132,7 +132,7 @@ async function handle(request: Request): Promise<Response> {
     if ((request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase() !== 'application/json')
       throw new ScanError('CONTENT_TYPE', 'MCP requests must use application/json.', 415);
     // 5 MiB cap (vs 128 KiB default JSON): qc_prepare_roof_outline accepts base64 image_data
-    // (3 MiB decoded ≈ 4 MiB encoded). Guarded by content-length precheck, streaming cap,
+    // (3 MiB decoded â‰ˆ 4 MiB encoded). Guarded by content-length precheck, streaming cap,
     // the 240/hr per-IP route rate limit, and the upload-budget guard on prepare itself.
     const body = await readLimited(request, LIMITS.mcpJsonBytes);
     rpc = parseRpc(body);
