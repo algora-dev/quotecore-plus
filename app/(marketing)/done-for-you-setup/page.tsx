@@ -178,14 +178,6 @@ export default function DoneForYouSetupPage() {
 
         <section className={styles.fitSection} aria-labelledby="handover-title">
           <div className={`${styles.container} ${styles.handoverLayout}`}>
-            <aside className={styles.shaunCard}>
-              <div className={styles.shaunTop}>
-                <img src="/shaun-smiling.jpg" alt="Shaun, founder of QuoteCore+" />
-                <div><strong>Shaun · Founder</strong><span>20+ years roofing & construction</span></div>
-              </div>
-              <p>You are dealing directly with someone who understands both roofing and the QuoteCore+ setup, not a generic software onboarding team.</p>
-            </aside>
-
             <div className={styles.handoverCopy}>
               <p className={styles.lightEyebrow}>If you choose Done For You</p>
               <h2 id="handover-title">We set it up, then hand it over in the way that suits you.</h2>
@@ -207,6 +199,14 @@ export default function DoneForYouSetupPage() {
                 <p>A quick answer, a short video, a quick call, or help inside your account when something needs fixing or explaining. Whatever makes the most sense for the problem.</p>
               </div>
             </div>
+
+            <aside className={styles.shaunCard}>
+              <div className={styles.shaunTop}>
+                <img src="/shaun-smiling.jpg" alt="Shaun, founder of QuoteCore+" />
+                <div><strong>Shaun · Founder</strong><span>20+ years roofing & construction</span></div>
+              </div>
+              <p>You are dealing directly with someone who understands both roofing and the QuoteCore+ setup, not a generic software onboarding team.</p>
+            </aside>
           </div>
         </section>
 
