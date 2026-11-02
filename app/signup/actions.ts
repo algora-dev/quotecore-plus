@@ -26,13 +26,14 @@ export async function sendSignupLinkAction(email: string): Promise<SignupLinkRes
   }
 
   // Rate limit: failClosed so email bombing can never slip through.
+  // (Bumped 2026-11-01: 3/h per email blocked the owner's own testing loops.)
   const h = await headers();
   const ip = getClientIP(h);
-  const ipAllowed = await checkRateLimit(`signuplink-ip:${ip}`, 5, 60 * 60 * 1000, { failClosed: true });
+  const ipAllowed = await checkRateLimit(`signuplink-ip:${ip}`, 10, 60 * 60 * 1000, { failClosed: true });
   if (!ipAllowed) {
     return { ok: false, error: 'Too many requests. Please try again later.' };
   }
-  const emailAllowed = await checkRateLimit(`signuplink-email:${normalizedEmail}`, 3, 60 * 60 * 1000, { failClosed: true });
+  const emailAllowed = await checkRateLimit(`signuplink-email:${normalizedEmail}`, 5, 60 * 60 * 1000, { failClosed: true });
   if (!emailAllowed) {
     return { ok: false, error: 'Too many signup links sent to this email. Please try again in an hour.' };
   }

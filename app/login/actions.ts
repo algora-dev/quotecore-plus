@@ -118,13 +118,14 @@ export async function sendLoginLinkAction(email: string) {
   }
 
   // Rate limit like resend-confirmation: failClosed to prevent email-bombing.
+  // (Bumped 2026-11-01: 3/h per email blocked the owner's own testing loops.)
   const h = await headers();
   const ip = getClientIP(h);
-  const ipAllowed = await checkRateLimit(`magiclink-ip:${ip}`, 5, 60 * 60 * 1000, { failClosed: true });
+  const ipAllowed = await checkRateLimit(`magiclink-ip:${ip}`, 10, 60 * 60 * 1000, { failClosed: true });
   if (!ipAllowed) {
     return { ok: false, error: 'Too many requests. Please try again later.' };
   }
-  const emailAllowed = await checkRateLimit(`magiclink-email:${normalizedEmail}`, 3, 60 * 60 * 1000, { failClosed: true });
+  const emailAllowed = await checkRateLimit(`magiclink-email:${normalizedEmail}`, 5, 60 * 60 * 1000, { failClosed: true });
   if (!emailAllowed) {
     return { ok: false, error: 'Too many login links sent. Please try again in an hour.' };
   }

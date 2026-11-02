@@ -1,5 +1,7 @@
 import 'server-only';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { checkRateLimit } from '@/app/lib/security/rateLimit';
 import { ensureCompanyHasCollection } from '@/app/lib/data/ensure-company-has-collection';
 import { PREVIEW_CATALOG } from '@/app/components/pricing/calculator/calculatorConfig';
 import { getStripeMode } from '@/app/lib/billing/stripe';
@@ -176,6 +178,114 @@ async function provisionFreeWorkspace(
   return `${origin}/${company.slug}${suffix}`;
 }
 
+/**
+ * EMAIL-COLLISION RESOLUTION (2026-11-01). A public.users row holding this
+ * email under a DIFFERENT id means one of two things:
+ *
+ *  (a) ORPHANED PROFILE - the old auth user was deleted (demo/test cleanup
+ *      that removed auth.users but left public.users behind) and a fresh
+ *      auth identity just arrived for the same human. The provisioning
+ *      profile insert dies on users_email_key (23505) and dead-ends the
+ *      user at /login?error=auth_failed. Fix: tombstone the unreachable
+ *      row's email and rebind the person to their existing company with a
+ *      profile row for their live auth id. All company data is preserved.
+ *
+ *  (b) LIVE SPLIT IDENTITY - the original auth user still exists (e.g. an
+ *      unconfirmed email user plus a new Google user for the same address).
+ *      Never touch their data: send the original account a login link and
+ *      land on a clear "account already exists" message instead of a
+ *      generic failure.
+ *
+ * Returns a redirect URL when the collision was fully handled, or null to
+ * continue the normal flow (no collision, or email freed for fresh
+ * provisioning).
+ */
+async function resolveEmailCollision(
+  user: SignInUser,
+  origin: string,
+  draftId: string | null,
+): Promise<string | null> {
+  const email = user.email?.trim().toLowerCase() || '';
+  if (!email) return null;
+  const admin = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const client = admin as any;
+
+  const { data: clash } = await client
+    .from('users')
+    .select('id, company_id, full_name')
+    .eq('email', email)
+    .maybeSingle();
+  if (!clash || clash.id === user.id) return null;
+
+  let originalAlive = false;
+  try {
+    const { error } = await admin.auth.admin.getUserById(clash.id);
+    originalAlive = !error;
+  } catch {
+    originalAlive = false;
+  }
+
+  if (originalAlive) {
+    // Best-effort login link to the original account (rate-limited).
+    try {
+      const allowed = await checkRateLimit(`handoff-email:${email}`, 3, 60 * 60 * 1000, { failClosed: true });
+      if (allowed) {
+        const supabase = await createSupabaseServerClient();
+        await supabase.auth.signInWithOtp({
+          email,
+          options: { shouldCreateUser: false, emailRedirectTo: `${origin}/auth/verify` },
+        });
+      }
+    } catch (err) {
+      console.error('[complete-signin] handoff link send failed (non-fatal):', err);
+    }
+    console.error(`[complete-signin] EMAIL COLLISION (live split): auth user ${user.id} for ${email}; original ${clash.id} still exists - handed off`);
+    return `${origin}/login?error=account_exists`;
+  }
+
+  // Orphaned profile: free the email, then reunite the human with their
+  // existing company when possible.
+  const tombstone = `orphan+${clash.id}@quotecore.invalid`;
+  const { error: tombError } = await client
+    .from('users')
+    .update({ email: tombstone })
+    .eq('id', clash.id);
+  if (tombError) {
+    console.error('[complete-signin] orphan tombstone failed:', tombError);
+    return `${origin}/login?error=auth_failed`;
+  }
+  console.error(`[complete-signin] EMAIL COLLISION (orphan): tombstoned dead profile ${clash.id} (${email}); rebinding to ${user.id}`);
+
+  if (clash.company_id) {
+    const { data: company } = await client
+      .from('companies')
+      .select('slug')
+      .eq('id', clash.company_id)
+      .maybeSingle();
+    if (company?.slug) {
+      const fullName = String(user.user_metadata?.full_name ?? user.user_metadata?.name ?? '').trim()
+        || String(clash.full_name ?? '').trim()
+        || null;
+      const { error: insertError } = await client.from('users').insert({
+        id: user.id,
+        company_id: clash.company_id,
+        email,
+        ...(fullName ? { full_name: fullName } : {}),
+        role: 'owner',
+      });
+      if (!insertError) {
+        return draftId
+          ? `${origin}/${company.slug}?restore_doc=${encodeURIComponent(draftId)}`
+          : `${origin}/${company.slug}`;
+      }
+      console.error('[complete-signin] adopt insert failed:', insertError);
+    }
+  }
+  // Email freed but nothing to rebind: provision a fresh workspace below.
+  return null;
+}
+
 export async function completeSignIn(opts: {
   supabase: SupabaseClient<Database>;
   user: SignInUser;
@@ -196,6 +306,11 @@ export async function completeSignIn(opts: {
   // created_by_user_id fallback - Gerald H-01). Restore the profile so the
   // user keeps their data.
   if (!profile) {
+    // Email collisions (orphaned profiles / split identities) must resolve
+    // FIRST: every path below would otherwise die on users_email_key.
+    const collision = await resolveEmailCollision(user, origin, draftId);
+    if (collision) return collision;
+
     const userEmail = user.email?.toLowerCase() || '';
     let orphanedQuote: { company_id: string } | null = null;
 
