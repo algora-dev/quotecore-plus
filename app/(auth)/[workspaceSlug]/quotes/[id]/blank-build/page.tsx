@@ -4,6 +4,7 @@ import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadCustomerQuoteLi
 import { loadQuoteTaxes, loadCompanyTaxes } from '@/app/lib/taxes/actions';
 import { loadComponentCollections, loadComponentLibrary } from '../../../components/actions';
 import { CustomerQuoteEditor } from '../customer-edit/CustomerQuoteEditor';
+import { isFreeWorkspaceCompany } from '@/app/lib/billing/free-workspace';
 import { getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
 /**
@@ -51,6 +52,8 @@ export default async function BlankBuildPage({
     .eq('id', quote.company_id)
     .single();
   const companyDefaultCurrency = company?.default_currency || 'NZD';
+  // Free Workspace watermark flag (owner 2026-11-03).
+  const showWatermark = await isFreeWorkspaceCompany(quote.company_id);
   const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
 
   let companyLogoUrl: string | null = null;
@@ -81,6 +84,7 @@ export default async function BlankBuildPage({
 
   return (
     <CustomerQuoteEditor
+      showWatermark={showWatermark}
       quote={quote}
       // Blank quotes have no roof areas or components - the editor initialises
       // to the savedLines (or empty if none yet), matching the user's expectation.
