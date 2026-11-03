@@ -148,7 +148,8 @@ export function decodeRegisteredItems(rawItems: unknown[], subscription: unknown
   const limits = parsePurchasedLimits({ capacity: capacity.component_code.replace('capacity_', ''), quotes: capacity.entitlements.quotes,
     storageBytes: capacity.entitlements.storageBytes, digitalTakeoff: families.has('digital'), scanTokens: scan?.entitlements.scanTokens ?? 0,
     offcuts: families.has('offcuts'), assistantTasks: assistant?.entitlements.assistantTasks ?? 0,
-    ...(capacity.entitlements.componentLimit ? { componentLimit: capacity.entitlements.componentLimit } : {}) });
+    ...(capacity.entitlements.componentLimit ? { componentLimit: capacity.entitlements.componentLimit } : {}),
+    ...(capacity.entitlements.sendAllowance ? { quoteSends: capacity.entitlements.sendAllowance } : {}) });
   return { codes: selected.map(r => r.component_code), rows: selected, itemIds, monthlyCents: selected.reduce((total,row) => total + row.monthly_cents, 0),
     limits, periodStart: start!, periodEnd: end!, revision: selected[0].catalog_revision };
 }

@@ -25,7 +25,7 @@ export interface CalculatorAnswers {
 }
 export interface PriceComponent { code: string; monthlyCents: number }
 /** Internal consolidated selection = baseMonthlyCents + capacityCents. V4 billing splits it into Core and Capacity; never charge both representations. */
-export interface CoreComponent { code: string; capacityCents: number; quotes: number; storageBytes: number; /** Owner 2026-11-03: capacity tiers cap component count; free = 15. */ componentLimit?: number }
+export interface CoreComponent { code: string; capacityCents: number; quotes: number; storageBytes: number; /** Owner 2026-11-03: capacity tiers cap component count; free = 15. */ componentLimit?: number; /** Owner 2026-11-03 evening: monthly send allowance per capacity tier (20/50/200). */ sendAllowance?: number }
 export interface ScanComponent extends PriceComponent { tokens: number }
 export interface AssistantComponent extends PriceComponent { tasks: number }
 export interface CalculatorCatalog {

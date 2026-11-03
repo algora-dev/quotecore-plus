@@ -31,8 +31,9 @@ export function calculatePlan(raw: CalculatorAnswers, c: CalculatorCatalog): Cal
   if (a.offcuts) lines.push({ ...c.offcuts[usage], kind: 'offcuts', label: 'Offcut Optimiser' });
   if (selectedAssistant !== 'none') lines.push({ ...c.assistant[selectedAssistant], kind: 'assistant', label: 'Smart Assistant · V1 Beta' });
   const warnings: Calculation['warnings'] = [];
-  if (a.quotesPerMonth > core.quotes) warnings.push({ code: 'quote-capacity',
-    text: `You price around ${a.quotesPerMonth.toLocaleString()} jobs a month. This capacity includes ${core.quotes} quotes a month. You can continue, but the quote limit may interrupt your work.` });
+  const sendCap = core.sendAllowance ?? core.quotes;
+  if (a.quotesPerMonth > sendCap) warnings.push({ code: 'quote-capacity',
+    text: `You price around ${a.quotesPerMonth.toLocaleString()} jobs a month. This capacity sends up to ${sendCap.toLocaleString()} quotes a month. A higher capacity keeps sending from interrupting your work.` });
   if (a.scan && TIERS.indexOf(selectedScan) < TIERS.indexOf(usage)) warnings.push({ code: 'scan-lower',
     text: 'You chose fewer Scan Tokens than recommended based on your workload. You may need to measure manually or upgrade if they run out.' });
   if (ASSISTANTS.indexOf(selectedAssistant) < ASSISTANTS.indexOf(recommendedAssistant)) warnings.push({

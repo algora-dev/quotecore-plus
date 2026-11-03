@@ -19,7 +19,7 @@ export interface QuotaWall { kind: QuotaWallKind; used: number; limit: number }
 
 const COPY: Record<QuotaWallKind, (limit: number) => { title: string; body: string }> = {
   quotes: l => ({ title: 'You\u2019ve reached your quote limit', body: `Free Workspace holds ${l} quotes at a time. Delete a quote to free a slot \u2014 or upgrade for unlimited quote creation.` }),
-  sends: l => ({ title: 'You\u2019ve reached your sending limit', body: `Free Workspace sends ${l} quotes per month (email or customer link). Every paid build sends unlimited.` }),
+  sends: l => ({ title: 'You\u2019ve reached your sending limit', body: `Your plan sends up to ${l} quotes per month (email or customer link). Upgrade your capacity for more sends.` }),
   scans: l => ({ title: 'You\u2019ve reached your scan limit', body: `Free Workspace includes ${l} scan tokens per month. Paid builds start at 50 tokens.` }),
   assistant: l => ({ title: 'You\u2019ve reached your Smart Assistant limit', body: `Free Workspace includes ${l} Assistant tasks per month. Paid builds start at 200.` }),
   offcuts: l => ({ title: 'You\u2019ve reached your Offcuts limit', body: `The Offcuts planner runs ${l} times per month on Free Workspace. Paid builds have no per-use charge.` }),

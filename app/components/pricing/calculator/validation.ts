@@ -52,7 +52,7 @@ export function validateCatalog(input: unknown): string[] {
     for (const field of limits) if (!whole(x[field]) || x[field] < 1) errors.push(`Invalid ${field}: ${label}.`);
   }
   const groups: [string, readonly string[], string[], string][] = [
-    ['core', TIERS, ['quotes','storageBytes','componentLimit'], 'capacityCents'], ['scan', TIERS, ['tokens'], 'monthlyCents'],
+    ['core', TIERS, ['quotes','storageBytes','componentLimit','sendAllowance'], 'capacityCents'], ['scan', TIERS, ['tokens'], 'monthlyCents'],
     ['offcuts', TIERS, [], 'monthlyCents'], ['assistant', ['light','regular','heavy'], ['tasks'], 'monthlyCents'],
   ];
   price(input.digital, 'digital', []);

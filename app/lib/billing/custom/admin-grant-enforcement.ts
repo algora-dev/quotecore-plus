@@ -9,8 +9,10 @@
  * correction: do not invent per-item caps).
  *
  * Allowance window = the grant's period_start..period_end. Exhausted or
- * expired -> typed error the UI turns into a Billing CTA. Legacy and
- * Stripe-metered companies pass through untouched.
+ * expired -> typed error the UI turns into a Billing CTA. Legacy companies
+ * pass through untouched. Owner 2026-11-03 (evening): sends are metered for
+ * BOTH custom kinds - Stripe-metered builds carry the capacity tier send
+ * allowance (Toolbox 20 / Workbench 50 / Workshop 200 a month).
  *
  * Usage rows live in company_admin_grant_usage (service-role only). The
  * UNIQUE(company_id, kind, ref_id) constraint makes counting idempotent:
@@ -86,7 +88,7 @@ async function loadAdminGrantWindow(companyId: string): Promise<AdminGrantWindow
  */
 export async function assertAdminGrantAllowance(companyId: string, kind: AdminGrantUsageKind): Promise<void> {
   const resolved = await resolveBillingType(companyId);
-  if (resolved.kind !== 'custom_admin_granted') return;
+  if (resolved.kind !== 'custom_admin_granted' && resolved.kind !== 'custom_metered') return;
 
   const win = await loadAdminGrantWindow(companyId);
   if (!win) {
@@ -106,9 +108,12 @@ export async function assertAdminGrantAllowance(companyId: string, kind: AdminGr
     );
   }
 
-  // Send/URL cap: Free Workspace uses its own quoteSends key (5/month);
-  // grants without it keep the shared quotes allowance.
-  const limit = win.limits.quoteSends ?? win.limits.quotes;
+  // Send/URL cap: quoteSends carries the allowance on both custom kinds
+  // (Free Workspace 5/month; metered 20/50/200 by capacity tier). Admin
+  // grants without it keep the shared quotes allowance; metered rows
+  // without it are uncapped (0 = no limit).
+  const limit = win.limits.quoteSends
+    ?? (resolved.kind === 'custom_admin_granted' ? win.limits.quotes : 0);
   // Chainable read builder: eq/gte/lt compose, then head-count select.
   type UsageChain = {
     eq(col: string, val: string): UsageChain;
@@ -152,7 +157,9 @@ export async function assertAdminGrantAllowance(companyId: string, kind: AdminGr
 export async function recordAdminGrantUsage(companyId: string, kind: AdminGrantUsageKind, refId: string): Promise<void> {
   try {
     const resolved = await resolveBillingType(companyId);
-    if (resolved.kind !== 'custom_admin_granted') return;
+    // Record for both custom kinds (owner 2026-11-03): metered sends count
+    // against the capacity-tier allowance in the same idempotent ledger.
+    if (resolved.kind !== 'custom_admin_granted' && resolved.kind !== 'custom_metered') return;
     const admin = createAdminClient() as unknown as {
       from(table: string): {
         upsert(row: Record<string, unknown>, opts: unknown): Promise<{ error: unknown }>;

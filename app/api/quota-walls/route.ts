@@ -74,12 +74,18 @@ export async function GET() {
       push('offcuts', offcutsRes.count ?? 0, Number(limits.offcutGenerations ?? 0));
       push('components', Number(compRes.data ?? 0), Number(limits.componentLimit ?? 0));
     } else if (resolved.kind === 'custom_metered') {
-      // Paid capacity tiers cap components (owner 2026-11-03). Everything
-      // else on paid builds is unlimited (sentinel) or add-on-metered.
+      // Paid capacity tiers cap components + sends (owner 2026-11-03).
       const cap = Number(limits.componentLimit ?? 0);
       if (cap > 0) {
         const compRes = await admin.rpc('company_component_count', { p_company_id: companyId });
         push('components', Number(compRes.data ?? 0), cap);
+      }
+      const sendsCap = Number(limits.quoteSends ?? 0);
+      if (sendsCap > 0 && periodStart && periodEnd) {
+        const sendsRes = await admin.from('company_admin_grant_usage').select('id', { count: 'exact', head: true })
+          .eq('company_id', companyId).eq('kind', 'quote_sent')
+          .gte('occurred_at', periodStart).lt('occurred_at', periodEnd);
+        push('sends', sendsRes.count ?? 0, sendsCap);
       }
     }
 

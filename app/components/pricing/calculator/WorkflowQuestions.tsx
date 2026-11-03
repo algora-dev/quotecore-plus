@@ -49,10 +49,10 @@ export function VolumeQuestion({ catalog, result, answers, dispatch, draft, onDr
     </details>
     {showError && <p id={`${id}-volume-error`} role="alert" className="qcp-error">Enter a whole number from 1 to {catalog.thresholds.maxInput.toLocaleString()}.</p>}
     {result && <div className="qcp-capacity-box">
-      <div className="qcp-allowance-summary"><Icon name="shield" size={20} /><div><strong>{TIER_LABELS[result.selectedCapacity]} capacity</strong><p>{result.limits.quotes >= 100000 ? 'Unlimited quotes' : `${result.limits.quotes} quotes / month`} · {storageLabel(result.limits.storageBytes)} storage</p></div></div>
+      <div className="qcp-allowance-summary"><Icon name="shield" size={20} /><div><strong>{TIER_LABELS[result.selectedCapacity]} capacity</strong><p>Send up to {catalog.core[result.selectedCapacity].sendAllowance ?? 200} quotes/mo · {storageLabel(result.limits.storageBytes)} storage</p></div></div>
       <Disclosure title="Change quote & storage capacity">
         <AllowanceControl id={`${id}-capacity`} label="Quote and storage capacity" selected={result.selectedCapacity} recommended={result.usage}
-          details={{ low: `Unlimited quotes · ${catalog.core.low.componentLimit} components · ${storageLabel(catalog.core.low.storageBytes)}`, medium: `Unlimited quotes · ${catalog.core.medium.componentLimit} components · ${storageLabel(catalog.core.medium.storageBytes)}`, high: `Unlimited quotes · ${catalog.core.high.componentLimit} components · ${storageLabel(catalog.core.high.storageBytes)}` }}
+          details={{ low: `Send up to ${catalog.core.low.sendAllowance}/mo · ${catalog.core.low.componentLimit} components · ${storageLabel(catalog.core.low.storageBytes)}`, medium: `Send up to ${catalog.core.medium.sendAllowance}/mo · ${catalog.core.medium.componentLimit} components · ${storageLabel(catalog.core.medium.storageBytes)}`, high: `Send up to ${catalog.core.high.sendAllowance}/mo · ${catalog.core.high.componentLimit} components · ${storageLabel(catalog.core.high.storageBytes)}` }}
           onChange={value => dispatch({ type: 'capacity', value })} />
         {answers.capacity !== 'recommended' && <button type="button" className="qcp-text-button" onClick={() => dispatch({ type: 'capacity', value: 'recommended' })}>Use workload recommendation</button>}
       </Disclosure>

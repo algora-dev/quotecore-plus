@@ -38,7 +38,7 @@ export function PlanSummary({ answers, result, catalog, current, actions, primar
       </div>
       <div className="qcp-purchase" data-testid="purchase-action">{primaryAction}{actionNotice}</div>
       <dl className="qcp-stats">
-        <div><dt>Quotes</dt><dd>{result.limits.quotes >= 100000 ? 'Unlimited' : result.limits.quotes.toLocaleString()}<span>{result.limits.quotes >= 100000 ? 'creation + sending' : 'per billing month'}</span></dd></div>
+        <div><dt>Quotes</dt><dd>Unlimited<span>creation · send up to {catalog.core[result.selectedCapacity].sendAllowance ?? 200}/mo</span></dd></div>
         <div><dt>Active storage</dt><dd>{storageLabel(result.limits.storageBytes)}<span>held at one time</span></dd></div>
         {result.scanEnabled && <div><dt>Scan Tokens</dt><dd>{result.limits.scanTokens.toLocaleString()}<span>per billing month</span></dd></div>}
         {result.selectedAssistant !== 'none' && <div><dt>Assistant Tasks</dt><dd>{result.limits.assistantTasks.toLocaleString()}<span>per billing month</span></dd></div>}
