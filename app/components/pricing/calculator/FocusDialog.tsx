@@ -9,9 +9,12 @@ function lockPage(): () => void {
   return () => { if (--scrollLocks === 0) document.body.style.overflow = previousOverflow; };
 }
 /** Native modal: top-layer rendering, inert background, Escape and focus containment.
- * No portal needed; scoped QuoteCore tokens stay inherited. Real booking remains host-owned. */
-export function FocusDialog({ title, eyebrow, onClose, wide, children }: {
-  title: string; eyebrow: string; onClose: () => void; wide?: boolean; children: ReactNode;
+ * No portal needed; scoped QuoteCore tokens stay inherited. Real booking remains host-owned.
+ * bare=true (owner 2026-11-03): chrome-less variant for embedded calculators — the
+ * title/eyebrow are screen-reader-only, the close button floats as a chip, and the
+ * qcp-dialog-bare CSS collapses the modal to a compact single-column host. */
+export function FocusDialog({ title, eyebrow, onClose, wide, bare, children }: {
+  title: string; eyebrow: string; onClose: () => void; wide?: boolean; bare?: boolean; children: ReactNode;
 }) {
   const id = useId();
   const ref = useRef<HTMLDialogElement>(null);
@@ -51,13 +54,13 @@ export function FocusDialog({ title, eyebrow, onClose, wide, children }: {
     }
   }
   return <div className="qcp">
-    <dialog className={`qcp-dialog${wide ? ' qcp-dialog-wide' : ''}`} ref={ref} aria-labelledby={`${id}-title`} aria-modal="true" onKeyDown={containTab}
+    <dialog className={`qcp-dialog${wide ? ' qcp-dialog-wide' : ''}${bare ? ' qcp-dialog-bare' : ''}`} ref={ref} aria-labelledby={`${id}-title`} aria-modal="true" onKeyDown={containTab}
     onCancel={e => { e.preventDefault(); onClose(); }}
     onPointerDown={e => { backdropStarted.current = e.target === e.currentTarget && outside(e.clientX, e.clientY); }}
     onClick={e => { if (backdropStarted.current && e.target === e.currentTarget && outside(e.clientX, e.clientY)) onClose(); backdropStarted.current = false; }}>
-    <header className="qcp-dialog-header"><p className="qcp-eyebrow"><span className="qcp-brand-dot" />{eyebrow}</p>
+    <header className="qcp-dialog-header">{!bare && <p className="qcp-eyebrow"><span className="qcp-brand-dot" />{eyebrow}</p>}
       <QcButton variant="glass" className="qcp-clear qcp-dialog-close" aria-label="Close dialog" onClick={onClose}><Icon name="close" size={19} /></QcButton>
-      <h2 ref={heading} tabIndex={-1} id={`${id}-title`}>{title}</h2>
+      <h2 ref={heading} tabIndex={-1} id={`${id}-title`} className={bare ? 'qcp-sr-only' : undefined}>{title}</h2>
     </header>
     <div className="qcp-dialog-content">{children}</div>
   </dialog></div>;

@@ -26,7 +26,7 @@ const MESSAGES: Record<string, string> = {
     change_not_available: 'Changing your setup is not available yet. Nothing was changed.',
     no_subscription: 'No active custom subscription was found for this workspace.',
     change_pending: 'A previous change is still settling. Try again in a moment.',
-    unchanged: 'You are already on this exact setup. Nothing to change.',
+    unchanged: 'You already have this exact setup. Change your requirements, features, or usage to get a different result, then review it here again.',
     catalog_changed: 'The catalogue changed. Review your setup again before confirming.',
     setup_expired: 'Your saved setup expired. Review your choices again.',
     setup_invalid: 'Your saved setup could not be verified. Review your choices again.',

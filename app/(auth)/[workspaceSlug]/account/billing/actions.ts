@@ -535,7 +535,7 @@ export async function applyCustomSetupChange(rawSetup: string): Promise<{ ok: bo
 /** Itemised custom-plan info for the billing card. Reads the reconciled snapshot only.
  * Also surfaces the Stripe customer credit balance (negative balance = credit) so the
  * card can show money the provider will apply to future invoices. */
-export async function loadCustomSetupInfo(): Promise<{ ok: boolean; monthlyCents?: number; currency?: string; componentCodes?: string[]; creditBalanceCents?: number }> {
+export async function loadCustomSetupInfo(): Promise<{ ok: boolean; monthlyCents?: number; currency?: string; componentCodes?: string[]; creditBalanceCents?: number; adminGranted?: boolean }> {
   try {
     const { profile } = await loadCompanyContext();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -544,12 +544,17 @@ export async function loadCustomSetupInfo(): Promise<{ ok: boolean; monthlyCents
       .select('monthly_cents, currency, component_codes, stripe_customer_id')
       .eq('company_id', profile.company_id).maybeSingle();
     if (!data) return { ok: false };
+    // Admin-granted marker (resolver: company-type.ts): no Stripe linkage exists,
+    // so skip the credit lookup and tell the card to hide the change wizard.
+    const adminGranted = String(data.stripe_customer_id ?? '') === 'admin-granted';
     let creditBalanceCents = 0;
-    try {
-      const customer = await requireStripe().customers.retrieve(String(data.stripe_customer_id ?? ''));
-      if (customer && !('deleted' in customer)) creditBalanceCents = Math.max(0, -((customer as { balance?: number }).balance ?? 0));
-    } catch { /* credit display is best-effort; never block the card */ }
-    return { ok: true, monthlyCents: Number(data.monthly_cents ?? 0), currency: String(data.currency ?? 'usd'), componentCodes: Array.isArray(data.component_codes) ? data.component_codes as string[] : [], creditBalanceCents };
+    if (!adminGranted) {
+      try {
+        const customer = await requireStripe().customers.retrieve(String(data.stripe_customer_id ?? ''));
+        if (customer && !('deleted' in customer)) creditBalanceCents = Math.max(0, -((customer as { balance?: number }).balance ?? 0));
+      } catch { /* credit display is best-effort; never block the card */ }
+    }
+    return { ok: true, monthlyCents: Number(data.monthly_cents ?? 0), currency: String(data.currency ?? 'usd'), componentCodes: Array.isArray(data.component_codes) ? data.component_codes as string[] : [], creditBalanceCents, adminGranted };
   } catch {
     return { ok: false };
   }

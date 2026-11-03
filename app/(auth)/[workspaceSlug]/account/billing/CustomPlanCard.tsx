@@ -9,6 +9,7 @@
  */
 
 import { useCallback, useEffect, useState, useTransition } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FocusDialog } from '@/app/components/pricing/calculator/FocusDialog';
 import { PricingCalculator } from '@/app/components/pricing/calculator/PricingCalculator';
@@ -32,7 +33,7 @@ function codeLabel(code: string): string {
   return code.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-interface SetupInfo { monthlyCents: number; currency: 'USD' | 'NZD'; componentCodes: string[]; creditBalanceCents: number }
+interface SetupInfo { monthlyCents: number; currency: 'USD' | 'NZD'; componentCodes: string[]; creditBalanceCents: number; adminGranted: boolean }
 type PreviewState = { direction: string; currentMonthlyCents: number; newMonthlyCents: number; proratedTodayCents: number; newRows: { productName: string; monthlyCents: number }[] };
 
 export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
@@ -52,7 +53,7 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
 
   useEffect(() => {
     let live = true;
-    loadCustomSetupInfo().then(result => { if (live && result.ok) setInfo({ monthlyCents: result.monthlyCents ?? 0, currency: (result.currency ?? 'USD').toUpperCase() === 'NZD' ? 'NZD' : 'USD', componentCodes: result.componentCodes ?? [], creditBalanceCents: result.creditBalanceCents ?? 0 }); });
+    loadCustomSetupInfo().then(result => { if (live && result.ok) setInfo({ monthlyCents: result.monthlyCents ?? 0, currency: (result.currency ?? 'USD').toUpperCase() === 'NZD' ? 'NZD' : 'USD', componentCodes: result.componentCodes ?? [], creditBalanceCents: result.creditBalanceCents ?? 0, adminGranted: !!result.adminGranted }); });
     return () => { live = false; };
   }, [reload]);
 
@@ -107,17 +108,28 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
             )}
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <button type="button" onClick={() => { setOpen(true); setDone(''); }}
-            className="qc-flow-control qc-button"
-            data-qc-variant="primary">
-            Change my setup
-          </button>
-          <button data-qc-variant="ghost" type="button" onClick={onManage} disabled={manageDisabled}
-            title="Cancel, update card, or view invoices"
-            className="qc-flow-control qc-button">
-            Manage subscription
-          </button>
+        {/* Admin-granted setups (owner 2026-11-03): no Stripe subscription to swap,
+            so the change wizard can never complete. Offer the support path instead
+            of a dead-end "no subscription" error. */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-start sm:justify-end">
+          {info?.adminGranted ? (
+            <p className="text-xs text-slate-500 sm:text-right leading-relaxed max-w-[280px] sm:pt-2.5">
+              Your setup is managed by our team. <Link href="?tab=support" className="font-medium text-orange-600 hover:underline">Contact us</Link> to change it.
+            </p>
+          ) : (
+            <button type="button" onClick={() => { setOpen(true); setDone(''); }}
+              className="qc-flow-control qc-button"
+              data-qc-variant="primary">
+              Change my setup
+            </button>
+          )}
+          {!info?.adminGranted && (
+            <button data-qc-variant="ghost" type="button" onClick={onManage} disabled={manageDisabled}
+              title="Cancel, update card, or view invoices"
+              className="qc-flow-control qc-button">
+              Manage subscription
+            </button>
+          )}
         </div>
       </div>
 
@@ -176,7 +188,7 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
       )}
 
       {open && (
-        <FocusDialog title="Change your setup" eyebrow="Billing" onClose={closeDialog} wide>
+        <FocusDialog title="Change your setup" eyebrow="Billing" onClose={closeDialog} bare>
           <PricingCalculator
             catalog={PREVIEW_CATALOG}
             variant="billing"

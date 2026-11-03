@@ -1,7 +1,7 @@
 /* PS02: approved dark/glint composition, UX Standard v2.15 Dark Focus.
    Canonical v2 tokens are unchanged.
    Uses brand/workstation tokens; local dark-surface companions exist only here. */
-[data-qc-ui="v2"].qcp {
+[data-qc-ui="v2"].qcp, .qcp .qcp-dialog {
   --qcp-bg: var(--qc-color-ink, #191B20);
   --qcp-deep: var(--qc-color-workstation-bg, #141820);
   --qcp-text: var(--qc-color-workstation-text, #F8FAFC);
