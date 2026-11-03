@@ -102,7 +102,7 @@ export default function MaterialOrderingPage() {
         {/* Hero */}
         <section className="relative overflow-hidden pb-12 pt-16">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.08),transparent_40%)]" />
-          <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
+          <div className="relative mx-auto max-w-7xl px-6">
             <p className="text-sm font-medium text-[#FF6B35]">Feature</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
               Material ordering, standalone or from a quote.
@@ -115,7 +115,7 @@ export default function MaterialOrderingPage() {
         </section>
 
         {/* Screenshot showcase */}
-        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 pb-16">
           <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
             <div className="flex items-center gap-2 border-b border-slate-800 px-4 py-3">
               <div className="h-3 w-3 rounded-full bg-red-400/70" />
@@ -157,7 +157,7 @@ export default function MaterialOrderingPage() {
         </section>
 
         {/* What it is */}
-        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 pb-16">
           <h2 className="text-2xl font-semibold tracking-tight">What is material ordering in QuoteCore+?</h2>
           <p className="mt-4 leading-7 text-zinc-600">
             Material ordering is a standalone tool. You can generate an order from an accepted quote in QuoteCore+, import a quote from another tool, or start with a blank order from scratch. However you start, the order builder gives you a supplier-ready document with quantities, product codes, cut lengths, and delivery details.
@@ -168,7 +168,7 @@ export default function MaterialOrderingPage() {
         </section>
 
         {/* How it works */}
-        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 pb-16">
           <h2 className="text-2xl font-semibold tracking-tight">How it works</h2>
           <div className="mt-8 space-y-8">
             {steps.map((step) => (
@@ -184,7 +184,7 @@ export default function MaterialOrderingPage() {
         </section>
 
         {/* Who it's for */}
-        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 pb-16">
           <h2 className="text-2xl font-semibold tracking-tight">Who it&apos;s for</h2>
           <p className="mt-4 leading-7 text-zinc-600">
             Contractors who order materials from suppliers. Whether you quote in QuoteCore+ or elsewhere, the material ordering tool gives you a clean, supplier-ready document without re-counting or re-formatting.
@@ -192,7 +192,7 @@ export default function MaterialOrderingPage() {
         </section>
 
         {/* What it solves */}
-        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 pb-16">
           <h2 className="text-2xl font-semibold tracking-tight">What problem it solves</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -211,7 +211,7 @@ export default function MaterialOrderingPage() {
         </section>
 
         {/* Supported inputs and outputs */}
-        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 pb-16">
           <h2 className="text-2xl font-semibold tracking-tight">Supported inputs and outputs</h2>
           <div className="mt-6 grid gap-6 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -237,7 +237,7 @@ export default function MaterialOrderingPage() {
         </section>
 
         {/* Worked example */}
-        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 pb-16">
           <h2 className="text-2xl font-semibold tracking-tight">Worked example: ordering tiles and ridge</h2>
           <div className="mt-6 rounded-xl border border-slate-200 p-6">
             <p className="text-sm text-zinc-600">A contractor accepts a quote for a 180 m2 gable roof:</p>
@@ -251,7 +251,7 @@ export default function MaterialOrderingPage() {
         </section>
 
         {/* Honest limitations */}
-        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 pb-16">
           <h2 className="text-2xl font-semibold tracking-tight">What it does not do</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -266,7 +266,7 @@ export default function MaterialOrderingPage() {
         </section>
 
         {/* Less suitable use */}
-        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 pb-16">
           <h2 className="text-2xl font-semibold tracking-tight">When it may not be the right fit</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -277,7 +277,7 @@ export default function MaterialOrderingPage() {
         </section>
 
         {/* FAQ */}
-        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 pb-16">
           <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
           <div className="mt-6 space-y-4">
             {faqs.map((faq) => (
@@ -290,7 +290,7 @@ export default function MaterialOrderingPage() {
         </section>
 
         {/* Related */}
-        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 pb-16">
           <h2 className="text-2xl font-semibold tracking-tight">Related</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <Link href="/features/smart-components" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
@@ -314,8 +314,8 @@ export default function MaterialOrderingPage() {
 
         
         {/* Demo card */}
-        <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
-          <DemoCTACard location="feature_material_ordering_bottom" variant="inline" className="mx-auto max-w-2xl" />
+        <section className="mx-auto max-w-7xl px-6 pb-8">
+          <DemoCTACard location="feature_material_ordering_bottom" variant="inline" className="w-full" />
         </section>
 
 

@@ -45,10 +45,6 @@
 .sectionLead { margin-top: 18px; color: var(--muted); font-size: 17px; line-height: 1.72; }
 .dark .sectionLead, .darkHeader .sectionLead { color: #aeb7c5; }
 .productFrame { position: relative; margin: 0; padding: 9px; border: 1px solid rgba(165,174,188,.58); border-radius: 22px; background: linear-gradient(145deg,rgba(255,255,255,.98),rgba(245,247,250,.84)); box-shadow: 0 28px 70px rgba(28,34,45,.14),0 3px 11px rgba(28,34,45,.06),inset 0 1px 0 #fff; }
-.productChrome { display: flex; align-items: center; gap: 5px; height: 26px; padding: 0 9px 7px; color: #687283; font-size: 8px; }
-.productChrome span { width: 6px; height: 6px; border-radius: 50%; background: #bbc2cd; }
-.productChrome span:first-child { background: #ff8c53; }
-.productChrome b { margin-left: auto; font-weight: 650; letter-spacing: .03em; }
 .productViewport { overflow: hidden; border: 1px solid #cdd3dc; border-radius: 13px; background: #f8f9fb; }
 .productViewport img { display: block; width: 100%; height: auto; }
 .productFrame figcaption { padding: 10px 8px 3px; color: #6a7381; font-size: 11px; line-height: 1.45; }

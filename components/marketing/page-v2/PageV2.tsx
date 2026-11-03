@@ -103,7 +103,6 @@ export function ProductFrame({ src, alt, width, height, caption, portrait = fals
 }) {
   return (
     <figure className={`${s.productFrame} ${portrait ? s.portraitFrame : ''}`}>
-      <div className={s.productChrome} aria-hidden="true"><span /><span /><span /><b>QuoteCore+</b></div>
       <div className={s.productViewport}>
         <img src={src} alt={alt} width={width} height={height} loading={eager ? 'eager' : 'lazy'} fetchPriority={eager ? 'high' : 'auto'} decoding="async" />
       </div>

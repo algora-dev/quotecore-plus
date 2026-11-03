@@ -71,7 +71,7 @@ export default function AboutPage() {
         {/* Hero */}
         <section className="relative overflow-hidden pb-12 pt-16">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.08),transparent_40%)]" />
-          <div className="relative mx-auto max-w-3xl px-6 lg:px-8">
+          <div className="relative mx-auto max-w-7xl px-6">
             <p className="text-sm font-medium text-[#FF6B35]">About QuoteCore+</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
               The quoting software he wished he had.
@@ -80,7 +80,7 @@ export default function AboutPage() {
         </section>
 
         {/* Story */}
-        <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 pb-24">
 
           {/* Founder card */}
           <div className="flex items-center gap-6 rounded-[2rem] border border-zinc-200 bg-white p-8 shadow-sm">
@@ -92,7 +92,7 @@ export default function AboutPage() {
           </div>
 
           {/* Story */}
-          <div className="mt-12 space-y-6 leading-8 text-zinc-600">
+          <div className="mt-12 max-w-3xl space-y-6 leading-8 text-zinc-600">
             <p>
               For 20 years, Shaun split his time between the tools and the office - quoting jobs, managing projects, and trying every method available to keep the paperwork under control.
             </p>

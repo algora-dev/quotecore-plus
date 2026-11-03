@@ -119,7 +119,7 @@ export default function SendingAndTrackingPage() {
         {/* Hero */}
         <section className="relative overflow-hidden pb-12 pt-16">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.08),transparent_40%)]" />
-          <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
+          <div className="relative mx-auto max-w-7xl px-6">
             <p className="text-sm font-medium text-[#FF6B35]">Feature</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
               Send, track and follow up. Automatically.
@@ -132,7 +132,7 @@ export default function SendingAndTrackingPage() {
         </section>
 
         {/* Document tracking */}
-        <section className="mx-auto max-w-5xl px-6 py-12 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 py-12">
           <h2 className="text-2xl font-semibold sm:text-3xl">Document tracking</h2>
           <p className="mt-3 text-base text-zinc-600">
             Know exactly where every quote, order and invoice stands.
@@ -159,7 +159,7 @@ export default function SendingAndTrackingPage() {
         </section>
 
         {/* Mobile + Assistant */}
-        <section className="mx-auto max-w-5xl px-6 pb-12 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 pb-12">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-6">
             <h2 className="text-xl font-semibold text-zinc-950">From your phone - or without opening the app at all</h2>
             <p className="mt-2 text-sm leading-6 text-zinc-600">
@@ -170,7 +170,7 @@ export default function SendingAndTrackingPage() {
 
         {/* Automated follow-ups */}
         <section className="bg-zinc-50 py-12 lg:py-16">
-          <div className="mx-auto max-w-5xl px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl px-6">
             <h2 className="text-2xl font-semibold sm:text-3xl">Automated follow-ups</h2>
             <p className="mt-3 text-base text-zinc-600">
               Set up triggers once and let QuoteCore+ chase for you. Follow-ups cancel themselves when conditions are met.
@@ -216,7 +216,7 @@ export default function SendingAndTrackingPage() {
         </section>
 
         {/* What you can send */}
-        <section className="mx-auto max-w-5xl px-6 py-12 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 py-12">
           <h2 className="text-2xl font-semibold sm:text-3xl">What you can send</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             {[
@@ -234,7 +234,7 @@ export default function SendingAndTrackingPage() {
 
         {/* Header templates */}
         <section className="bg-zinc-50 py-12 lg:py-16">
-          <div className="mx-auto max-w-5xl px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl px-6">
             <h2 className="text-2xl font-semibold sm:text-3xl">Reusable header templates</h2>
             <p className="mt-3 text-base text-zinc-600">
               Create different layouts for different customers, suppliers and payment methods.
@@ -258,7 +258,7 @@ export default function SendingAndTrackingPage() {
         </section>
 
         {/* Related features */}
-        <section className="mx-auto max-w-5xl px-6 py-12 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 py-12">
           <h2 className="text-2xl font-semibold sm:text-3xl">Related features</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <Link href="/features/invoicing" className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition-all">
@@ -277,7 +277,7 @@ export default function SendingAndTrackingPage() {
         </section>
 
         {/* FAQ */}
-        <section className="mx-auto max-w-5xl px-6 py-12 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 py-12">
           <h2 className="text-2xl font-semibold sm:text-3xl">FAQ</h2>
           <div className="mt-6 space-y-4">
             {faqs.map((faq) => (
@@ -291,8 +291,8 @@ export default function SendingAndTrackingPage() {
 
         
         {/* Demo card */}
-        <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
-          <DemoCTACard location="feature_sending_and_tracking_bottom" variant="inline" className="mx-auto max-w-2xl" />
+        <section className="mx-auto max-w-7xl px-6 pb-8">
+          <DemoCTACard location="feature_sending_and_tracking_bottom" variant="inline" className="w-full" />
         </section>
 
 

@@ -152,7 +152,7 @@ export default function ServicesPage() {
       <ServicesHeader />
 
       <section className="py-12 lg:py-16">
-        <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-7xl px-6">
           <div className="grid items-center gap-10 lg:grid-cols-[0.78fr_1.22fr]">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#FF6B35]">Services</p>
@@ -234,8 +234,8 @@ export default function ServicesPage() {
         </div>
       </section>
         {/* Final conversion */}
-        <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
-          <DemoCTACard location="services_bottom" variant="inline" className="mx-auto max-w-2xl" />
+        <section className="mx-auto max-w-7xl px-6 pb-8">
+          <DemoCTACard location="services_bottom" variant="inline" className="w-full" />
         </section>
 
         <SiteFooter />

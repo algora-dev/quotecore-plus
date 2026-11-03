@@ -4,13 +4,13 @@ import { workflowCallHref } from "@/lib/booking";
 import styles from "./SiteFooter.module.css";
 
 const product = [
-  ["All features", "/features"], ["Roof Scan Assist", "/features/ai-scan-assist"], ["Digital roof takeoff", "/features/digital-roof-takeoff"], ["Smart Assistant", "/features/smart-assistant"], ["Smart Components™", "/features/smart-components"], ["Offcut Optimiser", "/features/offcut-optimiser"], ["Material ordering", "/features/material-ordering"], ["Invoicing", "/features/invoicing"], ["Supplier resources", "/features/supplier-resources"],
+  ["All features", "/features"], ["Roof Scan Assist", "/features/ai-scan-assist"], ["Digital roof takeoff", "/features/digital-roof-takeoff"], ["Smart Assistant", "/features/smart-assistant"], ["Smart Components™", "/features/smart-components"], ["Offcut Optimiser", "/features/offcut-optimiser"], ["Material ordering", "/features/material-ordering"], ["Invoicing", "/features/invoicing"],
 ] as const;
 const explore = [
-  ["Roofing software", "/roofing-quoting-software"], ["Roofing estimating", "/roofing-estimating-software"], ["Roofing takeoff", "/roofing-takeoff-software"], ["Xero integration", "/integrations/xero"], ["Construction quoting software", "/construction-quoting-software"], ["Pricing", "/pricing"], ["Free tools", "/free-tools"], ["Free calculators", "/free-calculators"], ["Resources and blog", "/blog"], ["Roofing estimating hub", "/resources/roofing-estimating"], ["Digital takeoffs hub", "/resources/digital-takeoffs"], ["Construction quoting hub", "/resources/construction-quoting"], ["Contractor business hub", "/resources/contractor-business"], ["AI in roofing hub", "/resources/ai"], ["Software comparisons", "/resources/comparisons"], ["Video tutorials", "/tutorials"], ["Documentation", "/docs"],
+  ["Roofing software", "/roofing-quoting-software"], ["Roofing estimating", "/roofing-estimating-software"], ["Roofing takeoff", "/roofing-takeoff-software"], ["Xero integration", "/integrations/xero"], ["Pricing", "/pricing"], ["Free tools", "/free-tools"], ["Resources and blog", "/blog"], ["AI in roofing hub", "/resources/ai"], ["Software comparisons", "/resources/comparisons"], ["Video tutorials", "/tutorials"], ["Documentation", "/docs"],
 ] as const;
 const company = [
-  ["Book 25 minutes with Shaun", workflowCallHref], ["Free Workspace", "/free-trial"], ["Company", "/company"], ["About", "/about"], ["Customer stories", "/customer-stories"], ["Trust and security", "/trust"], ["For suppliers", "/suppliers-info"], ["Partner program", "/affiliate-program"], ["Services", "/services"], ["Contact", "/contact"],
+  ["Book 25 minutes with Shaun", workflowCallHref], ["Free Workspace", "/free-trial"], ["Company", "/company"], ["About", "/about"], ["Trust and security", "/trust"], ["Partner program", "/affiliate-program"], ["Contact", "/contact"],
 ] as const;
 const legal = [["Privacy", "/privacy"], ["Terms", "/terms"], ["Cookie policy", "/cookie-policy"]] as const;
 

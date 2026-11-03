@@ -157,7 +157,7 @@ export default function TutorialsPage() {
       <main className="min-h-screen bg-white text-zinc-950">
         <BlogHeader />
 
-        <section className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-20">
+        <section className="mx-auto w-full max-w-7xl px-6 py-16 lg:py-20">
           <div className="max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">
               Tutorials & Videos
@@ -253,8 +253,8 @@ export default function TutorialsPage() {
           </div>
         </section>
         {/* Conversion card */}
-        <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
-          <DemoCTACard location="tutorials_bottom" variant="inline" className="mx-auto max-w-2xl" />
+        <section className="mx-auto max-w-7xl px-6 pb-8">
+          <DemoCTACard location="tutorials_bottom" variant="inline" className="w-full" />
         </section>
 
         <SiteFooter />
