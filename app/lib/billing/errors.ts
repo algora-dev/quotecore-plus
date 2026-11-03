@@ -96,7 +96,9 @@ export class QuoteLimitReachedError extends BillingError {
   constructor(args: { used: number; limit: number; periodStart: string; planCode: string }) {
     super(
       'quote_limit_reached',
-      `Monthly quote limit reached for plan "${args.planCode}": used ${args.used} of ${args.limit} this period.`,
+      args.planCode === 'free_workspace'
+        ? `Free Workspace holds ${args.limit} quotes at a time. Delete a quote to free a slot \u2014 or upgrade for unlimited quotes.`
+        : `Monthly quote limit reached for plan "${args.planCode}": used ${args.used} of ${args.limit} this period.`,
     );
     this.used = args.used;
     this.limit = args.limit;
