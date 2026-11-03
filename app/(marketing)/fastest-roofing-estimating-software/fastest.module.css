@@ -80,7 +80,7 @@
 
 .fx p{color:var(--body);font-size:16px;line-height:1.75;margin:0}
 
-.section{padding-block:clamp(68px,8vw,98px);position:relative}
+.section{padding-block:clamp(68px,8vw,98px);position:relative;scroll-margin-top:92px}
 
 .section-tight{padding-block:64px}
 

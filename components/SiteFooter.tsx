@@ -30,9 +30,9 @@ export default function SiteFooter() {
         <FooterNav title="Product" links={product} />
         <FooterNav title="Explore" links={explore} />
         <FooterNav title="Company" links={company} />
-        <nav aria-label="Legal"><h2 className={styles.navTitle}>Legal</h2><div className={styles.links}>{legal.map(([label, href]) => <Link key={label} href={href} className={styles.link}>{label}</Link>)}</div><a href="/nz/roofing-quoting-software" className={styles.country}>New Zealand site</a></nav>
+        <nav aria-label="Legal"><h2 className={styles.navTitle}>Legal</h2><div className={styles.links}>{legal.map(([label, href]) => <Link key={label} href={href} className={styles.link}>{label}</Link>)}</div></nav>
       </div>
-      <div className={styles.bottom}><p>&copy; 2026 QuoteCore+. Built by <a href="https://t3labs.tech">T3 Labs</a>.</p><p>Global website</p></div>
+      <div className={styles.bottom}><p>&copy; 2026 QuoteCore+. Built by <a href="https://t3labs.tech">T3 Labs</a>.</p></div>
     </div>
   </footer>;
 }
