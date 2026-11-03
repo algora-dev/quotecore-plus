@@ -4,6 +4,7 @@ import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadAllEntriesForQu
 import { loadQuoteTaxes, loadCompanyTaxes } from '@/app/lib/taxes/actions';
 import { loadComponentCollections, loadComponentLibrary } from '../../../components/actions';
 import { CustomerQuoteEditor } from './CustomerQuoteEditor';
+import { isFreeWorkspaceCompany } from '@/app/lib/billing/free-workspace';
 import { getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
 export default async function CustomerQuoteEditPage({
@@ -38,6 +39,8 @@ export default async function CustomerQuoteEditPage({
     .eq('id', quote.company_id)
     .single();
   const companyDefaultCurrency = company?.default_currency || 'NZD';
+  // Free Workspace watermark flag (owner 2026-11-03).
+  const showWatermark = await isFreeWorkspaceCompany(quote.company_id);
   const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
   
   // Load company logo (if exists)
@@ -62,6 +65,7 @@ export default async function CustomerQuoteEditPage({
 
   return (
     <>{demo && <div className="border-b border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-900">DEMO - NOT A REAL QUOTE · Example pricing only. Open the safe customer preview from the guide.</div>}<CustomerQuoteEditor
+      showWatermark={showWatermark}
       quote={quote}
       roofAreas={roofAreas}
       components={components}

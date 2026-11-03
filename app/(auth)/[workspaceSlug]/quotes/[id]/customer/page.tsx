@@ -7,6 +7,7 @@ import { computeTaxLines } from '@/app/lib/taxes/types';
 import Link from 'next/link';
 import { getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { DownloadPDFButton } from './DownloadPDFButton';
+import { isFreeWorkspaceCompany } from '@/app/lib/billing/free-workspace';
 
 export default async function CustomerQuotePage({
   params,
@@ -32,6 +33,8 @@ export default async function CustomerQuotePage({
     .single();
   const companyDefaultCurrency = company?.default_currency || 'NZD';
   const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
+  // Free Workspace quotes carry the QuoteCore+ watermark band (owner 2026-11-03).
+  const showWatermark = await isFreeWorkspaceCompany(quote.company_id);
 
   // Display: only visible lines
   const visibleLines = savedLines.filter(l => l.is_visible);
@@ -82,6 +85,7 @@ export default async function CustomerQuotePage({
             showQuantityColumn={!!(quote as { show_quantity_column?: boolean }).show_quantity_column}
             hideLinePrices={!!(quote as { hide_line_prices?: boolean }).hide_line_prices}
             hideTotals={!!(quote as { hide_totals?: boolean }).hide_totals}
+            showWatermark={showWatermark}
             
           />
         </div>

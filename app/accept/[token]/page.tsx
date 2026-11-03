@@ -2,6 +2,7 @@
 import { isDemoCompany } from '@/app/lib/demo/context';
 import { notFound } from 'next/navigation';
 import { QuotePreview } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/QuotePreview';
+import { isFreeWorkspaceCompany } from '@/app/lib/billing/free-workspace';
 import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { getEffectiveCurrency } from '@/app/lib/currency/currencies';
@@ -190,6 +191,9 @@ export default async function AcceptQuotePage({
     displayName: r.display_name,
   }));
 
+  // Free Workspace quotes carry the QuoteCore+ watermark band (owner 2026-11-03).
+  const showWatermark = await isFreeWorkspaceCompany(quote.company_id);
+
   return (
     <div className="min-h-screen bg-slate-50" data-qc-ui="v2">
       {/* Recipient-view stamping via idempotent POST server action (not GET). */}
@@ -213,6 +217,7 @@ export default async function AcceptQuotePage({
             showQuantityColumn={!!(quote as { show_quantity_column?: boolean }).show_quantity_column}
             hideLinePrices={!!(quote as { hide_line_prices?: boolean }).hide_line_prices}
             hideTotals={!!(quote as { hide_totals?: boolean }).hide_totals}
+            showWatermark={showWatermark}
             metadataExtra={<> {quote.acceptance_token_expires_at && (() => {
                     const expiry = new Date(quote.acceptance_token_expires_at);
                     const remaining = Math.ceil((expiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24));

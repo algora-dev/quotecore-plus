@@ -6,6 +6,8 @@ import { formatCurrency } from '@/app/lib/currency/currencies';
 import { LineEditForm } from './LineEditForm';
 import { displayLineText, splitLineParts } from '@/app/lib/quotes/lineText';
 
+import { QuoteWatermarkBand } from '@/app/components/quotes/QuoteWatermarkBand';
+
 interface QuoteLine {
   id: string;
   qty?: number;
@@ -70,6 +72,8 @@ interface Props {
   labourMarginDisplay?: number | null;
   /** Quote entry_mode, used to conditionally show margin fields in the line editor. */
   quoteEntryMode?: string | null;
+  /** Free Workspace watermark band (owner 2026-11-03) - rendered on the customer-facing artifact only. */
+  showWatermark?: boolean;
 }
 
 export function QuotePreview({
@@ -105,6 +109,7 @@ export function QuotePreview({
   materialMarginDisplay = null,
   labourMarginDisplay = null,
   quoteEntryMode = null,
+  showWatermark = false,
 }: Props) {
   // Render a line's text honouring the Units toggle. Catalog lines hide the
   // separate quantity_text; legacy/component lines fall back to hyphen-strip.
@@ -299,6 +304,7 @@ export function QuotePreview({
         </div>
       )}
       {!footerText && <></>}
+      {showWatermark && <QuoteWatermarkBand />}
     </div>
   );
 }

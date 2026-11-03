@@ -8,6 +8,7 @@ import { formatCurrency } from '@/app/lib/currency/currencies';
 import { displayLineText } from '@/app/lib/quotes/lineText';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { QuoteWatermarkBand } from '@/app/components/quotes/QuoteWatermarkBand';
 
 interface Props {
   quote: QuoteRow;
@@ -33,7 +34,7 @@ interface LaborSheetDocumentProps {
  * downloaded PDF is a pixel match of the on-screen labour sheet. No back
  * link / download button / page shell lives in here.
  */
-export function LaborSheetDocument({ quote, components, savedLines, quoteTaxes }: LaborSheetDocumentProps) {
+export function LaborSheetDocument({ quote, components, savedLines, quoteTaxes, showWatermark = false }: LaborSheetDocumentProps & { showWatermark?: boolean }) {
   const currency = quote.currency || 'NZD';
   const visibleLines = savedLines.filter((l) => l.is_visible);
   const subtotal = savedLines.length > 0
@@ -124,6 +125,7 @@ export function LaborSheetDocument({ quote, components, savedLines, quoteTaxes }
           </div>
         </div>
       </div>
+      {showWatermark && <QuoteWatermarkBand />}
     </div>
   );
 }

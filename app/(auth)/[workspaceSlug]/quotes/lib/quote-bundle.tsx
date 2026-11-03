@@ -58,6 +58,7 @@ export async function renderCustomerQuotePdfBuffer(b: QuoteBundleData): Promise<
       hideTotals={(p.quote as { hide_totals?: boolean }).hide_totals === true}
       // AGENT-TODO P5-EXPORT-02: loader omits qty/unitPrice. Do not invent a quantity column.
       currency={p.currency}
+      showWatermark={p.showWatermark === true}
     />,
   );
 }
@@ -71,6 +72,7 @@ export async function renderLabourSheetPdfBuffer(b: QuoteBundleData): Promise<Ar
       components={labor.components as never}
       savedLines={labor.savedLines as never}
       quoteTaxes={labor.quoteTaxes as never}
+      showWatermark={b.preview.showWatermark === true}
     />,
   );
 }

@@ -1,4 +1,5 @@
 'use server';
+import { isFreeWorkspaceCompany } from '@/app/lib/billing/free-workspace';
 
 /**
  * Bulk operations on quotes (multi-select on the quotes list page).
@@ -99,6 +100,8 @@ export interface QuoteBundleData {
       companyEmail: string | null;
       companyLogoUrl: string | null;
       footerText: string | null;
+      /** Free Workspace watermark flag (owner 2026-11-03). */
+      showWatermark?: boolean;
     };
   };
   roofAreas: Array<{
@@ -157,6 +160,8 @@ export interface QuoteBundleData {
     companyEmail: string;
     companyLogoUrl: string;
     footerText: string;
+    /** Free Workspace watermark flag (owner 2026-11-03) - rendered on preview + PDFs. */
+    showWatermark?: boolean;
     currency: string;
     /**
      * Raw rows the on-screen LaborSheetDocument needs. Present only when the
@@ -452,6 +457,7 @@ export async function loadQuoteBundleData(quoteId: string): Promise<QuoteBundleD
         companyEmail: quote.cq_company_email,
         companyLogoUrl: quote.cq_company_logo_url,
         footerText: quote.cq_footer_text,
+        showWatermark: await isFreeWorkspaceCompany(quote.company_id),
       },
     },
     roofAreas: roofAreas.map((a: any) => ({
