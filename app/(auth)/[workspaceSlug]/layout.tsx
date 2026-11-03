@@ -19,6 +19,7 @@ import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { EntitlementBanner } from '@/app/components/billing/EntitlementBanner';
+import { QuotaBanner } from '@/app/components/billing/QuotaBanner';
 import { GlobalAnnouncementBanner } from '@/app/components/GlobalAnnouncementBanner';
 import { ImpersonationBanner } from '@/app/components/ImpersonationBanner';
 import { UserImpersonationBanner } from '@/app/components/UserImpersonationBanner';
@@ -27,6 +28,7 @@ import { getActiveDemoContext } from '@/app/lib/demo/context';
 import { DemoExperience } from '@/app/components/demo/DemoExperience';
 import { readRealWorkspaceSlug } from '@/app/lib/demo/owner';
 import { appUrl, demoUrl } from '@/lib/app-url';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 
 export default async function WorkspaceLayout({
   children,
@@ -74,9 +76,36 @@ export default async function WorkspaceLayout({
   const demoToggleHref = demoContext
     ? (realSlug ? `${appUrl(shellHost)}/${realSlug}` : (appUrl(shellHost) || '/'))
     : `${demoUrl(shellHost)}/demo`;
-  const demoToggle = <DemoShellToggle active={demoContext ? 'demo' : 'workspace'} otherHref={demoToggleHref} />;
-
   const supabase = await createSupabaseServerClient();
+
+  // Per-user demo-toggle visibility (owner 2026-11-03): checkbox lives at the
+  // top of Settings. Read directly here (same pattern as the assistant pref).
+  const { data: demoTogglePref } = await supabase
+    .from('users')
+    .select('hide_demo_toggle')
+    .eq('id', profile.id)
+    .maybeSingle();
+  const hideDemoToggle = (demoTogglePref as unknown as { hide_demo_toggle?: boolean } | null)?.hide_demo_toggle ?? false;
+
+  // Workspace activity metric (owner 2026-11-03): bump at most once an hour.
+  // Service-role write; last_activity_at is not user-writable through RLS.
+  try {
+    const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
+    // Structural cast (no `any`): last_activity_at is newer than the
+    // generated types, matching the rpc() pattern in entitlements.ts.
+    await (createAdminClient() as unknown as {
+      from(table: string): {
+        update(row: Record<string, unknown>): {
+          eq(col: string, val: string): { or(filter: string): Promise<{ error: unknown }> };
+        };
+      };
+    })
+      .from('companies')
+      .update({ last_activity_at: new Date().toISOString() })
+      .eq('id', company.id)
+      .or(`last_activity_at.is.null,last_activity_at.lt.${hourAgo}`);
+  } catch { /* metric only - never block the shell */ }
+  const demoToggle = hideDemoToggle ? null : <DemoShellToggle active={demoContext ? 'demo' : 'workspace'} otherHref={demoToggleHref} />;
 
   // Load alerts for the bell. The bell is a PREVIEW surface only: it shows
   // alerts that haven't been "Cleared" from the bell (bell_cleared_at IS NULL),
@@ -183,6 +212,7 @@ export default async function WorkspaceLayout({
           notices={<>
             {demoContext && <DemoExperience sessionId={demoContext.sessionId} workspaceSlug={slug} expiresAt={demoContext.expiresAt} initialState={demoContext.tutorialState} />}
             {announcement && <GlobalAnnouncementBanner config={announcement} />}
+            {!demoContext && <QuotaBanner workspaceSlug={slug} />}
             {'isImpersonating' in profile && profile.isImpersonating && (
               <ImpersonationBanner adminEmail={profile.impersonationAdminEmail ?? null} targetEmail={profile.email} />
             )}

@@ -14,6 +14,8 @@ interface CompanySettings {
   laborMargin: number;
   /** Phase 8 (Generic Trades): optional; only written when provided. */
   defaultTrade?: 'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing' | 'landscaping' | 'solar' | 'flooring' | 'tiling' | 'foundations' | 'insulation' | 'painting' | 'fencing' | 'concrete' | 'construction' | null;
+  /** Owner 2026-11-03: per-user Demo/Workspace toggle visibility. Only written when provided. */
+  hideDemoToggle?: boolean;
 }
 
 export async function updateCompanySettings(
@@ -59,6 +61,7 @@ export async function updateCompanySettings(
     .from('users')
     .update({
       full_name: settings.userName,
+      ...(typeof settings.hideDemoToggle === 'boolean' ? { hide_demo_toggle: settings.hideDemoToggle } : {}),
     })
     .eq('id', profile.id);
 

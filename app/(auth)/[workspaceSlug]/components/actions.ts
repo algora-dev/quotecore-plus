@@ -168,8 +168,10 @@ export async function createComponent(input: ComponentLibraryInsert): Promise<Cr
     return { ok: false, code: 'internal_error', message: error instanceof Error ? error.message : 'Demo allowance unavailable.' };
   }
 
-  // Free Workspace: 15 smart components in total, lifetime (owner 2026-11-02).
-  // Admin-free grants carry the cap in purchased_entitlements.componentLimit.
+  // Component caps (owner 2026-11-02 + 2026-11-03): Free Workspace 15 total;
+  // paid capacity tiers 20/30/50 (Toolbox/Workbench/Workshop). The cap lives
+  // in purchased_entitlements.componentLimit on any custom billing row — rows
+  // without the key (legacy, admin-granted) are never capped.
   try {
     const { createAdminClient } = await import('@/app/lib/supabase/admin');
     // Loose typing: company_custom_billing is a service-role table outside the
@@ -181,13 +183,13 @@ export async function createComponent(input: ComponentLibraryInsert): Promise<Cr
       .eq('company_id', profile.company_id).maybeSingle();
     const grant = (grantRes?.data ?? null) as { purchased_entitlements?: Record<string, unknown>; stripe_subscription_id?: string } | null;
     const limits = (grant?.purchased_entitlements ?? null) as Record<string, unknown> | null;
-    const cap = grant?.stripe_subscription_id?.startsWith('admin-free-') && limits ? Number(limits.componentLimit ?? 0) : 0;
+    const cap = limits ? Number(limits.componentLimit ?? 0) : 0;
     if (cap > 0) {
       const { count } = await admin.from('component_library')
         .select('id', { count: 'exact', head: true })
         .eq('company_id', profile.company_id);
       if ((count ?? 0) >= cap) {
-        return { ok: false, code: 'quota_reached', message: `Free Workspace includes ${cap} smart components in total. To add more, upgrade from Account \u2192 Billing & Pricing.` };
+        return { ok: false, code: 'quota_reached', message: `Your plan includes ${cap} smart components in total. To add more, upgrade from Account \u2192 Billing & Pricing.` };
       }
     }
   } catch { /* resolution failure must not block creation */ }

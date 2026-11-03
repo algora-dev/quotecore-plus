@@ -22,7 +22,7 @@ export interface BillingPrice {
   interval: 'month';
   lookupKey: string;
   tier?: UsageTier | 'light' | 'regular' | 'heavy';
-  entitlements: { coreAccess?: true; quotes?: number; storageBytes?: number; digitalTakeoff?: true; scanTokens?: number; offcuts?: true; assistantTasks?: number };
+  entitlements: { coreAccess?: true; quotes?: number; storageBytes?: number; digitalTakeoff?: true; scanTokens?: number; offcuts?: true; assistantTasks?: number; componentLimit?: number };
 }
 export type StripePriceMap = Record<string, string>;
 export interface SubscriptionItem { id: string; priceId: string; quantity: number }
@@ -48,7 +48,8 @@ export function buildBillingCatalogue(c: CalculatorCatalog): BillingPrice[] {
   for (const tier of TIERS) {
     const row = c.core[tier];
     add('capacity', `capacity_${tier}`, row.capacityCents, `${LABELS[tier]} capacity`,
-      `${row.quotes} quotes per billing month and ${row.storageBytes / 1e9} GB active storage.`, { quotes: row.quotes, storageBytes: row.storageBytes }, tier);
+      `Unlimited quote creation and sending, ${row.componentLimit} components, ${row.storageBytes / 1e9} GB active storage.`,
+      { quotes: row.quotes, storageBytes: row.storageBytes, ...(row.componentLimit ? { componentLimit: row.componentLimit } : {}) }, tier);
   }
   add('digital', c.digital.code, c.digital.monthlyCents, 'Digital Takeoff', BILLING_PRODUCTS[2].description, { digitalTakeoff: true });
   for (const tier of TIERS) {

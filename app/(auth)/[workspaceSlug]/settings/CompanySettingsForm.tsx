@@ -23,6 +23,8 @@ interface Props {
   currentTaxes: EditableTax[];
   /** Phase 8 (Generic Trades): only rendered when the client flag is on. */
   currentDefaultTrade?: string | null;
+  /** Owner 2026-11-03: false = user hid the Demo/Workspace toggle from the shell. */
+  currentHideDemoToggle?: boolean | null;
   /** When true the company is over storage - block logo uploads. */
   isOverStorage?: boolean;
 }
@@ -40,6 +42,7 @@ export function CompanySettingsForm({
   currentLogoUrl,
   currentTaxes,
   currentDefaultTrade,
+  currentHideDemoToggle,
   isOverStorage,
 }: Props) {
   const params = useParams<{ workspaceSlug: string }>();
@@ -66,6 +69,7 @@ export function CompanySettingsForm({
   const [materialMargin, setMaterialMargin] = useState(currentMaterialMargin.toString());
   const [laborMargin, setLaborMargin] = useState(currentLaborMargin.toString());
   const [taxes, setTaxes] = useState<EditableTax[]>(currentTaxes);
+  const [showDemoToggle, setShowDemoToggle] = useState(currentHideDemoToggle !== false);
   const [isPending, startTransition] = useTransition();
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -122,6 +126,7 @@ export function CompanySettingsForm({
           laborMargin: labMargin,
           // Phase 8: only pass when flag is on.
           ...(genericTradesEnabled ? { defaultTrade } : {}),
+          hideDemoToggle: !showDemoToggle,
         });
 
         await saveCompanyTaxes(
@@ -149,6 +154,19 @@ export function CompanySettingsForm({
         <h2 className="qc-flow-section-title">Business identity</h2><p className="qc-flow-description">The details that identify your business on documents.</p>
         
         <div className="space-y-6">
+          {/* Demo toggle visibility (owner 2026-11-03) */}
+          <div className="flex items-start gap-3">
+            <input id="show-demo-toggle" type="checkbox" checked={showDemoToggle}
+              onChange={(e) => setShowDemoToggle(e.target.checked)} disabled={isPending}
+              className="mt-1 h-4 w-4 accent-[#FF641F]" />
+            <label htmlFor="show-demo-toggle" className="text-sm text-gray-900">
+              <span className="font-semibold">Show the Demo/Workspace toggle</span>
+              <p className="text-xs text-gray-600 mt-0.5">
+                Keep the switch between your workspace and the guided demo in the top bar.
+              </p>
+            </label>
+          </div>
+
           {/* Company Name */}
           <div className="space-y-2">
             <label className="qc-flow-label block">

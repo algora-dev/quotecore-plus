@@ -149,11 +149,13 @@ async function provisionFreeWorkspace(
           // Free Workspace quotas (owner-approved 2026-11-02): monthly ledger
           // quotas reset by rolling the grant period (qcp_admin_free_period_refresh).
           // quoteSends/componentLimit/offcutGenerations are app-layer caps.
+          // Owner 2026-11-03: quotes = 10 in existence AT ONCE (deleting frees
+          // a slot; enforced in quote-creation), storageBytes = 100MB.
           purchased_entitlements: {
             capacity: 'high',
             quotes: 10,
             quoteSends: 5,
-            storageBytes: 1_000_000_000,
+            storageBytes: 100_000_000,
             digitalTakeoff: true,
             scanTokens: 12,
             componentLimit: 15,

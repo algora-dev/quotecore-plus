@@ -24,7 +24,7 @@ export async function FreeWorkspaceCard({ companyId, slug }: { companyId: string
   const limits = grant.purchased_entitlements;
   const num = (key: string) => Number(limits[key] ?? 0);
 
-  const [ledgerRes, sendsRes, offcutsRes, compRes] = await Promise.all([
+  const [ledgerRes, sendsRes, offcutsRes, compRes, quotesRes] = await Promise.all([
     admin.from('qcp_usage_ledger').select('resource, units')
       .eq('company_id', companyId).eq('period_start', grant.period_start).neq('state', 'refunded'),
     admin.from('company_admin_grant_usage').select('id', { count: 'exact', head: true })
@@ -34,6 +34,7 @@ export async function FreeWorkspaceCard({ companyId, slug }: { companyId: string
       .eq('company_id', companyId).eq('kind', 'offcut_generated')
       .gte('occurred_at', grant.period_start).lt('occurred_at', grant.period_end),
     admin.rpc('company_component_count', { p_company_id: companyId }),
+    admin.from('quotes').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
   ]);
   const used = { quote: 0, scan: 0, assistant: 0 } as Record<string, number>;
   for (const e of (ledgerRes.data ?? []) as { resource: string; units: number | null }[]) {
@@ -44,7 +45,7 @@ export async function FreeWorkspaceCard({ companyId, slug }: { companyId: string
   const rows: { label: string; hint: string; used: number; limit: number; lifetime?: boolean }[] = [
     { label: 'Smart Assistant tasks', hint: 'voice or typed, one task each', used: used.assistant, limit: num('assistantTasks') },
     { label: 'Scan tokens', hint: 'simple scan 2 · medium+ stage 6 · re-run free', used: used.scan, limit: num('scanTokens') },
-    { label: 'Quotes created', hint: 'new quotes this month', used: used.quote, limit: num('quotes') },
+    { label: 'Quotes in workspace', hint: `${num('quotes')} at once \u2014 delete one to free a slot`, used: quotesRes.count ?? 0, limit: num('quotes') },
     { label: 'Quotes sent + links', hint: 'emails and customer links', used: sendsRes.count ?? 0, limit: num('quoteSends') },
     { label: 'Offcuts planner', hint: 'quotes using offcut plans', used: offcutsRes.count ?? 0, limit: num('offcutGenerations') },
     { label: 'Smart components', hint: 'total, does not reset', used: componentCount, limit: num('componentLimit'), lifetime: true },

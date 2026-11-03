@@ -6,14 +6,18 @@ import type { CalculatorCatalog } from './types';
  * Monthly quotes replace the old weekly questionnaire; schema version is now 2.
  */
 export const PREVIEW_CATALOG: CalculatorCatalog = {
-  id: 'quotecore-us-monthly', revision: 'owner-first-pass-2026-10-05.4',
+  id: 'quotecore-us-monthly', revision: 'owner-first-pass-2026-11-03.1',
   stage: 'approved', currency: 'USD', locale: 'en-US',
   baseMonthlyCents: 1900,
   thresholds: { lowMax: 5, mediumMax: 20, maxInput: 10000 },
   core: {
-    low: { code: 'core_low', capacityCents: 1000, quotes: 5, storageBytes: 1e9 },
-    medium: { code: 'core_medium', capacityCents: 2000, quotes: 20, storageBytes: 3e9 },
-    high: { code: 'core_high', capacityCents: 4000, quotes: 100, storageBytes: 10e9 },
+    // Owner rebalance 2026-11-03: every paid build creates + sends unlimited
+    // quotes (100000 = effectively-unlimited ledger sentinel). Capacity tiers
+    // now differentiate on components + storage. Free Workspace is quota'd
+    // separately (10 quotes at once, 5 sends/month) via the admin-free grant.
+    low: { code: 'core_low', capacityCents: 1000, quotes: 100000, storageBytes: 1e9, componentLimit: 20 },
+    medium: { code: 'core_medium', capacityCents: 2000, quotes: 100000, storageBytes: 3e9, componentLimit: 30 },
+    high: { code: 'core_high', capacityCents: 4000, quotes: 100000, storageBytes: 10e9, componentLimit: 50 },
   },
   digital: { code: 'digital_takeoff', monthlyCents: 2000 },
   scan: {
@@ -31,7 +35,7 @@ export const PREVIEW_CATALOG: CalculatorCatalog = {
     regular: { code: 'assistant_regular', monthlyCents: 4000, tasks: 400 },
     heavy: { code: 'assistant_heavy', monthlyCents: 6000, tasks: 1500 },
   },
-  shareRule: 'Each new quote counts once, including drafts and copies. Editing, sending or sharing it does not use another quote. Deleting it does not restore the allowance.',
+  shareRule: 'Every paid build creates and sends unlimited quotes. Free Workspace keeps 10 quotes at once (delete one to free a slot) and 5 sends a month.',
   scanRule: 'Each scan uses 2, 6 or 12 Scan Tokens at Low, Medium or High quality. A full plan uses two scans: roof outline, then components. You can mix quality levels. Extra scans use more tokens.',
   assistantRule: '1 Assistant Task = 1 task or request you send. The Assistant’s reply does not count as another task.',
 };

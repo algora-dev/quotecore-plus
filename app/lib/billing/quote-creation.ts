@@ -7,6 +7,7 @@
 
 import 'server-only';
 import { customUsageMeteringApplies, loadCustomUsage } from './custom/usage/store';
+import { resolveBillingType } from './company-type';
 
 import type { Json } from '@/app/lib/supabase/database.types';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
@@ -163,6 +164,29 @@ export async function createQuoteAtomic(
 
   // Verify the host account/mode without using a cached quota precheck.
   if (await customUsageMeteringApplies(companyId)) await loadCustomUsage(companyId);
+
+  // Free Workspace (owner 2026-11-03): max 10 quotes in existence AT ONCE —
+  // deleting a quote frees a slot. Paid builds create unlimited (sentinel
+  // allowance in the ledger) and legacy keeps the installed gateway below.
+  if ((await resolveBillingType(companyId)).kind === 'custom_admin_granted') {
+    // Loose typing: company_custom_billing is a service-role table outside the
+    // generated types (same pattern as admin-grant enforcement).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const loose = admin as unknown as { from(table: string): any };
+    const grantRes = await loose.from('company_custom_billing')
+      .select('purchased_entitlements')
+      .eq('company_id', companyId)
+      .maybeSingle();
+    const limit = Number(
+      ((grantRes?.data as { purchased_entitlements?: { quotes?: number } } | null)?.purchased_entitlements ?? {}).quotes ?? 10,
+    );
+    const { count } = await loose.from('quotes')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId);
+    if ((count ?? 0) >= limit) {
+      throw new QuoteLimitReachedError({ used: count ?? 0, limit, periodStart: '', planCode: 'free_workspace' });
+    }
+  }
 
   // P2: custom quota is enforced in the database transaction. Do not add a
   // cached precheck here: it can reject valid replays and races at period edges.
