@@ -13,7 +13,7 @@ type NavItem = { label: string; href: string; app?: boolean; newTab?: boolean };
 
 function buildNavItems(appHref: string, homepage: boolean): NavItem[] {
   return [
-    { label: "Open My Workspace", href: appHref, app: true },
+    { label: "Log in", href: appHref, app: true },
     { label: "Create Free Workspace", href: "/signup", newTab: true },
     { label: "Features", href: homepage ? "#workflow" : "/features" },
     { label: "Done For You", href: "/done-for-you-setup" },
@@ -92,6 +92,15 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "dark", 
         </a>
 
         <div className={styles.actions}>
+          <a
+            href={appLink || "/login"}
+            target={/^https?:\/\//.test(appLink) ? "_blank" : undefined}
+            rel={/^https?:\/\//.test(appLink) ? "noopener noreferrer" : undefined}
+            className={`${controls.button} ${controls.glass} ${styles.loginButton}`}
+            onClick={() => trackEvent("app_click", { location: "header-login" })}
+          >
+            Log in
+          </a>
           <div className={styles.desktopActions}>
             {backLabel ? (
               <a href={backHref} className={styles.backLink}>
@@ -150,13 +159,6 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "dark", 
 
             <div className={styles.menuFooter}>
               <SocialIcons align="start" />
-              <a
-                href="/nz/roofing-quoting-software"
-                className={styles.countryLink}
-                onClick={() => setMenuOpen(false)}
-              >
-                Switch to New Zealand
-              </a>
             </div>
           </div>
         </div>

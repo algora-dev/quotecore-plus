@@ -114,6 +114,17 @@
 .menuButton svg { width: 20px; height: 20px; }
 .menuButton:active { transform: translateY(1px); box-shadow: inset 0 2px 3px rgba(25, 27, 32, 0.12); }
 
+.loginButton {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: 12px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
 .menuPanel {
   position: absolute;
   top: 100%;
@@ -169,20 +180,6 @@
   flex-wrap: wrap;
 }
 
-.countryLink {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid rgba(221, 225, 231, 0.92);
-  border-radius: 12px;
-  padding: 0 14px;
-  color: #303641;
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  background: rgba(255, 255, 255, 0.56);
-}
-
 @media (hover: hover) {
   .logoLink:hover .logo {
     transform: scale(1.018);
@@ -211,6 +208,7 @@
   .logo { height: 36px; }
   .desktopActions { display: none; }
   .menuButton { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }
+  .loginButton { min-height: 44px; padding-inline: 13px; }
   .actions { gap: 8px; }
   .menuInner { padding: 14px 16px calc(18px + env(safe-area-inset-bottom)); }
   .navItem { min-height: 50px; font-size: 15px; }
@@ -241,7 +239,7 @@
 
 @media (forced-colors: active) {
   .header, .menuPanel { border-color: CanvasText; }
-  .menuButton, .countryLink { background: ButtonFace; color: ButtonText; border-color: ButtonText; }
+  .menuButton, .loginButton { background: ButtonFace; color: ButtonText; border-color: ButtonText; }
   .signIn:focus-visible, .backLink:focus-visible, .menuButton:focus-visible, .logoLink:focus-visible { outline-color: Highlight; }
 }
 
@@ -251,7 +249,7 @@
 .menuFooter > div { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
 .menuFooter > div a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; color: #596273; }
 .menuFooter > div svg { width: 19px; height: 19px; }
-.navItem:focus-visible, .countryLink:focus-visible, .menuFooter a:focus-visible { outline: 2px solid var(--qc-header-orange-ink); outline-offset: 3px; }
+.navItem:focus-visible, .loginButton:focus-visible, .menuFooter a:focus-visible { outline: 2px solid var(--qc-header-orange-ink); outline-offset: 3px; }
 @media (max-width:767px) {
   .menuPanel { max-height: calc(100dvh - 64px); }
   .logo { height: 33px; }
@@ -310,11 +308,6 @@
 .dark .menuLabel { color: #a8b0bc; }
 .dark .navItem { color: #e8eaee; border-bottom-color: rgba(255, 255, 255, 0.08); }
 .dark .navItem svg { color: #6f7783; }
-.dark .countryLink {
-  color: #e8eaee;
-  border-color: rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.04);
-}
 .dark .menuFooter > div a { color: #a8b0bc; }
 
 @media (hover: hover) {
