@@ -154,7 +154,7 @@ export default async function AccountPage() {
             currentLaborMargin={company.default_labor_margin_percent || 0}
             currentLogoUrl={logoUrl}
             currentDefaultTrade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
-            currentHideDemoToggle={(user as unknown as { hide_demo_toggle?: boolean } | null)?.hide_demo_toggle ?? true}
+            currentHideDemoToggle={(user as unknown as { hide_demo_toggle?: boolean } | null)?.hide_demo_toggle ?? false}
             currentTaxes={taxes.map((t) => ({
               id: t.id,
               dbId: t.id,
