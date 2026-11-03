@@ -9,15 +9,15 @@ import { workflowCallHref } from "@/lib/booking";
 import styles from "./BlogHeader.module.css";
 import controls from "./marketing/MarketingButton.module.css";
 
-type NavItem = { label: string; href: string; app?: boolean };
+type NavItem = { label: string; href: string; app?: boolean; newTab?: boolean };
 
 function buildNavItems(appHref: string, homepage: boolean): NavItem[] {
   return [
-    { label: "Open the App", href: appHref, app: true },
+    { label: "Open My Workspace", href: appHref, app: true },
+    { label: "Create Free Workspace", href: "/signup", newTab: true },
     { label: "Features", href: homepage ? "#workflow" : "/features" },
     { label: "Done For You", href: "/done-for-you-setup" },
     { label: "Pricing", href: homepage ? "#pricing" : "/pricing" },
-    { label: "Free Workspace", href: "/free-trial" },
     { label: "Book 25 minutes with Shaun", href: workflowCallHref },
   ];
 }
@@ -101,8 +101,6 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "dark", 
             <FreeWorkspaceButton variant="primary" size="large" className={styles.workspaceCta}>Create free workspace</FreeWorkspaceButton>
           </div>
 
-          <FreeWorkspaceButton variant="primary" className={`${styles.mobileDemo} ${styles.workspaceCta}`}>Create free workspace</FreeWorkspaceButton>
-
           <button
             ref={menuButtonRef}
             type="button"
@@ -134,8 +132,8 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "dark", 
                 <a
                   key={item.label}
                   href={item.href}
-                  target={/^https?:\/\//.test(item.href) ? '_blank' : undefined}
-                  rel={/^https?:\/\//.test(item.href) ? 'noopener noreferrer' : undefined}
+                  target={item.newTab || /^https?:\/\//.test(item.href) ? '_blank' : undefined}
+                  rel={item.newTab || /^https?:\/\//.test(item.href) ? 'noopener noreferrer' : undefined}
                   className={styles.navItem}
                   onClick={() => {
                     if (item.app) trackEvent("app_click", { location: "menu-open-app" });
