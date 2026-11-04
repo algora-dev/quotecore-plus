@@ -73,13 +73,24 @@ export default async function BuildSetupPage() {
   // the in-app change wizard in Billing instead.
   checkoutEligible = !co?.stripe_subscription_id;
 
+  // Marker grants (free/comped) store CALCULATOR-vocabulary codes directly
+  // (core_high, scan_high, ...) — not the catalog vocabulary the paid
+  // reconciler writes (core_access, capacity_high, ...). The strict decoder
+  // accepts catalog codes only, so run it for REAL subscribers; filter marker
+  // codes to the known calculator set instead. This throw was the build-setup
+  // 500 (owner 2026-11-04).
+  const componentCodes = checkoutEligible
+    ? ((snapRow?.component_codes ?? []) as string[]).filter(code =>
+        /^(core_(low|medium|high)|digital_takeoff|scan_(low|medium|high)|offcuts_(low|medium|high)|assistant_(light|regular|heavy))$/.test(code))
+    : calculatorCodesFromBilling(snapRow?.component_codes);
+
   current = {
     billingSystem: 'custom_setup',
     displayName: isFree ? 'Your free workspace' : 'Your QuoteCore+ setup',
     monthlyCents: snapRow?.monthly_cents ?? null,
     currency: snapRow?.currency?.toLowerCase() === 'nzd' ? 'NZD' : 'USD',
     catalogRevision: snapRow?.catalog_revision ?? undefined,
-    componentCodes: calculatorCodesFromBilling(snapRow?.component_codes),
+    componentCodes,
   };
   }
 

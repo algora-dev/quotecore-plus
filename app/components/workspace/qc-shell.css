@@ -159,18 +159,24 @@ html[data-takeoff-immersive='touch'] .qc-main { max-width:none; padding:0; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 32px;
-  padding: 6px 12px;
+  min-height: var(--qc-control-md, 36px);
+  padding: var(--qc-space-2, 6px) 14px;
+  border: 1px solid transparent;
   border-radius: var(--qc-radius-small, 8px);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
   font-weight: 600;
   white-space: nowrap;
 }
+/* Owner 2026-11-04: active segment uses the EXACT v2 primary-button recipe
+   (qc.css C01 primary) — same gradient, border, ink and highlight tokens as
+   the Guided Walkthrough / Add-your-pricing buttons. No bespoke treatment. */
 .qc-demo-toggle-seg.is-active {
-  background: linear-gradient(135deg, #FF641F 0%, #FF8A3D 55%, #FFB36B 100%);
-  color: #191B20;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35);
+  background: var(--qc-gradient-primary, linear-gradient(135deg, #FF641F 0%, #FF8A3D 55%, #FFB36B 100%));
+  border-color: var(--qc-action-primary-start, #FF641F);
+  color: var(--qc-action-primary-text, #191B20);
+  box-shadow: var(--qc-glass-b-highlight, inset 0 1px 0 rgba(255, 255, 255, .35));
+  font-weight: 600;
 }
 a.qc-demo-toggle-seg { color: var(--qc-text-secondary, #475569); text-decoration: none; }
 a.qc-demo-toggle-seg:hover { background: rgba(255, 107, 53, .12); color: #C2410C; }

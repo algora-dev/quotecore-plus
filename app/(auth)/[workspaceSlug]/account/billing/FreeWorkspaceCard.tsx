@@ -1,4 +1,6 @@
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { QcLinkButton } from '@/app/components/ui/v2/QcButton';
+import { QcIcon } from '@/app/components/ui/v2/QcIcon';
 
 /** Loose client: company_custom_billing / qcp_usage_ledger / grant usage are
  * service-role tables outside the generated types (same pattern as the
@@ -58,7 +60,7 @@ export async function FreeWorkspaceCard({ companyId, slug, storageUsedBytes = 0 
   const reset = new Date(grant.period_end).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+    <div data-qc-ui="v2" className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Your current plan</p>
@@ -70,9 +72,9 @@ export async function FreeWorkspaceCard({ companyId, slug, storageUsedBytes = 0 
             Your tier and monthly allowances{` · resets ${reset}`}
           </p>
         </div>
-        <a href={`/${slug}/account/billing/build-setup`} className="qc-flow-control inline-flex min-h-11 items-center rounded-xl bg-[linear-gradient(135deg,#FF641F_0%,#FF8A3D_55%,#FFB36B_100%)] px-5 py-3 font-semibold text-[#191B20]">
-          Change my plan
-        </a>
+        <QcLinkButton href={`/${slug}/account/billing/build-setup`} variant="primary" size="lg">
+          Change my plan <QcIcon name="arrow" />
+        </QcLinkButton>
       </div>
       <div className="mt-4 grid gap-2">
         {rows.filter(r => r.limit > 0).map(r => {
