@@ -171,7 +171,7 @@ export async function createComponent(input: ComponentLibraryInsert): Promise<Cr
   // Component caps (owner 2026-11-02 + 2026-11-03): Free Workspace 15 total;
   // paid capacity tiers 20/30/50 (Toolbox/Workbench/Workshop). The cap lives
   // in purchased_entitlements.componentLimit on any custom billing row — rows
-  // without the key (legacy, admin-granted) are never capped.
+  // without the key (legacy, team-granted) are never capped.
   try {
     const { createAdminClient } = await import('@/app/lib/supabase/admin');
     // Loose typing: company_custom_billing is a service-role table outside the

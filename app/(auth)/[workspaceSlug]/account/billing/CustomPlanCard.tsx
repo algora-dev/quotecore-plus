@@ -33,7 +33,7 @@ function codeLabel(code: string): string {
   return code.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-interface SetupInfo { monthlyCents: number; currency: 'USD' | 'NZD'; componentCodes: string[]; creditBalanceCents: number; adminGranted: boolean }
+interface SetupInfo { monthlyCents: number; currency: 'USD' | 'NZD'; componentCodes: string[]; creditBalanceCents: number; adminGranted: boolean; free: boolean }
 type PreviewState = { direction: string; currentMonthlyCents: number; newMonthlyCents: number; proratedTodayCents: number; newRows: { productName: string; monthlyCents: number }[] };
 
 export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
@@ -53,7 +53,7 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
 
   useEffect(() => {
     let live = true;
-    loadCustomSetupInfo().then(result => { if (live && result.ok) setInfo({ monthlyCents: result.monthlyCents ?? 0, currency: (result.currency ?? 'USD').toUpperCase() === 'NZD' ? 'NZD' : 'USD', componentCodes: result.componentCodes ?? [], creditBalanceCents: result.creditBalanceCents ?? 0, adminGranted: !!result.adminGranted }); });
+    loadCustomSetupInfo().then(result => { if (live && result.ok) setInfo({ monthlyCents: result.monthlyCents ?? 0, currency: (result.currency ?? 'USD').toUpperCase() === 'NZD' ? 'NZD' : 'USD', componentCodes: result.componentCodes ?? [], creditBalanceCents: result.creditBalanceCents ?? 0, adminGranted: !!result.adminGranted, free: !!result.free }); });
     return () => { live = false; };
   }, [reload]);
 
@@ -72,6 +72,11 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
     setOpen(false);
     return { message: 'Review the change below your current plan, then confirm.' };
   }, []);
+
+  // Free Workspace (owner 2026-11-04): the FreeWorkspaceCard is their tier
+  // surface and the build-setup page is their purchase path — never show the
+  // subscriber change wizard to a company with no Stripe subscription.
+  if (info?.free) return null;
 
   function confirmChange() {
     setError(''); setDone('');

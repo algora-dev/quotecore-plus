@@ -29,6 +29,7 @@ import {
 import { createCustomCheckoutSession as runCustomCheckout } from '@/app/lib/billing/custom/checkout';
 import { previewCustomSetupChange as previewChange, changeCustomSetup as runChange } from '@/app/lib/billing/custom/update';
 import { isLegacyBillingCompany } from '@/app/lib/billing/custom/legacy-boundary';
+import { resolveBillingType } from '@/app/lib/billing/company-type';
 
 /**
  * Compute the absolute base URL for return links.
@@ -452,6 +453,7 @@ export async function createCustomCheckoutSession(
   }
   const { profile, company: ctxCompany } = ctx;
   await assertDemoExternalAllowed(profile.company_id);
+  const slug = ctxCompany.slug;
 
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
@@ -480,6 +482,10 @@ export async function createCustomCheckoutSession(
     existingStripeSubscriptionId: company.stripe_subscription_id,
     existingSubscriptionStatus: company.subscription_status,
     baseUrl: base,
+    // Free Workspace upgrades (owner 2026-11-04) land back on the billing tab,
+    // where the existing success/canceled banners explain the sync window.
+    successPath: `/${slug}/account?tab=billing`,
+    cancelPath: `/${slug}/account?tab=billing`,
   });
 }
 
@@ -535,18 +541,24 @@ export async function applyCustomSetupChange(rawSetup: string): Promise<{ ok: bo
 /** Itemised custom-plan info for the billing card. Reads the reconciled snapshot only.
  * Also surfaces the Stripe customer credit balance (negative balance = credit) so the
  * card can show money the provider will apply to future invoices. */
-export async function loadCustomSetupInfo(): Promise<{ ok: boolean; monthlyCents?: number; currency?: string; componentCodes?: string[]; creditBalanceCents?: number; adminGranted?: boolean }> {
+export async function loadCustomSetupInfo(): Promise<{ ok: boolean; monthlyCents?: number; currency?: string; componentCodes?: string[]; creditBalanceCents?: number; adminGranted?: boolean; free?: boolean }> {
   try {
     const { profile } = await loadCompanyContext();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const admin = createAdminClient() as any;
     const { data } = await admin.from('company_custom_billing')
-      .select('monthly_cents, currency, component_codes, stripe_customer_id')
+      .select('monthly_cents, currency, component_codes, stripe_customer_id, stripe_subscription_id')
       .eq('company_id', profile.company_id).maybeSingle();
     if (!data) return { ok: false };
-    // Admin-granted marker (resolver: company-type.ts): no Stripe linkage exists,
-    // so skip the credit lookup and tell the card to hide the change wizard.
-    const adminGranted = String(data.stripe_customer_id ?? '') === 'admin-granted';
+    // Admin-granted companies (resolver: company-type.ts): no Stripe linkage
+    // exists, so skip the credit lookup and tell the card to hide the change
+    // wizard. Free Workspace grants resolve to the same kind.
+    const resolved = await resolveBillingType(profile.company_id).catch(() => null);
+    const adminGranted = resolved?.kind === 'custom_admin_granted';
+    // Free Workspace marker (owner 2026-11-04): 'admin-free-*' grant ids. These
+    // are free-tier users with NO subscription to change — the FreeWorkspaceCard
+    // is their tier surface and the build-setup page is their purchase path.
+    const free = String(data.stripe_subscription_id ?? '').startsWith('admin-free-');
     let creditBalanceCents = 0;
     if (!adminGranted) {
       try {
@@ -554,7 +566,7 @@ export async function loadCustomSetupInfo(): Promise<{ ok: boolean; monthlyCents
         if (customer && !('deleted' in customer)) creditBalanceCents = Math.max(0, -((customer as { balance?: number }).balance ?? 0));
       } catch { /* credit display is best-effort; never block the card */ }
     }
-    return { ok: true, monthlyCents: Number(data.monthly_cents ?? 0), currency: String(data.currency ?? 'usd'), componentCodes: Array.isArray(data.component_codes) ? data.component_codes as string[] : [], creditBalanceCents, adminGranted };
+    return { ok: true, monthlyCents: Number(data.monthly_cents ?? 0), currency: String(data.currency ?? 'usd'), componentCodes: Array.isArray(data.component_codes) ? data.component_codes as string[] : [], creditBalanceCents, adminGranted, free };
   } catch {
     return { ok: false };
   }

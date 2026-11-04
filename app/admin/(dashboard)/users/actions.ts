@@ -50,6 +50,7 @@ export interface SearchUserRow {
   companyName: string;
   planCode: string | null;
   billingModel: string | null;
+  freeWorkspace: boolean;
   stripeSubscriptionId: string | null;
   subscriptionStatus: string | null;
   compUntil: string | null;
@@ -90,6 +91,30 @@ async function fetchLastActiveMap(
   }
   for (const id of userIds) if (!map.has(id)) map.set(id, null);
   return map;
+}
+
+/**
+ * Free Workspace marker (owner 2026-11-04): grant rows carrying an
+ * 'admin-free-*' subscription id are free-tier signups. They surface with a
+ * distinct "Free" pill in the users list instead of "Custom".
+ */
+async function freeWorkspaceCompanyIds(
+  admin: ReturnType<typeof createAdminClient>,
+  companyIds: string[],
+): Promise<Set<string>> {
+  const free = new Set<string>();
+  if (companyIds.length === 0) return free;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (admin as any)
+    .from('company_custom_billing')
+    .select('company_id, stripe_subscription_id')
+    .in('company_id', companyIds);
+  for (const g of (data ?? []) as { company_id: string; stripe_subscription_id: string | null }[]) {
+    if (typeof g.stripe_subscription_id === 'string' && g.stripe_subscription_id.startsWith('admin-free-')) {
+      free.add(g.company_id);
+    }
+  }
+  return free;
 }
 
 /**
@@ -142,6 +167,8 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
       for (const c of cos ?? []) companiesById[c.id] = c;
     }
 
+    const freeSet = await freeWorkspaceCompanyIds(admin, companyIds);
+
     const activeMap = await fetchLastActiveMap(
       admin,
       (pageUsers ?? []).map((u) => u.id),
@@ -157,6 +184,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
         companyName: co?.name ?? 'Unknown',
         planCode: co?.plan_code ?? null,
         billingModel: co?.billing_model ?? null,
+        freeWorkspace: freeSet.has(u.company_id ?? ''),
         subscriptionStatus: co?.subscription_status ?? null,
         stripeSubscriptionId: co?.stripe_subscription_id ?? null,
         compUntil: co?.comp_until ?? null,
@@ -192,6 +220,8 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
     }
   }
 
+  const emailFreeSet = await freeWorkspaceCompanyIds(admin, emailCompanyIds);
+
   const emailActiveMap = await fetchLastActiveMap(
     admin,
     (emailMatches ?? []).map((u) => u.id),
@@ -207,6 +237,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
       companyName: co?.name ?? 'Unknown',
       planCode: co?.plan_code ?? null,
       billingModel: co?.billing_model ?? null,
+      freeWorkspace: emailFreeSet.has(u.company_id ?? ''),
       subscriptionStatus: co?.subscription_status ?? null,
       stripeSubscriptionId: co?.stripe_subscription_id ?? null,
       compUntil: co?.comp_until ?? null,
@@ -236,6 +267,8 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
         .select('id, email, full_name, is_admin, company_id')
         .in('company_id', newCoIds);
 
+      const coFreeSet = await freeWorkspaceCompanyIds(admin, newCoIds);
+
       const coActiveMap = await fetchLastActiveMap(
         admin,
         (coUsers ?? []).map((u) => u.id),
@@ -251,6 +284,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
             companyName: c.name,
             planCode: c.plan_code,
             billingModel: (c as { billing_model?: string | null }).billing_model ?? null,
+            freeWorkspace: coFreeSet.has(c.id),
             subscriptionStatus: c.subscription_status,
             stripeSubscriptionId: c.stripe_subscription_id ?? null,
             compUntil: (c as { comp_until?: string | null }).comp_until ?? null,

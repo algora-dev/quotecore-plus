@@ -59,6 +59,9 @@ export async function createCustomCheckoutSession(opts: {
   rawSetup: string; companyId: string; userId: string | null; baseUrl: string;
   stripeCustomerEmail?: string | null; existingStripeCustomerId?: string | null;
   existingStripeSubscriptionId?: string | null; existingSubscriptionStatus?: string | null;
+  /** Optional app-relative return paths (Free Workspace upgrades land back on
+   * the billing tab, owner 2026-11-04). Defaults keep the paywall URLs. */
+  successPath?: string; cancelPath?: string;
 }): Promise<CustomCheckoutResult> {
   try {
     requireCustomCheckoutEnabled();
@@ -88,12 +91,17 @@ export async function createCustomCheckoutSession(opts: {
     const origin = new URL(opts.baseUrl);
     insist(origin.origin === opts.baseUrl && !origin.username && !origin.password &&
       (origin.protocol === 'https:' || (scope.mode === 'test' && origin.protocol === 'http:' && ['localhost','127.0.0.1'].includes(origin.hostname))), 'checkout_origin_invalid');
+    const joinFlag = (p: string) => (p.includes('?') ? '&' : '?');
+    const safePath = (p: string | undefined, fallback: string) =>
+      (p && p.startsWith('/') && !p.includes('//')) ? p : fallback;
+    const successPath = safePath(opts.successPath, '/paywall');
+    const cancelPath = safePath(opts.cancelPath, '/paywall');
     const request = {
       mode: 'subscription', line_items: expanded.lineItems, client_reference_id: company.id,
       ...(company.stripe_customer_id ? { customer: company.stripe_customer_id } : { customer_email: opts.stripeCustomerEmail ?? undefined }),
       allow_promotion_codes: true,
-      success_url: `${origin.origin}/paywall?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin.origin}/paywall?checkout=canceled`,
+      success_url: `${origin.origin}${successPath}${joinFlag(successPath)}checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin.origin}${cancelPath}${joinFlag(cancelPath)}checkout=canceled`,
       subscription_data: { metadata: { company_id: company.id, billing_model: 'custom_setup', catalog_id: scope.catalogId, catalog_revision: scope.revision } },
     };
     // At most one old session can be recovered and expired before claiming a fresh operation.

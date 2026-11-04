@@ -37,6 +37,9 @@ const ALLOWLIST = {
     'app/admin/(dashboard)/users/[userId]/custom-billing/actions.ts',
     'app/admin/(dashboard)/users/[userId]/custom-billing/CustomBillingSection.tsx',
     'app/api/smoke/billing-matrix/route.ts',
+    // Free-workspace provisioning writer (owner 2026-11-01): stamps the
+    // marker grant rows the resolver classifies. Writer, not a decision site.
+    'app/lib/auth/complete-signin.ts',
   ],
   // Raw billing_model column reads outside these paths = new decision site.
   'billing_model-read': [
