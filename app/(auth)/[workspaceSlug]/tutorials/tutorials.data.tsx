@@ -1,12 +1,14 @@
 import type { ReactNode } from 'react';
 
 /**
- * Tutorials data - the 13 onboarding cards.
+ * Tutorials data - the onboarding cards.
  *
  * Each tutorial renders as a card on /tutorials. Clicking opens TutorialModal,
  * which pages through `pages[]` and shows two CTAs:
- *   - "Go to <feature>"          -> router.push(ctaHref(base))
- *   - "Walk me through with Q"    -> launches guide `workflowId` (hidden if null)
+ *   - "Go to <feature>"          -> router.push(ctaHref(base)), except docs-help
+ *                                   which opens the in-app help drawer
+ *   - "Walk me through with Q"    -> launches guide `workflowId` (hidden if null
+ *                                   or the legacy Q assistant is off)
  *
  * workflowId maps to an existing guide in app/components/copilot/guides.generic.ts.
  * When null, the Q button is hidden for that card (no dead button).
@@ -47,35 +49,24 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: 'start-here',
     title: 'Start Here',
-    tagline: 'The three ways to build a quote, order, or invoice - pick what fits your business.',
+    tagline: 'The first thing you need is to add your pricing to QuoteCore+ - we make it easy.',
     icon: icon('M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'),
-    ctaLabel: 'Go to Quotes',
-    ctaHref: (b) => `${b}/quotes`,
+    ctaLabel: 'Add Your Pricing',
+    ctaHref: (b) => `${b}/components?guided=1`,
     workflowId: null,
     pages: [
       {
-        heading: 'Three ways to quote',
+        heading: 'Your pricing comes first',
         body: [
-          'QuoteCore+ gives you three systems to get information into a quote: Smart Components™, Catalogs, and Custom Lines. Combine all three, or just use 1-2. Understanding each one means you\'ll always quote fast and accurately.',
+          'Before you build your first quote, get your prices into QuoteCore+. A Smart Component™ is a product or service you provide - your material cost, labour rate, waste, and how it\'s measured. Build it once, and every future quote prices itself.',
+          'The app seeds starter examples so you can see how working components look - swap in your own costs as you go.',
         ],
       },
       {
-        heading: 'Smart Components™',
+        heading: 'Guided setup, step by step',
         body: [
-          'Define your rules once - how it\'s measured, what it costs, labour, waste, and complex calculations (pitch, area, volume, length × height, and more). Enter your measurements per job; the Smart Component™ calculates the rest and populates quote lines instantly. Build it once. Use it forever.',
-        ],
-      },
-      {
-        heading: 'Catalogs',
-        body: [
-          'Upload a spreadsheet of products, labour items, or supplier prices - anything you reference when quoting. Choose which columns appear on the quote line, then search and drop any item in seconds. No more digging through PDFs or external tabs copy and pasting items.',
-        ],
-      },
-      {
-        heading: 'Custom Lines',
-        body: [
-          'Add any line manually: description, quantity, price - exactly as you want it. Slower, but completely custom.',
-          'Every line - whether from a Smart Component™, Catalog, or typed manually - can be fully edited after adding: description, quantity, price, margin, and more.',
+          'Click "Add Your Pricing" below and the guided setup opens straight at step one. Name your component, enter your costs, choose how it\'s measured, and test it with a real measurement - each step explains itself as you go.',
+          'Once your pricing is in, quotes, Digital Measure, and orders all price from it automatically.',
         ],
       },
     ],
@@ -103,7 +94,7 @@ export const TUTORIALS: Tutorial[] = [
         body: [
           'Use saved Smart Components™ to quickly add lines to your quote that require pricing from measurements, items, or areas - including complex calculations for labour, materials, pitch, area squared, length x height, volume, and more.',
           'You can also add custom lines or catalog lines later in the customer quote editor section.',
-          'Must have Smart Components™ saved - see the Smart Components™ tutorial.',
+          'Must have Smart Components™ saved - see Start Here to add your pricing.',
         ],
       },
       {
@@ -124,7 +115,7 @@ export const TUTORIALS: Tutorial[] = [
         heading: 'Then what',
         body: [
           'Save, preview, edit, then send to your customer by link or email.',
-          'See the "Sending" tutorial for how delivery and tracking work, and the "Smart Components™" or "Catalog" tutorials to learn how and why each of these powerful tools can help you create quotes faster and more accurately.',
+          'See the "Sending" tutorial for how delivery and tracking work, or the "Catalog" tutorial to learn how supplier price lists can speed up your quoting.',
         ],
       },
     ],
@@ -173,41 +164,6 @@ export const TUTORIALS: Tutorial[] = [
   },
 
   // 3 ------------------------------------------------------------------
-  {
-    id: 'components',
-    title: 'Smart Components™',
-    tagline: 'Build them once, use them forever - your rules, your pricing, your calculations.',
-    icon: icon('M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10'),
-    ctaLabel: 'Go to Smart Components™',
-    ctaHref: (b) => `${b}/components`,
-    workflowId: 'components',
-    pages: [
-      {
-        heading: 'What & why',
-        body: [
-          'A Smart Component™ is a saved item with your item cost + labour rates, waste %, and how it’s measured (per m², per metre, each...).', 
-          'Build them once, reuse on every quote - consistent pricing, no re-typing.',
-        ],
-      },
-      {
-        heading: 'How to use',
-        body: [
-          'Create Smart Components™ in Resources → Smart Components™.',
-          'When quoting in Digital Measure, your measurements pull the right Smart Components™ and price automatically.',
-          'You can also drop a Smart Component™ straight onto any quote or order line.',
-        ],
-      },
-      {
-        heading: 'When',
-        body: [
-          'Set up your Smart Components™ first (the app seeds starter examples so you can see and edit working ones).',
-          'Edit Smart Components™ any time - new quotes use the latest.',
-        ],
-      },
-    ],
-  },
-
-  // 4 ------------------------------------------------------------------
   {
     id: 'catalogs',
     title: 'Catalogs',
@@ -519,36 +475,30 @@ export const TUTORIALS: Tutorial[] = [
     ],
   },
 
-  // 13 -----------------------------------------------------------------
+  // 12 -----------------------------------------------------------------
   {
-    id: 'q-and-docs',
-    title: 'Q & Docs / Help',
-    tagline: 'Your built-in assistant and help docs.',
-    icon: icon('M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'),
-    ctaLabel: 'Open Q',
+    id: 'docs-help',
+    title: 'Docs / Help',
+    tagline: 'Searchable help docs for every feature - right inside the app.',
+    icon: icon('M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25'),
+    // TutorialModal special-cases this card: the CTA opens the in-app help
+    // drawer (context from the workspace layout) instead of navigating.
+    ctaLabel: 'Open Help',
     ctaHref: (b) => `${b}`,
-    // This card IS the Q intro - Q-walkthrough button hidden (handled in modal).
     workflowId: null,
     pages: [
       {
-        heading: 'Meet Q',
+        heading: 'Help on every screen',
         body: [
-          'Q is your personal in-app assistant. Ask "how do I…?" or "show me how to…?" and Q answers from the docs, or offers to walk you through it - highlighting each button as you go (that’s "Guide Me").',
-          'For Guide Me, simply select the tab in the chat box when opened. You can turn highlights on/off from there. Q will walk you through each step - sometimes the step auto-updates, sometimes you click "Next" in the chat box.',
+          'The ? help icon in the top bar opens the help drawer with the doc that matches the page you\'re on.',
+          'Browse the full doc tree or search - quotes, Smart Components™, catalogs, orders, invoices, sending, follow-ups, and more are all covered.',
         ],
       },
       {
-        heading: 'Docs & Help',
+        heading: 'Answers, not filler',
         body: [
-          'The ? help icon on any screen opens the matching help doc. The full docs are searchable.',
-          'Q draws its answers from these docs, so anything in Help, Q can explain.',
-        ],
-      },
-      {
-        heading: 'How to use Guide Me',
-        body: [
-          'Ask Q, pick "walk me through", and follow the glowing highlights - Next / Back / Finish at your pace.',
-          'Toggle highlights off if you just want the instructions.',
+          'Docs are written step-by-step for trades - short, practical, and searchable.',
+          'Anything not covered here, the other tutorial cards cover the same ground in summary form.',
         ],
       },
     ],

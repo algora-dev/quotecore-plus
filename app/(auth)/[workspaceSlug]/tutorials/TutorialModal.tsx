@@ -6,6 +6,7 @@ import { QcButton } from '@/app/components/ui/v2/QcButton';
 import './tutorials.css';
 import { useRouter } from 'next/navigation';
 import { startGuide } from '@/app/components/assistant/startGuide';
+import { useHelpDrawer } from '@/app/components/docs/HelpDrawerContext';
 import type { Tutorial } from './tutorials.data';
 
 interface Props {
@@ -28,6 +29,7 @@ interface Props {
  */
 export function TutorialModal({ tutorial, base, assistantEnabled, onClose }: Props) {
   const router = useRouter();
+  const { openDrawer } = useHelpDrawer();
   const [page, setPage] = useState(0);
 
   // Reset to first page whenever a different tutorial opens.
@@ -38,8 +40,14 @@ export function TutorialModal({ tutorial, base, assistantEnabled, onClose }: Pro
   const goToFeature = useCallback(() => {
     if (!tutorial) return;
     onClose();
+    // The Docs / Help card opens the in-app help drawer (its context lives in
+    // the workspace layout, so it is available here) instead of navigating.
+    if (tutorial.id === 'docs-help') {
+      setTimeout(() => openDrawer(), 80);
+      return;
+    }
     router.push(tutorial.ctaHref(base));
-  }, [tutorial, base, router, onClose]);
+  }, [tutorial, base, router, onClose, openDrawer]);
 
   // "Walk me through with Q": start the guide from right here, WITHOUT
   // pre-navigating. The guide engine's own nav-hop logic highlights the correct

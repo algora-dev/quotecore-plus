@@ -48,6 +48,7 @@ export function ComponentList({
   companyDefaultTrade = 'roofing',
   companyCurrency = 'NZD',
   showPricingIntroduction = false,
+  autoStartGuided = false,
   reviewImported = false,
   componentCollections = [],
   editWarningDismissed = false,
@@ -67,6 +68,8 @@ export function ComponentList({
   companyDefaultTrade?: string;
   companyCurrency?: string;
   showPricingIntroduction?: boolean;
+  /** Tutorials "Start Here" deep link (?guided=1): open the guided component setup on landing. */
+  autoStartGuided?: boolean;
   reviewImported?: boolean;
   /** Component collections for the company (for library assignment UI). */
   componentCollections?: { id: string; name: string; is_bootstrap: boolean; visibility?: string | null; publication_status?: string | null; public_title?: string | null; public_description?: string | null; roofing_types?: string[] | null; product_categories?: string[] | null; brands?: string[] | null; keywords?: string[] | null; }[];
@@ -112,6 +115,18 @@ export function ComponentList({
   const [guidedPitchType, setGuidedPitchType] = useState<PitchType>('rafter');
   const [guidedSaving, setGuidedSaving] = useState(false);
   const [guidedSaveError, setGuidedSaveError] = useState<string | null>(null);
+  // Deep link from Tutorials "Start Here" (?guided=1): land straight in the
+  // guided component setup, as if the user clicked "Create with guidance".
+  // The pricing introduction overlay stays closed on this landing so the two
+  // never stack; the personal intro-seen preference is untouched server-side.
+  const guidedAutoStarted = useRef(false);
+  useEffect(() => {
+    if (!autoStartGuided || guidedAutoStarted.current) return;
+    guidedAutoStarted.current = true;
+    setLearning(false);
+    void startGuidedIdentity();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStartGuided]);
   const editorAnchor = useRef<HTMLDivElement>(null);
   const [catalogueChanged, setCatalogueChanged] = useState(false);
   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);

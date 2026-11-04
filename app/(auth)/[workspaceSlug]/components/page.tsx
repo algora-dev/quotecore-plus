@@ -12,10 +12,10 @@ import { smartAssistantFeatureAvailable } from '@/app/lib/smart-assistant/access
 
 export default async function ComponentsPage(props: {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams: Promise<{ restore?: string; created?: string; from?: string; learn?: string; reviewImport?: string; collection?: string }>;
+  searchParams: Promise<{ restore?: string; created?: string; from?: string; learn?: string; guided?: string; reviewImport?: string; collection?: string }>;
 }) {
   const { workspaceSlug } = await props.params;
-  const { restore: restoreDraftId, created: createdComponentId, from, learn, reviewImport, collection } = await props.searchParams;
+  const { restore: restoreDraftId, created: createdComponentId, from, learn, guided, reviewImport, collection } = await props.searchParams;
   let components;
 
   try {
@@ -92,6 +92,7 @@ export default async function ComponentsPage(props: {
         companyCurrency={company.default_currency ?? 'NZD'}
         reviewImported={reviewImport === '1'}
         showPricingIntroduction={learn === '1' || (!introSeen && !restoreDraftId && !createdComponentId)}
+        autoStartGuided={guided === '1'}
         companyDefaultTrade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
         componentCollections={collections}
         demoDefaultLibraryId={demoDefaultLibraryId}
