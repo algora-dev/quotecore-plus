@@ -133,6 +133,10 @@ export interface BillingPanelProps {
     storageLimitBytes: number;
     storagePendingBytes: number;
   };
+  /** Free Workspace (owner 2026-11-04): the FreeWorkspaceCard on the page is
+   *  the plan surface — suppress the paid usage panel and both plan cards
+   *  entirely (no client-side flash). */
+  freeWorkspace?: boolean;
 }
 
 function formatBytes(bytes: number): string {
@@ -341,7 +345,7 @@ export function BillingPanel(props: BillingPanelProps) {
       {/* P2 custom setup: verified paid-period usage. Quotes/tokens/tasks
           reset at the renewal boundary (never the 1st of a month); storage
           is active bytes and only frees when deletions finish cleaning up. */}
-      {props.customUsage && (
+      {props.customUsage && !props.freeWorkspace && (
         <div className="qc-flow-panel">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
@@ -461,7 +465,7 @@ export function BillingPanel(props: BillingPanelProps) {
       )}
       {/* Current plan card: custom subscribers see the custom-plan card with the
           change-setup calculator; legacy subscribers see the tier card. */}
-      {props.customUsage ? (
+      {props.freeWorkspace ? null : props.customUsage ? (
         <CustomPlanCard currentPeriodEnd={props.currentPeriodEnd} onManage={onManage} manageDisabled={pending || !props.hasStripeCustomer} />
       ) : (
       <div className="qc-flow-panel">

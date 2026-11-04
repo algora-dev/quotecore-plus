@@ -59,6 +59,7 @@ export default async function AccountPage() {
     supportTickets,
     entitlements,
     plansRes,
+    freeGrantRes,
   ] = await Promise.all([
     supabase
       .from('users')
@@ -91,6 +92,13 @@ export default async function AccountPage() {
       .select('code, display_name, price_cents_monthly, price_cents_monthly_original, monthly_quote_limit, storage_limit_bytes, component_limit, flashing_limit, monthly_material_order_limit, monthly_invoice_limit, monthly_ai_tokens, ai_assist_points_limit, monthly_ai_parse_limit, included_seats, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, feat_invoices, feat_message_center, tagline, feature_blurbs, coming_soon, stripe_price_id_live, stripe_price_id_test, sort_order, active')
       .eq('active', true)
       .order('sort_order', { ascending: true }),
+    // Free Workspace gating (owner 2026-11-04): grant marker read, same load.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (createAdminClient() as any)
+      .from('company_custom_billing')
+      .select('stripe_subscription_id')
+      .eq('company_id', profile.company_id)
+      .maybeSingle(),
   ]);
 
   const user = userRes.data;
@@ -100,6 +108,12 @@ export default async function AccountPage() {
 
   const authProvider = authUser?.app_metadata?.provider || 'email';
   const userEmail = user?.email || authUser?.email || '';
+
+  // Free accounts get the FreeWorkspaceCard as their ONLY plan surface on
+  // Billing — the paid usage panel and subscriber card are never sent to
+  // them at all (no flash, owner 2026-11-04).
+  const isFreeWorkspace = typeof freeGrantRes?.data?.stripe_subscription_id === 'string'
+    && (freeGrantRes.data.stripe_subscription_id as string).startsWith('admin-free-');
 
   // Company logo URL. Public bucket, so a plain getPublicUrl is fine.
   let logoUrl: string | null = null;
@@ -310,7 +324,7 @@ export default async function AccountPage() {
             <h2 className="text-lg md:text-xl font-semibold text-slate-900">Billing &amp; Subscription</h2>
             <p className="text-sm text-slate-500 mt-1">Manage your plan and payment details.</p>
           </div>
-          <FreeWorkspaceCard companyId={profile.company_id} slug={company.slug ?? ''} />
+          <FreeWorkspaceCard companyId={profile.company_id} slug={company.slug ?? ''} storageUsedBytes={entitlements.storageUsedBytes} />
           {customPricingOnly() && entitlements.billingModel !== 'custom_setup' && (
             <div className="rounded-xl border border-orange-200 bg-orange-50/40 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <p className="text-sm text-slate-700">New pricing is here. Compare a setup that fits your work - your current plan is unchanged.</p>
@@ -322,6 +336,7 @@ export default async function AccountPage() {
           <div data-copilot="account-billing">
             <BillingPanel
               hideLegacyPlans={customPricingOnly()}
+              freeWorkspace={isFreeWorkspace}
               effectivePlanCode={entitlements.effectivePlanCode}
               purchasedPlanCode={entitlements.purchasedPlanCode}
               subscriptionStatus={entitlements.subscriptionStatus}
@@ -334,7 +349,7 @@ export default async function AccountPage() {
               storageUsedBytes={entitlements.storageUsedBytes}
               storageLimitBytes={entitlements.storageLimitBytes}
               plans={plans}
-              {...(entitlements.billingModel === 'custom_setup' ? {
+              {...(entitlements.billingModel === 'custom_setup' && !isFreeWorkspace ? {
                 customUsage: {
                   available: entitlements.isActive && entitlements.customAccessStatus === 'paid_period',
                   periodStart: entitlements.usagePeriodStart,

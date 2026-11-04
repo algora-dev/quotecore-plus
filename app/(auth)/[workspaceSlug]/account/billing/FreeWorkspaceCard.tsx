@@ -11,12 +11,15 @@ const looseAdmin = () => createAdminClient() as unknown as { from(table: string)
  * and visible in Account → Billing — every quota with live usage and the
  * monthly reset date. Self-gating: renders nothing for non-free setups.
  */
-export async function FreeWorkspaceCard({ companyId, slug }: { companyId: string; slug: string }) {
+export async function FreeWorkspaceCard({ companyId, slug, storageUsedBytes = 0 }: { companyId: string; slug: string; storageUsedBytes?: number | null }) {
   const admin = looseAdmin();
-  const grantRaw = await admin.from('company_custom_billing')
+  // Owner 2026-11-04: the original read cast the PostgREST response wrapper
+  // ({data, error}) as the row itself, so this card silently never rendered
+  // for anyone. Destructure the row; the gate below stays the source of truth.
+  const { data: grantRow } = await admin.from('company_custom_billing')
     .select('purchased_entitlements, period_start, period_end, stripe_subscription_id')
     .eq('company_id', companyId).maybeSingle();
-  const grant = grantRaw as unknown as {
+  const grant = grantRow as unknown as {
     purchased_entitlements?: Record<string, unknown>;
     period_start?: string; period_end?: string; stripe_subscription_id?: string;
   } | null;
@@ -42,13 +45,15 @@ export async function FreeWorkspaceCard({ companyId, slug }: { companyId: string
   }
   const componentCount = Number(compRes.data ?? 0);
 
-  const rows: { label: string; hint: string; used: number; limit: number; lifetime?: boolean }[] = [
+  const fmtBytes = (b: number) => b >= 1e9 ? `${(b / 1e9).toFixed(1)} GB` : `${Math.max(0, Math.round(b / 1e6))} MB`;
+  const rows: { label: string; hint: string; used: number; limit: number; lifetime?: boolean; bytes?: boolean }[] = [
     { label: 'Smart Assistant tasks', hint: 'voice or typed, one task each', used: used.assistant, limit: num('assistantTasks') },
     { label: 'Scan tokens', hint: 'simple scan 2 · medium+ stage 6 · re-run free', used: used.scan, limit: num('scanTokens') },
     { label: 'Quotes in workspace', hint: `${num('quotes')} at once \u2014 delete one to free a slot`, used: quotesRes.count ?? 0, limit: num('quotes') },
     { label: 'Quotes sent + links', hint: 'emails and customer links', used: sendsRes.count ?? 0, limit: num('quoteSends') },
     { label: 'Offcuts planner', hint: 'quotes using offcut plans', used: offcutsRes.count ?? 0, limit: num('offcutGenerations') },
     { label: 'Smart components', hint: 'total, does not reset', used: componentCount, limit: num('componentLimit'), lifetime: true },
+    { label: 'Storage', hint: 'active files; deleting frees it once cleanup completes', used: Math.max(0, Number(storageUsedBytes ?? 0)), limit: num('storageBytes'), bytes: true },
   ];
   const reset = new Date(grant.period_end).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
@@ -56,7 +61,11 @@ export async function FreeWorkspaceCard({ companyId, slug }: { companyId: string
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">Free Workspace</h3>
+          <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Your current plan</p>
+          <div className="flex items-center gap-2 mt-1">
+            <h3 className="text-lg font-semibold text-slate-900">Free Workspace</h3>
+            <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-slate-100 text-slate-500">Free</span>
+          </div>
           <p className="text-sm text-slate-500 mt-0.5">
             Your tier and monthly allowances{` · resets ${reset}`}
           </p>
@@ -75,7 +84,7 @@ export async function FreeWorkspaceCard({ companyId, slug }: { companyId: string
                 <p className="text-xs text-slate-500">{r.hint}</p>
               </div>
               <span className={`text-sm font-semibold tabular-nums whitespace-nowrap ${atLimit ? 'text-orange-700' : 'text-slate-700'}`}>
-                {r.used} / {r.limit}
+                {r.bytes ? `${fmtBytes(r.used)} / ${fmtBytes(r.limit)}` : `${r.used} / ${r.limit}`}
               </span>
             </div>
           );
