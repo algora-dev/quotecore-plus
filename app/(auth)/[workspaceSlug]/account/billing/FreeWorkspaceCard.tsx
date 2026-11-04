@@ -62,7 +62,7 @@ export async function FreeWorkspaceCard({ companyId, slug }: { companyId: string
           </p>
         </div>
         <a href={`/${slug}/account/billing/build-setup`} className="qc-flow-control inline-flex min-h-11 items-center rounded-xl bg-[linear-gradient(135deg,#FF641F_0%,#FF8A3D_55%,#FFB36B_100%)] px-5 py-3 font-semibold text-[#191B20]">
-          Upgrade my setup
+          Change my plan
         </a>
       </div>
       <div className="mt-4 grid gap-2">

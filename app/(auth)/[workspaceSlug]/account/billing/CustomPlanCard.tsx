@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { FocusDialog } from '@/app/components/pricing/calculator/FocusDialog';
 import { PricingCalculator } from '@/app/components/pricing/calculator/PricingCalculator';
 import { PREVIEW_CATALOG } from '@/app/components/pricing/calculator/calculatorConfig';
@@ -42,6 +42,8 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
   manageDisabled: boolean;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const slug = pathname?.split('/')[1] ?? '';
   const [info, setInfo] = useState<SetupInfo | null>(null);
   const [open, setOpen] = useState(false);
   const [raw, setRaw] = useState('');
@@ -113,19 +115,27 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
             )}
           </div>
         </div>
-        {/* Admin-granted setups (owner 2026-11-03): no Stripe subscription to swap,
-            so the change wizard can never complete. Offer the support path instead
-            of a dead-end "no subscription" error. */}
+        {/* Admin-granted / comped setups (owner 2026-11-04): no Stripe
+            subscription to swap, but self-serve is UNIFIED — same "Change my
+            plan" path as everyone else; checkout converts the grant into a
+            real subscription in place. */}
         <div className="flex flex-col sm:flex-row gap-2 sm:items-start sm:justify-end">
           {info?.adminGranted ? (
-            <p className="text-xs text-slate-500 sm:text-right leading-relaxed max-w-[280px] sm:pt-2.5">
-              Your setup is managed by our team. <Link href="?tab=support" className="font-medium text-orange-600 hover:underline">Contact us</Link> to change it.
-            </p>
+            <div className="flex flex-col sm:items-end gap-1.5">
+              <button type="button" onClick={() => router.push(`/${slug}/account/billing/build-setup`)}
+                className="qc-flow-control qc-button"
+                data-qc-variant="primary">
+                Change my plan
+              </button>
+              <p className="text-xs text-slate-500 sm:text-right leading-relaxed max-w-[280px]">
+                Your current setup is complimentary — it keeps working until you pick your own plan. <Link href="?tab=support" className="font-medium text-orange-600 hover:underline">Contact us</Link> any time for help.
+              </p>
+            </div>
           ) : (
             <button type="button" onClick={() => { setOpen(true); setDone(''); }}
               className="qc-flow-control qc-button"
               data-qc-variant="primary">
-              Change my setup
+              Change my plan
             </button>
           )}
           {!info?.adminGranted && (

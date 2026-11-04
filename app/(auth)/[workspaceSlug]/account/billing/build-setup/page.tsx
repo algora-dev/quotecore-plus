@@ -28,6 +28,7 @@ export default async function BuildSetupPage() {
   }
   const isCustom = ent.billingModel === 'custom_setup';
   let isFree = false;
+  let checkoutEligible = false;
 
   let current: CurrentSubscription;
   if (!isCustom) {
@@ -41,6 +42,12 @@ export default async function BuildSetupPage() {
     };
   } else {
   const admin = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: co } = await (admin as any)
+    .from('companies')
+    .select('stripe_subscription_id')
+    .eq('id', ctx.profile.company_id)
+    .maybeSingle();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: snap, error: snapshotError } = await (admin as any)
     .from('company_custom_billing')
@@ -56,11 +63,15 @@ export default async function BuildSetupPage() {
     stripe_subscription_id: string | null;
   } | null;
 
-  // Free Workspace (owner 2026-11-04): 'admin-free-*' grant ids = free tier
-  // with NO Stripe subscription. This page is their PURCHASE path (real
-  // Stripe Checkout), not a comparison.
+  // Free Workspace (owner 2026-11-04): 'admin-free-*' grant ids = free tier.
   isFree = typeof snapRow?.stripe_subscription_id === 'string'
     && snapRow.stripe_subscription_id.startsWith('admin-free-');
+
+  // Checkout-eligible (owner 2026-11-04): ANY custom company with no real
+  // Stripe subscription yet — free workspaces AND comped team-granted
+  // accounts. The purchase path is identical for both; paid subscribers use
+  // the in-app change wizard in Billing instead.
+  checkoutEligible = !co?.stripe_subscription_id;
 
   current = {
     billingSystem: 'custom_setup',
@@ -82,19 +93,19 @@ export default async function BuildSetupPage() {
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8">
         <div className="text-center max-w-2xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{isFree ? 'Upgrade your workspace' : 'Review your setup'}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{checkoutEligible ? 'Change your plan' : 'Review your setup'}</h1>
           <p className="mt-2 text-sm md:text-base text-slate-600">
-            {isFree
-              ? 'Build the paid setup that fits your work. Your free workspace keeps working — nothing changes until payment completes.'
+            {checkoutEligible
+              ? 'Configure the setup that fits your work, then pay securely to activate it. Your current workspace keeps working — nothing changes until payment completes.'
               : 'Explore a setup that fits your work now. Your current subscription stays unchanged while you compare.'}
           </p>
         </div>
         <div className="mt-8" data-qc-build-setup>
           <AccountSetupCalculator
             currentSubscription={current}
-            mode={isFree ? 'checkout' : 'compare'}
-            notice={isFree
-              ? 'Secure checkout via Stripe. Your new allowances activate as soon as payment completes; your free tier keeps working until then.'
+            mode={checkoutEligible ? 'checkout' : 'compare'}
+            notice={checkoutEligible
+              ? 'Secure checkout via Stripe. Your new allowances activate as soon as payment completes; your current tier keeps working until then.'
               : isCustom
                 ? 'This is a comparison only. Online setup changes are temporarily unavailable. No payment or subscription change will be made.'
                 : 'Preview of the new pricing. Your current subscription is unchanged; switching plans here is not available yet.'}
