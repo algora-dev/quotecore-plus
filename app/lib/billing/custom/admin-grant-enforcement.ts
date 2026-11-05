@@ -211,5 +211,11 @@ export async function assertOffcutAllowance(quoteId: string): Promise<void> {
       { kind: 'quote_sent', used: count ?? 0, limit: cap, periodEnd: win.periodEnd });
   }
   await admin.from('company_admin_grant_usage')
-    .insert({ company_id: companyId, kind: 'offcut_generated', ref_id: quoteId });
+    .insert({ company_id: companyId, kind: 'offcut_generated', ref_id: quoteId })
+    .then(({ error }: { error: unknown }) => {
+      // 2026-11-04: this insert silently failed for weeks - the usage table's
+      // kind CHECK only allowed 'quote_sent' (widened by migration
+      // 20261105014000). Surface failures now so metering gaps get caught.
+      if (error) console.error('[admin-grant] offcut usage record failed:', error);
+    });
 }
