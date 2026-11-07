@@ -341,7 +341,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
 
   const overlays = <div data-qc-ui="v2" className="qc-demo-overlays" data-assistant-open={assistantOpen} data-assistant-chapter={assistantStep}>
     <p className="qc-demo-announcement" role="status" aria-live="polite" aria-atomic="true">{state.welcomed && state.mode === 'guided' && !expired ? `${chapter.title}: ${step?.title ?? 'chapter finished'}. ${progress.done} lessons completed${progress.skipped ? `, ${progress.skipped} skipped` : ''}.` : ''}</p>
-    {!open && !expired && !mobileNotice && <button ref={trigger} className="qc-demo-reopen" type="button" onClick={showGuidance} aria-expanded={false} aria-controls="qc-demo-guide"><span>Guided walkthrough</span><small>{progress.handled}/{progress.total} lessons · Resume</small></button>}
+    {!open && !expired && !mobileNotice && <button ref={trigger} className="qc-demo-reopen" type="button" onClick={showGuidance} aria-expanded={false} aria-controls="qc-demo-guide"><span>Guided demo</span><small>{progress.handled}/{progress.total} lessons · Resume</small></button>}
     {assistantOpen && open && !expired && <QcButton className="qc-demo-assistant-return" variant="secondary" onClick={() => window.dispatchEvent(new Event('qc-hide-assistant'))}>Hide Assistant to see the guide</QcButton>}
     {showGuide && <aside id="qc-demo-guide" ref={widget} tabIndex={-1} className="qc-demo-guide" aria-label="QuoteCore+ Guided Walkthrough" style={position ? { left: position.x, top: position.y, right: 'auto', bottom: 'auto' } : undefined}>
       <header className="qc-demo-guide-head" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}>

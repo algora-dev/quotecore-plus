@@ -12,9 +12,9 @@ export function DemoShellToggle({ active, otherHref }: { active: 'workspace' | '
       : <a key={key} className="qc-demo-toggle-seg" href={otherHref}>{label}</a>;
 
   return (
-    <div className="qc-demo-toggle" role="group" aria-label="Switch between your workspace and the guided walkthrough">
+    <div className="qc-demo-toggle" role="group" aria-label="Switch between your workspace and the guided demo">
       {segment('workspace', 'My Workspace')}
-      {segment('demo', 'Demo')}
+      {segment('demo', 'Guided demo')}
     </div>
   );
 }

@@ -29,7 +29,7 @@ export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationC
       <div><p className="qc-eyebrow">{isDemo ? 'Your demo' : 'Your workspace'}</p><h1>{isDemo ? 'Welcome to your demo workspace' : firstName ? <>Welcome {newUser ? '' : 'back, '}{firstName}</> : newUser ? 'Welcome to your workspace' : 'Welcome back'}</h1>
         <p>Measure with confidence. Price your work. Send a great quote.</p></div>
       <div className="flex flex-wrap items-center gap-2">
-        {newUser && !isDemo ? <a href="/demo" target="_blank" rel="noopener noreferrer" className="qc-button" data-qc-variant="primary"><QcIcon name="help" /> Guided walkthrough</a> : null}
+        {newUser && !isDemo ? <a href="/demo" target="_blank" rel="noopener noreferrer" className="qc-button" data-qc-variant="primary"><QcIcon name="help" /> Guided demo</a> : null}
         <Link href={`${base}/tutorials`} prefetch={false} className="qc-button" data-qc-variant="glass"><QcIcon name="help" /> Tutorials</Link>
       </div>
     </header>
@@ -51,7 +51,7 @@ export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationC
           </Link>}
           <div className="qc-home-measure">{measureAction}</div>
         </div>
-        {pricingFirst && <p className="qc-home-pricing-note">Want to learn with a prepared fictional roofing business first? Open the Guided Walkthrough above, then come back to your clean workspace whenever you want.</p>}
+        {pricingFirst && <p className="qc-home-pricing-note">Want to learn with a prepared roofing business first? Start the guided demo above. Your workspace will be waiting when you get back.</p>}
       </div>
       <div className="qc-home-process" aria-label={pricingFirst ? 'Add pricing, measure a job, send a quote' : 'Measure, price, quote'}>
         {(pricingFirst ? (['pricing','measure','quote'] as const) : (['measure','pricing','quote'] as const)).map((name, index) => <div key={name}>

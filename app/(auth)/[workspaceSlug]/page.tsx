@@ -8,6 +8,9 @@ import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { smartAssistantFeatureAvailable } from '@/app/lib/smart-assistant/access.server';
 import { MeasureJobButton } from './MeasureJobModal';
 import { WelcomeModal } from './tutorials/WelcomeModal';
+import { FreeEntryModal } from './FreeEntryModal';
+import { isFreeWorkspaceCompany } from '@/app/lib/billing/free-workspace';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 import { getActiveDemoContext } from '@/app/lib/demo/context';
 import { DocDraftRestorer } from './DocDraftRestorer';
 import { TakeoffDraftNoteBanner } from './TakeoffDraftNoteBanner';
@@ -79,6 +82,29 @@ export default async function WorkspaceHome({
   const demoContext = await getActiveDemoContext(company.id);
   // A personal help preference, not workspace pricing-readiness. No blocking tour.
   const showWelcome = !demoContext && !user?.tutorials_seen_at;
+
+  // Free Workspace first-entry modal (owner 2026-11-07): free accounts that
+  // have never opened a guided demo get the can/limits dialog once, at company
+  // level (either CTA records it, first stamp wins). Demo sandboxes never see
+  // it, and the inline welcome banner holds off this visit so the first entry
+  // isn't doubled up.
+  let hasDemoSession = false;
+  let showFreeEntryModal = false;
+  if (!demoContext) {
+    // Loose client: demo_sessions + the new companies column sit outside the
+    // generated types (same pattern as FreeWorkspaceCard).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const looseAdmin = createAdminClient() as unknown as { from(table: string): any };
+    const [freeWorkspace, demoOwned, entryStamp] = await Promise.all([
+      isFreeWorkspaceCompany(company.id),
+      looseAdmin.from('demo_sessions').select('id', { count: 'exact', head: true })
+        .or(`owner_user_id.eq.${profile.id},owner_email.eq.${profile.email}`),
+      looseAdmin.from('companies').select('free_entry_modal_seen_at').eq('id', company.id).maybeSingle(),
+    ]);
+    hasDemoSession = Number(demoOwned.count ?? 0) > 0;
+    const seenAt = (entryStamp.data as { free_entry_modal_seen_at?: string } | null)?.free_entry_modal_seen_at;
+    showFreeEntryModal = freeWorkspace && !hasDemoSession && !seenAt;
+  }
   // Check for calculator draft from signup flow (H-03: signup context preservation)
   const cookieStore = await cookies();
   const signupDraft = cookieStore.get('qcp_signup_draft')?.value;
@@ -122,7 +148,8 @@ export default async function WorkspaceHome({
 
   return (
     <section data-qc-ui="v2" className="space-y-5">
-      {showWelcome ? <WelcomeModal base={`/${workspaceSlug}`} firstName={firstName} pricingFirst={!hasCalcDraft && recentWork !== undefined && recentWork.length === 0 && !(company as { is_supplier?: boolean }).is_supplier} /> : null}
+      {showFreeEntryModal ? <FreeEntryModal /> : null}
+      {showWelcome && !showFreeEntryModal ? <WelcomeModal base={`/${workspaceSlug}`} firstName={firstName} hasDemoSession={hasDemoSession} pricingFirst={!hasCalcDraft && recentWork !== undefined && recentWork.length === 0 && !(company as { is_supplier?: boolean }).is_supplier} /> : null}
       {hasCalcDraft && <CalcDraftImportBanner draftId={signupDraft!} sourceRef={signupRef ?? null} />}
       <Suspense fallback={null}><DocDraftRestorer workspaceSlug={workspaceSlug} /></Suspense>
       <TakeoffDraftNoteBanner />
