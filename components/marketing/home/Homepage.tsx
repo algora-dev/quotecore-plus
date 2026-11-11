@@ -4,6 +4,7 @@ import { FreeWorkspaceButton } from '@/components/marketing/FreeWorkspaceButton'
 import { MarketingButton } from '@/components/marketing/MarketingButton';
 import Link from 'next/link';
 import { WorkflowExplorer } from './WorkflowExplorer';
+import { Icon } from './Icon';
 import { homepageConfig, type HomepageConfig } from './homepage-config';
 import styles from './HomeLocked.module.css';
 
@@ -56,8 +57,8 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
       </div></div></section>
 
       <section className={styles.dfy} id="done-for-you"><div className={styles.blueprint} aria-hidden="true" /><div className={styles.wrap}><div className={c('dfy-panel')}>
-        <div><p className={styles.eyebrow}>Done For You Setup</p><h2><span>Your workflow.</span><span className={styles.orange}>Your pricing.</span><span className={styles.grey}>We set it up for <span className={styles.orange} style={{display:'inline'}}>you.</span></span></h2><p>Show us how you price and quote today. We&apos;ll configure QuoteCore+ around that workflow, guide you through using it on your own jobs, and stay available while you get going.</p><div className={c('dfy-benefits')}><span>Configured for you</span><span>Guided on your jobs</span><span>3 months of support</span><span>3 months of QuoteCore+ included</span></div><div className={c('dfy-actions')}><MarketingButton href="/done-for-you-setup" size="large" className={c('btn','btn-primary')}>Learn more →</MarketingButton></div></div>
-        <div className={c('dfy-media')} aria-label="Shaun, founder of QuoteCore+"><img src="/shaun-smiling.jpg" alt="Shaun, founder of QuoteCore+" /><span className={c('video-caption')}><b>Shaun, founder of QuoteCore+</b><span>20+ years in roofing &amp; construction.</span></span></div>
+        <div><p className={styles.eyebrow}>Done For You Setup</p><h2><span>Don&apos;t want to spend hours</span><span className={styles.orange}>figuring out new software?</span><span className={styles.grey}>Done For You is the fast track.</span></h2><p>Tell us how you currently work and send us your pricing, your workflow, even a job you&apos;ve previously quoted. We&apos;ll set everything up, then show you exactly how to use it on your own jobs.</p><div className={c('dfy-actions')}><MarketingButton href="/done-for-you-setup" size="large" className={c('btn','btn-primary')}>Learn more →</MarketingButton></div></div>
+        <div className={c('dfy-cards')} aria-label="What Done For You includes"><div className={c('dfy-card')}><span className={c('dfy-card-icon')}><Icon name="calculator" size={21} /></span><div><b>Configured for you</b><span>Your pricing, components and workflow, set up around how you already work.</span></div></div><div className={c('dfy-card')}><span className={c('dfy-card-icon')}><Icon name="roof" size={21} /></span><div><b>Guided on your jobs</b><span>A live or recorded walkthrough using your own quotes and jobs.</span></div></div><div className={c('dfy-card')}><span className={c('dfy-card-icon')}><Icon name="spark" size={21} /></span><div><b>3 months of QuoteCore+ included</b><span>The plan your setup needs is part of the price.</span></div></div><div className={c('dfy-card')}><span className={c('dfy-card-icon')}><Icon name="people" size={21} /></span><div><b>3 months of support</b><span>Real help while you get going, for anything you need.</span></div></div></div>
       </div></div></section>
 
       <WorkflowExplorer demoHref="/signup" config={config} />
