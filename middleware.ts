@@ -212,6 +212,34 @@ export async function middleware(request: NextRequest) {
     return new NextResponse(null, { status: 404 });
   }
 
+  // -- Bare public-path fixes (2026-11-13) ----------------------------
+  // Several PUBLIC_PATHS entries exist only as sub-routes (/nz/<leaf>,
+  // /resources/<topic>, /integrations/xero, /accept/<token>, ...). Their
+  // bare paths have no route, so on the marketing host they fell into the
+  // (auth)/[workspaceSlug] dynamic segment and 500'd (workspace home
+  // assumes an authenticated session; first seen live on /nz, 2026-11-13).
+  // Redirect the hub-style ones to real destinations and hard-404 the
+  // token-only ones: a token URL without its token is never a valid page.
+  // Trailing-slash variants are normalised so /nz/ does not double-hop.
+  const BARE_PUBLIC_REDIRECTS: Record<string, string> = {
+    '/nz': '/nz/roofing-quoting-software', // primary NZ landing page
+    '/resources': '/blog', // resource hubs are blog category pages
+    '/integrations': '/integrations/xero', // only integration page today
+  };
+  const TOKEN_ONLY_PATHS = new Set([
+    '/accept', '/m', '/orders', '/invoice', '/file', '/unsubscribe',
+  ]);
+  const barePathname =
+    pathname !== '/' && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+  if (BARE_PUBLIC_REDIRECTS[barePathname]) {
+    const target = new URL(BARE_PUBLIC_REDIRECTS[barePathname], request.url);
+    target.search = request.nextUrl.search;
+    return NextResponse.redirect(target, 308);
+  }
+  if (TOKEN_ONLY_PATHS.has(barePathname)) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   // ── Stable Vercel alias redirect ───────────────────────────
   // Known stable production aliases (e.g. quotecore-plus-dev.vercel.app)
   // 308-redirect to the canonical production domain so Google consolidates
