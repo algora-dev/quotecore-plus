@@ -1,5 +1,7 @@
 import { HomeDashboard, type RecentWorkItem } from '@/app/components/workspace/HomeDashboard';
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { getDemoControl } from '@/app/lib/demo/control';
 import { Suspense } from 'react';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
@@ -99,11 +101,22 @@ export default async function WorkspaceHome({
       isFreeWorkspaceCompany(company.id),
       looseAdmin.from('demo_sessions').select('id', { count: 'exact', head: true })
         .or(`owner_user_id.eq.${profile.id},owner_email.eq.${profile.email}`),
-      looseAdmin.from('companies').select('free_entry_modal_seen_at').eq('id', company.id).maybeSingle(),
+      looseAdmin.from('companies').select('free_entry_modal_seen_at, welcome_modal_seen_at').eq('id', company.id).maybeSingle(),
     ]);
     hasDemoSession = Number(demoOwned.count ?? 0) > 0;
-    const seenAt = (entryStamp.data as { free_entry_modal_seen_at?: string } | null)?.free_entry_modal_seen_at;
-    showFreeEntryModal = freeWorkspace && !hasDemoSession && !seenAt;
+    const stampRow = entryStamp.data as { free_entry_modal_seen_at?: string; welcome_modal_seen_at?: string } | null;
+    const seenAt = stampRow?.free_entry_modal_seen_at;
+    const welcomeSeenAt = stampRow?.welcome_modal_seen_at;
+    // Demo-first entry (owner 2026-11-13): brand-new free signups (no demo
+    // session, never saw either entry modal) are ported straight into the
+    // guided demo. The welcome modal stamps on the first demo visit, so this
+    // redirect fires at most once per account. If the demo is switched off,
+    // fall back to the old free-entry modal below.
+    const newFlowCohort = freeWorkspace && !hasDemoSession && !seenAt && !welcomeSeenAt;
+    if (newFlowCohort && (await getDemoControl()).demoEnabled) {
+      redirect('/demo');
+    }
+    showFreeEntryModal = newFlowCohort;
   }
   // Check for calculator draft from signup flow (H-03: signup context preservation)
   const cookieStore = await cookies();

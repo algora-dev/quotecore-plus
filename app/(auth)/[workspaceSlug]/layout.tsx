@@ -26,6 +26,9 @@ import { UserImpersonationBanner } from '@/app/components/UserImpersonationBanne
 import { getAnnouncement } from '@/app/admin/(dashboard)/settings/actions';
 import { getActiveDemoContext } from '@/app/lib/demo/context';
 import { DemoExperience } from '@/app/components/demo/DemoExperience';
+import { OnboardingNudges } from './OnboardingNudges';
+import { loadOnboardingNudgeState } from '@/app/lib/onboarding/nudge-state';
+import { isFreeWorkspaceCompany } from '@/app/lib/billing/free-workspace';
 import { readRealWorkspaceSlug } from '@/app/lib/demo/owner';
 import { appUrl, demoUrl } from '@/lib/app-url';
 import { createAdminClient } from '@/app/lib/supabase/admin';
@@ -192,6 +195,37 @@ export default async function WorkspaceLayout({
     };
   }
 
+  // Demo-first activation nudges (owner 2026-11-13): one-time pricing and
+  // first-quote modals for accounts that came through the welcome flow.
+  // Real workspaces only - demo sandboxes never see them.
+  let onboardingNudges: ReactNode | null = null;
+  if (!demoContext) {
+    const [{ count: onboardingQuoteCount }, freeWorkspace] = await Promise.all([
+      supabase.from('quotes').select('id', { count: 'exact', head: true }).eq('company_id', company.id),
+      isFreeWorkspaceCompany(company.id),
+    ]);
+    if (freeWorkspace) {
+      const nudgeState = await loadOnboardingNudgeState(
+        company.id,
+        entitlements.componentCount,
+        onboardingQuoteCount ?? 0,
+      );
+      if (nudgeState.active) {
+        onboardingNudges = (
+          <OnboardingNudges
+            workspaceSlug={slug}
+            firstVisitAt={nudgeState.firstVisitAt}
+            companyCreatedAt={nudgeState.companyCreatedAt}
+            componentCount={nudgeState.componentCount}
+            quoteCount={nudgeState.quoteCount}
+            pricingShown={nudgeState.pricingNudgeShown}
+            quoteShown={nudgeState.quoteNudgeShown}
+          />
+        );
+      }
+    }
+  }
+
   // Global announcement banner (admin-controlled, localStorage dismissal)
   const announcement = await getAnnouncement();
 
@@ -201,6 +235,7 @@ export default async function WorkspaceLayout({
     <HelpDrawerProvider>
       {!demoContext && process.env.PWA_PUSH_ENABLED === 'true' && <PushSessionBridge />}
       <HelpDrawerPanel />
+      {onboardingNudges}
       <HelpDrawerLayout>
         <QcAppShell
           workspaceSlug={slug}

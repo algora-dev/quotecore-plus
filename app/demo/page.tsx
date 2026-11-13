@@ -8,6 +8,9 @@ import { authCookieOptions } from '@/app/lib/supabase/cookie-config';
 import { getDemoControl } from '@/app/lib/demo/control';
 import { appUrl } from '@/lib/app-url';
 import { DemoLauncher } from './DemoLauncher';
+import { DemoWelcomeModal } from './DemoWelcomeModal';
+import { createAdminClient } from '@/app/lib/supabase/admin';
+import { isFreeWorkspaceCompany } from '@/app/lib/billing/free-workspace';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,7 +53,7 @@ async function requireRealWorkspaceAccount() {
 
   const { data: profile } = await client
     .from('users')
-    .select('company_id')
+    .select('company_id, email')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -58,11 +61,11 @@ async function requireRealWorkspaceAccount() {
     redirect(`${appBase}/onboarding`);
   }
 
-  return { host, appBase };
+  return { host, appBase, userId: user.id, userEmail: profile.email ?? '', companyId: profile.company_id };
 }
 
 export default async function DemoEntryPage() {
-  const { appBase } = await requireRealWorkspaceAccount();
+  const { appBase, userId, userEmail, companyId } = await requireRealWorkspaceAccount();
   const control = await getDemoControl();
 
   if (!control.demoEnabled) {
@@ -84,8 +87,37 @@ export default async function DemoEntryPage() {
     );
   }
 
+  // Demo-first welcome flow (owner 2026-11-13): free accounts that have
+  // never started a demo and never saw the old free-entry modal get the
+  // welcome (founder video) + tips sequence over the launcher, once each.
+  // Best-effort: the modal is cosmetic - never let it block the demo.
+  // (JSX is constructed outside the try/catch per react-hooks/error-boundaries.)
+  let welcomeStep: 'welcome' | 'tips' | null = null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const looseAdmin = createAdminClient() as unknown as { from(table: string): any };
+    const [{ data: stamps }, freeWorkspace, { count: demoCount }] = await Promise.all([
+      looseAdmin.from('companies')
+        .select('welcome_modal_seen_at, demo_tips_seen_at, free_entry_modal_seen_at')
+        .eq('id', companyId)
+        .maybeSingle(),
+      isFreeWorkspaceCompany(companyId),
+      looseAdmin.from('demo_sessions').select('id', { count: 'exact', head: true })
+        .or(`owner_user_id.eq.${userId},owner_email.eq.${userEmail}`),
+    ]);
+    const stampRow = stamps as
+      | { welcome_modal_seen_at?: string; demo_tips_seen_at?: string; free_entry_modal_seen_at?: string }
+      | null;
+    if (freeWorkspace && Number(demoCount ?? 0) === 0 && !stampRow?.free_entry_modal_seen_at) {
+      welcomeStep = !stampRow?.welcome_modal_seen_at
+        ? 'welcome'
+        : !stampRow?.demo_tips_seen_at ? 'tips' : null;
+    }
+  } catch { /* welcome flow only */ }
+
   return (
     <main className="flex min-h-[78vh] items-center justify-center bg-[var(--qc-bg-app)] px-4 py-10">
+      {welcomeStep ? <DemoWelcomeModal initialStep={welcomeStep} /> : null}
       <DemoLauncher appHomeHref={appBase || '/'} />
     </main>
   );
