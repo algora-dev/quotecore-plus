@@ -121,10 +121,20 @@ export function DemoWelcomeModal({ initialStep }: { initialStep: 'welcome' | 'ti
             see how QuoteCore+ fits together. Take your time with everything else.
           </p>
           <p>
-            When you switch to your own workspace (top right), add your pricing first. It&apos;s
-            the one thing that turns measurements into real prices — without it you&apos;ll only
-            ever see quantities.
+            When you switch to your own workspace, add your pricing first. It&apos;s the one thing
+            that turns measurements into real prices — without it you&apos;ll only ever see
+            quantities.
           </p>
+          <figure className="space-y-1.5">
+            <img
+              src="/demo-workspace-toggle.png"
+              alt="Top-right app bar with the My Workspace and Guided demo toggle highlighted in orange"
+              className="w-full rounded-xl border border-slate-200"
+            />
+            <figcaption className="text-xs text-slate-500">
+              Switch to your own workspace anytime — it&apos;s this toggle, top right.
+            </figcaption>
+          </figure>
         </div>
       </QcDialog>
     </>
