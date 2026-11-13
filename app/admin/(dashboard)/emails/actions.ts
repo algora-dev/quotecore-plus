@@ -87,7 +87,11 @@ export async function loadEmailOutreach(templateKey: string = DEFAULT_OUTREACH_T
     .from('users')
     .select('id, company_id, email, full_name')
     .in('company_id', companyIds)
-    .eq('role', 'owner');
+    .eq('role', 'owner')
+    // Original owner first (created_at asc): outreach goes to the account
+    // founder, not later-added verifier/secondary owners (owner 2026-11-13:
+    // RS Roofing test send had to reach the original owner).
+    .order('created_at', { ascending: true });
   const ownerByCompany = new Map<string, { id: string; email: string; full_name: string | null }>();
   for (const owner of (ownerRows ?? []) as { id: string; company_id: string; email: string; full_name: string | null }[]) {
     if (!ownerByCompany.has(owner.company_id)) ownerByCompany.set(owner.company_id, owner);
