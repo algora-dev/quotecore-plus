@@ -112,6 +112,23 @@ export default async function DemoEntryPage() {
       welcomeStep = !stampRow?.welcome_modal_seen_at
         ? 'welcome'
         : !stampRow?.demo_tips_seen_at ? 'tips' : null;
+      // Stamp SERVER-SIDE at render time (2026-11-13 fix): the workspace-home
+      // demo-first redirect depends on these stamps, so they must never
+      // depend on a client action firing. Client-side stamping silently
+      // failed for two fresh test accounts (both got bounced workspace ->
+      // /demo -> welcome modal again). First-wins guards keep it idempotent;
+      // the choice stamp stays a best-effort client action (analytics only).
+      if (welcomeStep === 'welcome') {
+        await looseAdmin.from('companies')
+          .update({ welcome_modal_seen_at: new Date().toISOString() })
+          .eq('id', companyId)
+          .is('welcome_modal_seen_at', null);
+      } else if (welcomeStep === 'tips') {
+        await looseAdmin.from('companies')
+          .update({ demo_tips_seen_at: new Date().toISOString() })
+          .eq('id', companyId)
+          .is('demo_tips_seen_at', null);
+      }
     }
   } catch { /* welcome flow only */ }
 

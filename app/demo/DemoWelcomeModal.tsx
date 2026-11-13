@@ -10,9 +10,7 @@ import {
   dfyHref,
 } from '@/app/lib/onboarding/constants';
 import {
-  recordWelcomeSeen,
   recordWelcomeChoice,
-  recordDemoTipsSeen,
 } from '@/app/lib/onboarding/actions';
 import { trackEvent } from '@/lib/analytics';
 
@@ -32,18 +30,17 @@ import { trackEvent } from '@/lib/analytics';
 export function DemoWelcomeModal({ initialStep }: { initialStep: 'welcome' | 'tips' }) {
   const [step, setStep] = useState<'welcome' | 'tips' | 'closed'>(initialStep);
 
-  // Stamp "seen" as soon as each step renders, not on close: a closed tab must
-  // never re-trigger the redirect loop guard in the workspace home.
+  // Seen-stamps are written SERVER-SIDE at render time (app/demo/page.tsx,
+  // 2026-11-13 fix) - client-side stamping silently failed and caused a
+  // workspace -> /demo redirect loop. Client effects here are analytics only.
   useEffect(() => {
     if (initialStep === 'welcome') {
-      void recordWelcomeSeen();
       trackEvent('onboarding_welcome_shown');
     }
   }, [initialStep]);
 
   useEffect(() => {
     if (step === 'tips') {
-      void recordDemoTipsSeen();
       trackEvent('onboarding_tips_shown');
     }
   }, [step]);
