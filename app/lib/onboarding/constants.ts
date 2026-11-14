@@ -9,9 +9,10 @@
  * hatch (message / book a call / Done For You).
  */
 
-/** Founder welcome video (mp4). Empty until Shaun's recording is uploaded;
- * the modal then falls back to the Done For You overview video below. */
-export const WELCOME_VIDEO_URL = '';
+/** Founder welcome video (mp4, served same-origin from
+ * public/onboarding/welcome-video.mp4 — Shaun's recording, added 2026-11-14).
+ * If emptied, the modal falls back to the Done For You overview video below. */
+export const WELCOME_VIDEO_URL = '/onboarding/welcome-video.mp4';
 
 /** Placeholder shown while the founder recording is pending. */
 export const WELCOME_VIDEO_FALLBACK_YOUTUBE_ID = 'fJYVEnVTcOA';
