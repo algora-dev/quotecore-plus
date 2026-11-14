@@ -1,4 +1,5 @@
 'use server';
+import { assertQuoteHasNoPracticePricing } from '@/app/lib/pricing-setup/practice-guard.server';
 import { isDemoCompany } from '@/app/lib/demo/context';
 
 /**
@@ -77,6 +78,14 @@ export async function sendDocumentMessage(
   const entity = await adapter.loadEntity(supabase, profile.company_id, input.entityId);
   if (!entity) {
     return { ok: false, error: `${input.entityKind.charAt(0).toUpperCase() + input.entityKind.slice(1)} not found.` };
+  }
+  // Enforce even when a customer link already exists; this also covers direct email sends.
+  if (input.entityKind === 'quote') {
+    try {
+      await assertQuoteHasNoPracticePricing(supabase as unknown as import('@supabase/supabase-js').SupabaseClient, input.entityId);
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : 'Practice quotes cannot be sent.' };
+    }
   }
 
   // ─── 3. Validate sendable state ───

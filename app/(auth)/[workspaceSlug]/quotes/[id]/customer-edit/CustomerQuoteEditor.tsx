@@ -61,6 +61,8 @@ interface Props {
   /** Which include flag drives totals here. Customer-edit uses 'quote'; labor sheet passes 'labor'. */
   taxAudience?: 'quote' | 'labor';
   /** Free Workspace watermark (owner 2026-11-03) - rendered on the customer-facing preview. */
+  /** Practice quote snapshot — cannot become sendable by later component verification. */
+  practicePricing?: boolean;
   showWatermark?: boolean;
 }
 
@@ -95,7 +97,7 @@ interface QuoteLine {
   baseLabourCost?: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, componentEntries = {}, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave: _disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction, initialTaxes, companyTaxes, taxAudience = 'quote', collections = [], componentLibrary = [], catalogs = [], showWatermark = false }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, componentEntries = {}, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave: _disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction, initialTaxes, companyTaxes, taxAudience = 'quote', collections = [], componentLibrary = [], catalogs = [], showWatermark = false, practicePricing = false }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [taxes, setTaxes] = useState<EditableTax[]>(
@@ -1574,6 +1576,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, componentEnt
                 showEditButtons={false}
                 documentTitle={taxAudience === 'labor' ? 'Labour sheet' : 'Quotation'}
                 showWatermark={showWatermark}
+                practicePricing={practicePricing}
                 onSaveLine={(id, text, quantityText, amount, sp, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent, bmc) =>
                   updateLine(id, text, quantityText, amount, sp, qty ?? 1, unitPrice ?? null, lineMarginPercent ?? null, lineLaborMarginPercent ?? null, bmc)
                 }
@@ -1603,6 +1606,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, componentEnt
             footer={<QcButton onClick={() => setShowPreviewModal(false)}>Close preview</QcButton>}>
             <div className="qc-document-preview-scroll"><div className="qc-document-paper"><QuotePreview documentTitle={taxAudience === 'labor' ? 'Labour Sheet' : 'Quotation'}
                 showWatermark={showWatermark}
+                practicePricing={practicePricing}
                 quote={quote}
                 lines={visibleLines}
                 subtotal={subtotal}

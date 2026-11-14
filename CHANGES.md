@@ -1,5 +1,7 @@
 # QuoteCore+ reconciled marketing handoff changes
 
+> **2026-11-14 — Pricing Setup Assistant v3 integrated** (development): 45 new + 17 modified files from the external full-source delivery, overlaid on `e5ca98d2` (zero conflicts; delivery base `15f458c9`). Full inventory: `PRICING_SETUP_V3_FILE_MANIFEST.json`; integration/migration procedure: `PRICING_SETUP_V3_AGENT_HANDOFF.md`. Root `FILE_CHANGES.json` intentionally NOT taken from the delivery — it remains the demo V2.2 lint manifest. Three additive migrations `20261114160000` / `20261114180000` / `20261114190000` applied in order to the shared Supabase (prod-use1). Feature gated by `NEXT_PUBLIC_PRICING_SETUP_ENABLED` (testing only).
+
 This file describes the source-level reconciliation performed after the previous handoff rendered differently from the approved previews.
 
 - `HANDOFF-README.md` — replaced stale handoff instructions with the locked visual acceptance contract, current acquisition model, Done For You flow, email destination, and real-repo build warning.

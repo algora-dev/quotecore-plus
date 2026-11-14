@@ -1,3 +1,4 @@
+import { assertQuoteHasNoPracticePricing } from '@/app/lib/pricing-setup/practice-guard.server';
 import { isDemoCompany } from '@/app/lib/demo/context';
 /**
  * Outbound Messages pipeline - single entry point.
@@ -205,6 +206,13 @@ export async function sendOutboundMessage(
   }
 
   const supabase = createAdminClient();
+  if (input.relatedQuoteId) {
+    try {
+      await assertQuoteHasNoPracticePricing(supabase as unknown as import('@supabase/supabase-js').SupabaseClient, input.relatedQuoteId);
+    } catch (error) {
+      return { ok: false, messageId: null, error: error instanceof Error ? error.message : 'Practice quotes cannot be sent.' };
+    }
+  }
   const recipientLower = lowerEmail(input.recipientEmail);
 
   // 1. Check suppression list before doing any work.

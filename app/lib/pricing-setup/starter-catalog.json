@@ -1,0 +1,401 @@
+{
+  "schemaVersion": 3,
+  "source": "Research-informed practice examples; DB master is authoritative at runtime",
+  "libraries": [
+    {
+      "slug": "asphalt-shingles",
+      "name": "Asphalt Shingle Roofing",
+      "description": "Architectural laminated shingle example",
+      "version": 3,
+      "sortOrder": 1,
+      "items": [
+        {
+          "code": "ASPHALT_SHINGLES_01",
+          "name": "Underlayment",
+          "notes": "Synthetic underlay; overlaps represented only as practice allowance; user must replace with roll yield.",
+          "measurementType": "area",
+          "pitchType": "rafter",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 1
+        },
+        {
+          "code": "ASPHALT_SHINGLES_02",
+          "name": "Architectural field shingles",
+          "notes": "Example architectural shingles. Field labour covers ordinary fixing; does not include strip-off or deck repairs.",
+          "measurementType": "area",
+          "pitchType": "rafter",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 2
+        },
+        {
+          "code": "ASPHALT_SHINGLES_03",
+          "name": "Ridge cap shingles",
+          "notes": "Horizontal ridgeline; sample rate allocated from cap bundles.",
+          "measurementType": "lineal",
+          "pitchType": "none",
+          "takeoffSlot": "ridge",
+          "sourceUnit": "m",
+          "sortOrder": 3
+        },
+        {
+          "code": "ASPHALT_SHINGLES_04",
+          "name": "Hip cap shingles",
+          "notes": "Diagonal hips; sample hip cap cost distinct from ridge labour.",
+          "measurementType": "lineal",
+          "pitchType": "valley_hip",
+          "takeoffSlot": "hip",
+          "sourceUnit": "m",
+          "sortOrder": 4
+        },
+        {
+          "code": "ASPHALT_SHINGLES_05",
+          "name": "Valley protection",
+          "notes": "Example self-adhered valley membrane, priced by installed valley metre; check actual membrane width and overlaps.",
+          "measurementType": "lineal",
+          "pitchType": "valley_hip",
+          "takeoffSlot": "valley",
+          "sourceUnit": "m",
+          "sortOrder": 5
+        },
+        {
+          "code": "ASPHALT_SHINGLES_06",
+          "name": "Rake starter / verge edge",
+          "notes": "Rake starter course only; not an eaves drip edge. Add eaves detail separately if required.",
+          "measurementType": "lineal",
+          "pitchType": "rafter",
+          "takeoffSlot": "barge",
+          "sourceUnit": "m",
+          "sortOrder": 6
+        },
+        {
+          "code": "ASPHALT_SHINGLES_07",
+          "name": "Shingle nails allowance",
+          "notes": "Material-only nails allowance by surface area; fastening labour is included in field shingles (intentional $0 here).",
+          "measurementType": "area",
+          "pitchType": "rafter",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 7
+        }
+      ]
+    },
+    {
+      "slug": "long-run-metal",
+      "name": "Long-Run / Corrugated Metal Roofing",
+      "description": "Coated exposed-fastener corrugated steel example",
+      "version": 3,
+      "sortOrder": 2,
+      "items": [
+        {
+          "code": "LONG_RUN_METAL_01",
+          "name": "Roofing underlay",
+          "notes": "Underlay priced separately from sheeting.",
+          "measurementType": "area",
+          "pitchType": "rafter",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 1
+        },
+        {
+          "code": "LONG_RUN_METAL_02",
+          "name": "Corrugated metal roof sheets",
+          "notes": "Indicative coated steel coverage cost; effective cover width and custom sheet length not modelled in demo.",
+          "measurementType": "area",
+          "pitchType": "rafter",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 2
+        },
+        {
+          "code": "LONG_RUN_METAL_03",
+          "name": "Ridge flashing",
+          "notes": "Horizontal ridge only.",
+          "measurementType": "lineal",
+          "pitchType": "none",
+          "takeoffSlot": "ridge",
+          "sourceUnit": "m",
+          "sortOrder": 3
+        },
+        {
+          "code": "LONG_RUN_METAL_04",
+          "name": "Hip flashing",
+          "notes": "Conventional diagonal hip; use hip/valley length factor on plan measurements.",
+          "measurementType": "lineal",
+          "pitchType": "valley_hip",
+          "takeoffSlot": "hip",
+          "sourceUnit": "m",
+          "sortOrder": 4
+        },
+        {
+          "code": "LONG_RUN_METAL_05",
+          "name": "Valley flashing",
+          "notes": "Folded valley tray; verify actual cross section.",
+          "measurementType": "lineal",
+          "pitchType": "valley_hip",
+          "takeoffSlot": "valley",
+          "sourceUnit": "m",
+          "sortOrder": 5
+        },
+        {
+          "code": "LONG_RUN_METAL_06",
+          "name": "Barge / rake flashing",
+          "notes": "Sloping gable edge; rafter pitch for plan length only.",
+          "measurementType": "lineal",
+          "pitchType": "rafter",
+          "takeoffSlot": "barge",
+          "sourceUnit": "m",
+          "sortOrder": 6
+        },
+        {
+          "code": "LONG_RUN_METAL_07",
+          "name": "Roofing screws allowance",
+          "notes": "Screw cost by roof area for demonstration; fixing labour included in roof sheet labour; wind-zone count not assumed.",
+          "measurementType": "area",
+          "pitchType": "rafter",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 7
+        }
+      ]
+    },
+    {
+      "slug": "concrete-tile",
+      "name": "Concrete Tile Roofing",
+      "description": "Standard interlocking concrete roof tile example",
+      "version": 3,
+      "sortOrder": 3,
+      "items": [
+        {
+          "code": "CONCRETE_TILE_01",
+          "name": "Tile underlay",
+          "notes": "Example underlay; verify actual weathering membrane.",
+          "measurementType": "area",
+          "pitchType": "rafter",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 1
+        },
+        {
+          "code": "CONCRETE_TILE_02",
+          "name": "Concrete field tiles",
+          "notes": "Example interlocking concrete tile installed surface. Includes standard handling and placement labour.",
+          "measurementType": "area",
+          "pitchType": "rafter",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 2
+        },
+        {
+          "code": "CONCRETE_TILE_03",
+          "name": "Tile battens allowance",
+          "notes": "Area-based batten allowance for demo; not a supplier linear-metre order and not a fixing schedule.",
+          "measurementType": "area",
+          "pitchType": "rafter",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 3
+        },
+        {
+          "code": "CONCRETE_TILE_04",
+          "name": "Ridge tiles",
+          "notes": "Horizontal ridge; assumed standard caps and fixing consumables.",
+          "measurementType": "lineal",
+          "pitchType": "none",
+          "takeoffSlot": "ridge",
+          "sourceUnit": "m",
+          "sortOrder": 4
+        },
+        {
+          "code": "CONCRETE_TILE_05",
+          "name": "Hip tiles",
+          "notes": "Diagonal hip; distinct labour from ridge.",
+          "measurementType": "lineal",
+          "pitchType": "valley_hip",
+          "takeoffSlot": "hip",
+          "sourceUnit": "m",
+          "sortOrder": 5
+        },
+        {
+          "code": "CONCRETE_TILE_06",
+          "name": "Valley tray",
+          "notes": "Metal valley tray, not individual valley tiles.",
+          "measurementType": "lineal",
+          "pitchType": "valley_hip",
+          "takeoffSlot": "valley",
+          "sourceUnit": "m",
+          "sortOrder": 6
+        },
+        {
+          "code": "CONCRETE_TILE_07",
+          "name": "Verge / gable finish",
+          "notes": "Sloping verge; choose dry verge or other detail in real component.",
+          "measurementType": "lineal",
+          "pitchType": "rafter",
+          "takeoffSlot": "barge",
+          "sourceUnit": "m",
+          "sortOrder": 7
+        },
+        {
+          "code": "CONCRETE_TILE_08",
+          "name": "Tile fixing clips allowance",
+          "notes": "Illustrative clips per roof surface; installation labour is included in field tile labour.",
+          "measurementType": "area",
+          "pitchType": "rafter",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 8
+        }
+      ]
+    },
+    {
+      "slug": "natural-slate",
+      "name": "Natural Slate Roofing",
+      "description": "Standard natural slate example",
+      "version": 3,
+      "sortOrder": 4,
+      "items": [
+        {
+          "code": "NATURAL_SLATE_01",
+          "name": "Slate underlay",
+          "notes": "Example high-quality roof underlay.",
+          "measurementType": "area",
+          "pitchType": "rafter",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 1
+        },
+        {
+          "code": "NATURAL_SLATE_02",
+          "name": "Natural slate field covering",
+          "notes": "Natural slate covering. Slate dimensions, exposure, shipping breakage and cut waste affect actual cost.",
+          "measurementType": "area",
+          "pitchType": "rafter",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 2
+        },
+        {
+          "code": "NATURAL_SLATE_03",
+          "name": "Slate battens allowance",
+          "notes": "Area-based batten cost for demo, not measured lengths or ordering quantities.",
+          "measurementType": "area",
+          "pitchType": "rafter",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 3
+        },
+        {
+          "code": "NATURAL_SLATE_04",
+          "name": "Slate ridge finish",
+          "notes": "Example ridge finish; slate or metal ridge methods vary.",
+          "measurementType": "lineal",
+          "pitchType": "none",
+          "takeoffSlot": "ridge",
+          "sourceUnit": "m",
+          "sortOrder": 4
+        },
+        {
+          "code": "NATURAL_SLATE_05",
+          "name": "Slate hip finish",
+          "notes": "Conventional diagonal hip; specialist slate trimming.",
+          "measurementType": "lineal",
+          "pitchType": "valley_hip",
+          "takeoffSlot": "hip",
+          "sourceUnit": "m",
+          "sortOrder": 5
+        },
+        {
+          "code": "NATURAL_SLATE_06",
+          "name": "Slate valley flashing",
+          "notes": "Metal valley example for natural slate.",
+          "measurementType": "lineal",
+          "pitchType": "valley_hip",
+          "takeoffSlot": "valley",
+          "sourceUnit": "m",
+          "sortOrder": 6
+        },
+        {
+          "code": "NATURAL_SLATE_07",
+          "name": "Slate verge / rake finish",
+          "notes": "Sloping rake detail; evaluate actual slate cutwork.",
+          "measurementType": "lineal",
+          "pitchType": "rafter",
+          "takeoffSlot": "barge",
+          "sourceUnit": "m",
+          "sortOrder": 7
+        },
+        {
+          "code": "NATURAL_SLATE_08",
+          "name": "Slate nails / hooks allowance",
+          "notes": "Material-only fixing allowance; fixing labour is included in slate field labour.",
+          "measurementType": "area",
+          "pitchType": "rafter",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 8
+        }
+      ]
+    },
+    {
+      "slug": "low-slope-tpo",
+      "name": "Low-Slope TPO Membrane Roofing",
+      "description": "60 mil mechanically attached TPO example",
+      "version": 3,
+      "sortOrder": 5,
+      "items": [
+        {
+          "code": "LOW_SLOPE_TPO_01",
+          "name": "Polyiso insulation allowance",
+          "notes": "Sample thermal layer allowance; deck profile and insulation thickness must be checked. Surface area assumed measured directly.",
+          "measurementType": "area",
+          "pitchType": "none",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 1
+        },
+        {
+          "code": "LOW_SLOPE_TPO_02",
+          "name": "60 mil TPO membrane",
+          "notes": "Mechanically attached membrane example; seams priced separately. Measured surface area directly, no steep-roof pitch factor.",
+          "measurementType": "area",
+          "pitchType": "none",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 2
+        },
+        {
+          "code": "LOW_SLOPE_TPO_03",
+          "name": "Field seam welding",
+          "notes": "Heat-welded TPO seam; seam lengths require independent takeoff, not roof area.",
+          "measurementType": "lineal",
+          "pitchType": "none",
+          "takeoffSlot": "custom",
+          "sourceUnit": "m",
+          "sortOrder": 3
+        },
+        {
+          "code": "LOW_SLOPE_TPO_04",
+          "name": "Perimeter termination",
+          "notes": "Perimeter bar/seal termination; measure actual perimeter run.",
+          "measurementType": "lineal",
+          "pitchType": "none",
+          "takeoffSlot": "custom",
+          "sourceUnit": "m",
+          "sortOrder": 4
+        },
+        {
+          "code": "LOW_SLOPE_TPO_05",
+          "name": "Attachment plates and fasteners allowance",
+          "notes": "Material allowance for mechanical fixation; fixing labour included in membrane labour; no uplift design.",
+          "measurementType": "area",
+          "pitchType": "none",
+          "takeoffSlot": "roof_area",
+          "sourceUnit": "m²",
+          "sortOrder": 5
+        }
+      ]
+    }
+  ]
+}

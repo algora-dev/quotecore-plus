@@ -15,7 +15,7 @@ export function workspaceNavigation(slug: string, supplier: boolean, assistant: 
     { key: 'quotes', label: 'Quotes', href: `${b}/quotes`, icon: 'quote', group: 'work', copilot: 'nav-quotes' },
     { key: 'orders', label: 'Orders', href: `${b}/material-orders`, icon: 'orders', group: 'work', gatedBy: 'material_orders', copilot: 'nav-orders' },
     { key: 'invoices', label: 'Invoices', href: `${b}/invoices`, icon: 'invoice', group: 'work', gatedBy: 'invoices', copilot: 'nav-invoices' },
-    { key: 'pricing', label: 'Pricing Library', href: `${b}/components`, icon: 'pricing', group: 'library' },
+    { key: 'pricing', label: 'My Pricing Library', href: process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' ? `${b}/pricing` : `${b}/components`, icon: 'pricing', group: 'library' },
     { key: 'resources', label: 'Resources', href: `${b}/resources`, icon: 'library', group: 'library', copilot: 'nav-resources' },
     ...(supplier ? [{ key: 'supplier', label: 'Supplier', href: `${b}/supplier`, icon: 'supplier' as const, group: 'library' as const }] : []),
     ...(assistant ? [{ key: 'assistant', label: 'Smart Assistant', href: `${b}/account/smart-assistant`, icon: 'assistant' as const, group: 'utility' as const }] : []),
@@ -34,7 +34,7 @@ export function shellRoute(pathname: string, slug: string) {
   const label = !section ? 'Home' : section === 'quotes' && detail === 'summary' ? 'Job space' : takeoff ? 'Digital takeoff' :
     builder ? (detail === 'customer-edit' ? 'Customer quote editor' : detail === 'labor-sheet' ? 'Labour sheet' : 'Quote builder') :
     ({ 'job-spaces': 'Job Spaces', quotes: 'Quotes', 'material-orders': 'Orders', orders: 'Orders', invoices: 'Invoices',
-      components: 'Pricing Library', resources: 'Resources', assistant: 'Smart Assistant', account: 'Account',
+      components: 'My Pricing Library', pricing: 'My Pricing Library', resources: 'Resources', assistant: 'Smart Assistant', account: 'Account',
       tutorials: 'Tutorials', inbox: 'Message Center', supplier: 'Supplier' } as Record<string, string>)[section] ?? 'Resources';
   return { width: takeoff ? 'immersive' : editor ? 'editor' : focused ? 'focused' : 'wide',
     // The user-facing shell has two states. Rail stays available internally,
@@ -47,6 +47,7 @@ export function navIsActive(item: ShellNavItem, pathname: string, slug: string) 
   if (item.key === 'job-spaces' && jobSummary) return true;
   if (item.key === 'quotes' && jobSummary) return false;
   if (item.key === 'orders' && pathname.startsWith(`/${slug}/orders`)) return true;
+  if (item.key === 'pricing' && pathname.startsWith(`/${slug}/components`)) return true;
   if (item.key === 'resources' && /^\/(attachments|catalogs|templates|drawings)(\/|$)/.test(pathname.slice(`/${slug}`.length))) return true;
   // The Smart Assistant settings page is its own nav destination under
   // /account; Account must not also claim it active (double-highlight 2026-10-17).

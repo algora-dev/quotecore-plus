@@ -1,5 +1,6 @@
 import { loadComponentLibrary, hasSeenComponentsIntro, loadComponentCollections, hasDismissedComponentEditWarning } from './actions';
 import { ComponentList } from './component-list';
+import Link from 'next/link';
 import { PendingUpdatesBanner } from './PendingUpdatesBanner';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { isDemoCompany } from '@/app/lib/demo/context';
@@ -77,6 +78,7 @@ export default async function ComponentsPage(props: {
       <BackButton href={from === 'inbox' ? `/${workspaceSlug}/inbox` : `/${workspaceSlug}/resources`} label={from === 'inbox' ? 'Back to inbox' : 'Back to resources'} />
       {/* "Where is my takeoff" helper - shown here because this is the landing
           page after the free-takeoff import banner click. */}
+      {process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' && <div className="mb-4 flex justify-end"><Link href={`/${workspaceSlug}/pricing/setup`} className="text-sm font-medium underline underline-offset-4" style={{ color: "var(--qc-text-link)" }}>Need help setting up your pricing?</Link></div>}
       <TakeoffDraftNoteBanner />
       {pendingUpdates.length > 0 && (
         <PendingUpdatesBanner workspaceSlug={workspaceSlug} updates={pendingUpdates} />

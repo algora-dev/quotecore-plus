@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { demoComponentCalculated, refreshDemoGuide } from '@/app/lib/demo/client-events';
 import { useSearchParams } from 'next/navigation';
 import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
@@ -20,6 +21,7 @@ import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useEffect, useRef } from 'react';
 import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning } from './actions';
+import { verifyPracticeComponent } from './practice-actions';
 import { AddFromCatalogModal } from './components/AddFromCatalogModal';
 import type {
   ComponentLibraryRow,
@@ -95,6 +97,10 @@ export function ComponentList({
   const openedDemoTarget = useRef<string | null>(null);
   const { notify, ask, feedback } = useQcFeedback();
   const { notice, showNotice } = useQcActionNotice();
+  const [practiceVerificationId, setPracticeVerificationId] = useState<string | null>(null);
+  const [practiceVerificationChecked, setPracticeVerificationChecked] = useState(false);
+  const [practiceVerifying, setPracticeVerifying] = useState(false);
+  const [practiceVerificationError, setPracticeVerificationError] = useState('');
   const [learning, setLearning] = useState(showPricingIntroduction);
   const [testedInSession, setTestedInSession] = useState(false);
   const [createdInSession, setCreatedInSession] = useState(false);
@@ -1126,6 +1132,15 @@ export function ComponentList({
               {createLibraryError && (
                 <p className="text-xs text-red-600">{createLibraryError}</p>
               )}
+              {process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' && (
+                <div className="rounded-xl border border-slate-200 p-3 text-sm">
+                  <strong className="block text-slate-900">Need an example to start with?</strong>
+                  <p className="mt-1 text-slate-600">Explore ready-made roofing libraries, choose the components you need, and add your own costs.</p>
+                  <Link className="mt-2 inline-block font-semibold underline underline-offset-4" href={`/${workspaceSlug}/pricing/assistant?start=ready`}>
+                    Choose a ready-made library
+                  </Link>
+                </div>
+              )}
               <div className="flex gap-2 pt-1">
                 <button data-qc-variant="primary"
                   type="button"
@@ -1153,6 +1168,12 @@ export function ComponentList({
         <h1 className="qc-library-title text-xl md:text-2xl font-semibold text-slate-900">Pricing library</h1>
         <p className="text-xs md:text-sm text-slate-500 mt-1">Find and reuse Smart Components™: saved materials, labour and measurement settings for your quotes.</p>
       </div>
+      {process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' && components.some(c => (c as unknown as {pricing_setup_practice?:boolean}).pricing_setup_practice) && (
+        <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 mb-3">
+          <strong>Practice pricing in this library.</strong> Some components use fictitious example costs from a 2026 USD benchmark. They are for learning how to quote, not customer estimates. They can be tested on jobs, but any quote made with them cannot be shared with customers. Open and edit each component, then explicitly verify its real costs and rules before using it for business.
+          <span className="block mt-1">The current calculator applies configured waste to both material and labour quantities. If your workspace is not in USD, example numbers are not FX converted.</span>
+        </div>
+      )}
       <PricingIntroduction open={learning} onOpen={() => setLearning(true)} onDismiss={() => setLearning(false)}
         hasComponents={components.length > 0} tested={testedInSession} created={createdInSession} ownTested={ownTested}
         workspaceSlug={workspaceSlug} onCreate={() => { void startNew(); }}
@@ -1299,6 +1320,13 @@ export function ComponentList({
           <ComponentCreationActions disabled={saving}
             onGuided={() => { void startGuidedIdentity(); }}
             onQuick={() => { void startNew(); }} />
+          {process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' && (
+            <Link href={`/${workspaceSlug}/pricing/assistant?start=ready`}
+              className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
+              data-qc-variant="ghost" data-qc-size="md">
+              Ready-made roofing libraries
+            </Link>
+          )}
           <button data-qc-variant="ghost"
             onClick={() => {
               void mayLeaveEditor().then(leave => { if (leave) { cancelEdit(); setShowCatalogModal(true); } });
@@ -1485,6 +1513,9 @@ export function ComponentList({
                     {comp.sku && (
                       <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-mono">{comp.sku}</span>
                     )}
+                    {(comp as unknown as {pricing_setup_practice?:boolean}).pricing_setup_practice && (
+                      <span className="text-xs px-2 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300 font-semibold">PRACTICE PRICES · NOT VERIFIED</span>
+                    )}
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${comp.component_type === 'main' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700'}`}>
                       {comp.component_type}
                     </span>
@@ -1515,6 +1546,12 @@ export function ComponentList({
                   </svg>
                   Open & test
                 </button>
+                {(comp as unknown as {pricing_setup_practice?:boolean}).pricing_setup_practice && process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' && (
+                  <button type="button" data-qc-variant="secondary" className="qc-button qc-flow-control qc-library-control"
+                    onClick={e=>{e.stopPropagation();setPracticeVerificationId(comp.id);setPracticeVerificationChecked(false);setPracticeVerificationError('');}}>
+                    Verify real costs
+                  </button>
+                )}
                 <button aria-label={`Delete ${comp.name}`} data-qc-variant="ghost"
                   onClick={(e) => { e.stopPropagation(); setDeleteCompId(comp.id); }}
                   title="Click to delete"
@@ -1530,6 +1567,28 @@ export function ComponentList({
         ))}
       </div>
 
+      {practiceVerificationId && <QcJourneyDialog label="Verify real pricing" size="sm">
+        <div className="p-5 space-y-4">
+          <h2 className="text-lg font-semibold">Verify this component for real quotes</h2>
+          <p className="text-sm">Before removing the PRACTICE label, open the component and check your actual supplier costs, labour cost, measurement basis, pitch and waste. Check local tax, overhead and markup when building a quote. USD example values are not reliable market costs in any region.</p>
+          <p className="text-sm">This does not turn an existing practice quote into a real quote. Create a new quote after verification.</p>
+          <label className="flex gap-3 text-sm items-start"><input type="checkbox" checked={practiceVerificationChecked} onChange={e=>setPracticeVerificationChecked(e.target.checked)}/><span>I have checked or replaced every example amount and rule with my own verified pricing and understand that future customer quotes are my responsibility.</span></label>
+          {practiceVerificationError && <p className="text-sm text-red-700" role="alert">{practiceVerificationError}</p>}
+          <div className="flex flex-wrap gap-2 justify-end">
+            <button className="qc-button" data-qc-variant="ghost" disabled={practiceVerifying} onClick={()=>setPracticeVerificationId(null)}>Cancel</button>
+            <button className="qc-button" data-qc-variant="primary" disabled={practiceVerifying||!practiceVerificationChecked} onClick={()=>{void (async()=>{
+              if(!practiceVerificationId)return;
+              setPracticeVerifying(true);
+              try{const result=await verifyPracticeComponent(practiceVerificationId,true);
+                if(!result.ok)throw Error(result.message);
+                setComponents(old=>old.map(c=>c.id===practiceVerificationId?{...c,pricing_setup_practice:false} as typeof c:c));
+                setPracticeVerificationId(null);showNotice({title:'Component pricing verified',description:result.message,tone:'success',focus:true});
+              }catch(error){setPracticeVerificationError(error instanceof Error?error.message:'Could not verify.');}
+              finally{setPracticeVerifying(false);}
+            })();}}>{practiceVerifying?'Verifying…':'Confirm verified pricing'}</button>
+          </div>
+        </div>
+      </QcJourneyDialog>}
       {/* Delete Modal */}
       {deleteCompId && (
         <QcJourneyDialog label="Delete Smart Component™" size="sm">

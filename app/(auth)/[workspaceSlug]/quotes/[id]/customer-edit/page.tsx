@@ -32,6 +32,15 @@ export default async function CustomerQuoteEditPage({
     supabase.from('catalogs').select('id, name').eq('company_id', profileForCatalogs?.company_id ?? '').order('name').then(r => r.data ?? []),
   ]);
   
+  // Server-derived practice status: a previous quote must remain clearly marked
+  // even after the library component is changed or verified.
+  let quoteUsesPracticePricing = false;
+  if (process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true') {
+    const { data: practiceRows, error: practiceError } = await supabase.from('quote_components')
+      .select('id').eq('quote_id', id).eq('pricing_setup_practice_snapshot', true).limit(1);
+    quoteUsesPracticePricing = Boolean(practiceError || practiceRows?.length);
+  }
+
   // Load company default currency
   const { data: company } = await supabase
     .from('companies')
@@ -64,7 +73,10 @@ export default async function CustomerQuoteEditPage({
   }
 
   return (
-    <>{demo && <div className="border-b border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-900">DEMO - NOT A REAL QUOTE · Example pricing only. Open the safe customer preview from the guide.</div>}<CustomerQuoteEditor
+    <>{demo && <div className="border-b border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-900">DEMO - NOT A REAL QUOTE · Example pricing only. Open the safe customer preview from the guide.</div>}
+    {quoteUsesPracticePricing && <div role="alert" className="border-b border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">PRACTICE QUOTE — Contains illustrative, unverified material and labour rates. For internal learning only. Customer sending and acceptance links are blocked. Verify your pricing, then create a new quote to send.</div>}
+    <CustomerQuoteEditor
+      practicePricing={quoteUsesPracticePricing}
       showWatermark={showWatermark}
       quote={quote}
       roofAreas={roofAreas}

@@ -105,6 +105,7 @@ import { handleCustomStripeEvent } from '@/app/lib/billing/custom/reconcile';
 import { observeStripeRefundEvent } from '@/app/lib/billing/custom/payment-lifecycle';
 import { invoiceSubscriptionId } from '@/app/lib/billing/custom/contracts';
 
+import { handlePricingQuickStartStripeEvent } from '@/app/lib/pricing-setup/quick-start-webhook.server';
 export const runtime = 'nodejs';
 // Stripe needs the raw bytes for signature verification, so this route
 // MUST be dynamic (no static optimisation) and we MUST NOT parse the body
@@ -227,7 +228,8 @@ export async function POST(request: Request) {
   let result: string;
   let retryable = false;
   try {
-    const customResult = await handleCustomStripeEvent(event, eventJson);
+    const quickStartResult = await handlePricingQuickStartStripeEvent(event);
+    const customResult = quickStartResult ?? await handleCustomStripeEvent(event, eventJson);
     if (customResult !== null) {
       result = customResult;
     } else switch (event.type) {

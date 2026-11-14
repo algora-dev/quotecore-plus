@@ -1,4 +1,5 @@
 'use server';
+import { assertQuoteHasNoPracticePricing } from '@/app/lib/pricing-setup/practice-guard.server';
 import { assertDemoExternalAllowed } from '@/app/lib/demo/egress';
 import { demoCustomerSaved } from '@/app/lib/demo/product-events';
 import { readActiveDemoContext } from '@/app/lib/demo/context';
@@ -226,6 +227,7 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
     .single();
 
   if (!quote) throw new Error('Quote not found');
+  await assertQuoteHasNoPracticePricing(supabase as unknown as import('@supabase/supabase-js').SupabaseClient, quoteId);
   if (quote.status === 'draft') throw new Error('Cannot send draft quotes');
   if ((quote as any).accepted_at) throw new Error('Quote has already been accepted');
   if ((quote as any).declined_at) throw new Error('Quote has already been declined');

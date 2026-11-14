@@ -70,6 +70,13 @@ export default async function QuoteSummaryPage({
   const activityCardEnabled = entitlements.features.activity_card;
 
   const supabase = await createSupabaseServerClient();
+  // A quote keeps its practice status after the original library's rates change.
+  let quoteUsesPracticePricing = false;
+  if (process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true') {
+    const {data:practiceRows,error:practiceError} = await supabase.from('quote_components')
+      .select('id').eq('quote_id',id).eq('pricing_setup_practice_snapshot',true).limit(1);
+    quoteUsesPracticePricing = Boolean(practiceError || practiceRows?.length);
+  }
 
   // One-time "test it on yourself first" send tip: has THIS user seen it?
   const _profile = await getCurrentProfile();
@@ -395,12 +402,15 @@ export default async function QuoteSummaryPage({
 
   return (
     <div className="qc-job-space" data-qc-ui="v2">
+      {quoteUsesPracticePricing && <div role="alert" className="m-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+        <strong>PRACTICE QUOTE — EXAMPLE PRICES, NOT A CUSTOMER ESTIMATE.</strong> This quote includes unverified starter-library pricing. Use it to learn measuring and quoting. Customer sending and new public acceptance links are blocked. After verifying your real costs in My Pricing Library, create a fresh quote. The original quote stays in practice mode.
+      </div>}
       <JobHeader title={quote.job_name || quote.site_address || quote.customer_name}
         customer={quote.customer_name} address={quote.site_address} quoteLabel={`Quote #${quote.quote_number || 'DRAFT'}`}
         status={jobStatus.label} statusTone={jobStatus.tone} updatedLabel={formatJobDate(quote.updated_at)}
         backHref={backHref} backLabel={backLabel} editHref={editHref}
-        primarySend={hasCustomerQuote && !quote.accepted_at && !quote.declined_at && !quote.withdrawn_at && overviewModel.revisionCount === 0}
-        sendAction={
+        primarySend={!quoteUsesPracticePricing && hasCustomerQuote && !quote.accepted_at && !quote.declined_at && !quote.withdrawn_at && overviewModel.revisionCount === 0}
+        sendAction={quoteUsesPracticePricing ? <span className="text-xs font-semibold text-amber-700">Practice only — sending disabled</span> :
             <SendDocumentButton
               entityKind="quote"
               entityId={id}
@@ -535,7 +545,7 @@ export default async function QuoteSummaryPage({
         summaryActions={
           <>
             {quote.status === 'draft' && <CurrencySelector quoteId={id} currentCurrency={quote.currency} companyDefaultCurrency={companyDefaultCurrency} workspaceSlug={workspaceSlug} />}
-            <DownloadSummaryPDFButton quoteNumber={quote.quote_number} customerName={quote.customer_name} />
+            <DownloadSummaryPDFButton quoteNumber={quote.quote_number} customerName={quote.customer_name} isPractice={quoteUsesPracticePricing} />
           </>
         }
         managementActions={

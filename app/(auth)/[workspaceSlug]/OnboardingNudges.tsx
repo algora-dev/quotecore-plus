@@ -113,7 +113,7 @@ export function OnboardingNudges({
         footer={
           <>
             <QcButton onClick={openHelp}>Get help</QcButton>
-            <QcButton variant="primary" onClick={() => go('/components')}>Add my pricing</QcButton>
+            <QcButton variant="primary" onClick={() => go(process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' ? '/pricing' : '/components')}>Add my pricing</QcButton>
           </>
         }
       >

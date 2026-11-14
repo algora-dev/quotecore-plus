@@ -7,13 +7,18 @@ import { elementToPdf } from '@/app/lib/pdf/renderPreviewToPdf';
 interface Props {
   quoteNumber: string | number | null;
   customerName: string;
+  isPractice?: boolean;
 }
 
-export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
+export function DownloadSummaryPDFButton({ quoteNumber, customerName, isPractice = false }: Props) {
   const { notify, feedback } = useQcFeedback();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleDownload = async () => {
+    if (isPractice) {
+      await notify('This quote uses practice prices. PDF export is disabled until you verify your components and create a fresh quote.');
+      return;
+    }
     setIsGenerating(true);
     try {
       const element = document.querySelector('[data-pdf-content]') as HTMLElement | null;
@@ -41,8 +46,8 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
     <>{feedback}<button
       type="button"
       onClick={handleDownload}
-      disabled={isGenerating}
-      title="Download PDF"
+      disabled={isGenerating || isPractice}
+      title={isPractice ? 'Practice pricing: export unavailable' : 'Download PDF'}
       className="qc-button" data-qc-variant="ghost"
     >
       {isGenerating ? (
@@ -50,7 +55,7 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
       ) : (
         <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
       )}
-      <span>{isGenerating ? 'Preparing PDF...' : 'Download summary'}</span>
+      <span>{isPractice ? 'Practice: PDF disabled' : isGenerating ? 'Preparing PDF...' : 'Download summary'}</span>
     </button></>
   );
 }

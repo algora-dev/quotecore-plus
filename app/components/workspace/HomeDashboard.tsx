@@ -41,7 +41,7 @@ export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationC
           : resume ? `Return to ${resume.title}. Your other jobs and starting options are below.`
           : 'Already measured the job? Start a quote. Need quantities first? Open your plan in takeoff.'}</p>
         <div className="qc-home-start-actions">
-          <Link href={pricingFirst ? `${base}/components?learn=1` : resume ? resume.href : canCreateQuote ? `${base}/quotes/new` : `${base}/quotes`} prefetch={false}
+          <Link href={pricingFirst ? (process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' ? `${base}/pricing` : `${base}/components?learn=1`) : resume ? resume.href : canCreateQuote ? `${base}/quotes/new` : `${base}/quotes`} prefetch={false}
             className="qc-button" data-qc-variant="primary" data-qc-size="lg">
             <QcIcon name={pricingFirst ? 'pricing' : resume ? 'quote' : 'plus'} />
             {pricingFirst ? 'Add your pricing' : resume ? 'Continue this job' : canCreateQuote ? 'New quote' : 'Open quotes'}<QcIcon name="arrow" />
@@ -90,7 +90,7 @@ export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationC
         </section>
         <section className="qc-hub-surface"><span className="qc-eyebrow">Set up once. Reuse every time.</span>
           <h2>Your pricing library</h2><p>Smart Components keep your material costs, labour rates and pricing rules ready for the next job.</p>
-          <Link href={`${base}/components`} prefetch={false} className="qc-button" data-qc-variant="ghost">Open Pricing Library <QcIcon name="arrow" /></Link>
+          <Link href={`${base}/${process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' ? 'pricing' : 'components'}`} prefetch={false} className="qc-button" data-qc-variant="ghost">Open My Pricing Library <QcIcon name="arrow" /></Link>
         </section>
       </aside>
     </div>

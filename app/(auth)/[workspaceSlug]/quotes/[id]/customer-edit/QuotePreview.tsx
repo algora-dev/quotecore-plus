@@ -73,6 +73,8 @@ interface Props {
   /** Quote entry_mode, used to conditionally show margin fields in the line editor. */
   quoteEntryMode?: string | null;
   /** Free Workspace watermark band (owner 2026-11-03) - rendered on the customer-facing artifact only. */
+  /** Render a practice-only warning INSIDE the printable/PDF document. */
+  practicePricing?: boolean;
   showWatermark?: boolean;
 }
 
@@ -110,6 +112,7 @@ export function QuotePreview({
   labourMarginDisplay = null,
   quoteEntryMode = null,
   showWatermark = false,
+  practicePricing = false,
 }: Props) {
   // Render a line's text honouring the Units toggle. Catalog lines hide the
   // separate quantity_text; legacy/component lines fall back to hyphen-strip.
@@ -117,6 +120,9 @@ export function QuotePreview({
 
   return (
     <div className="qc-output qc-output-quote">
+      {practicePricing && <div role="note" style={{border:'2px solid #b45309',color:'#92400e',background:'#fffbeb',padding:'10px 16px',marginBottom:'14px',fontWeight:800,fontSize:'14px',textAlign:'center'}}>
+        PRACTICE QUOTE — ILLUSTRATIVE PRICES ONLY — NOT FOR CUSTOMER USE
+      </div>}
       <DocumentHeader title={documentTitle} number={`#${quote.quote_number || 'DRAFT'}`}
         companyName={companyName} logo={companyLogoUrl} selection={selection}
         companyDetails={<>{companyAddress && <p>{companyAddress}</p>}{companyPhone && <p>{companyPhone}</p>}{companyEmail && <p>{companyEmail}</p>}</>}
