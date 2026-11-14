@@ -43,7 +43,7 @@ export const editableDraftSchema = pricingDraftSchema.pick({
 });
 export type EditableDraft = z.infer<typeof editableDraftSchema>;
 export type PricingDraftRow = {id:string;source_index:number;source_excerpt:string;status:'candidate'|'selected'|'confirmed'|'saved'|'skipped';draft_data:PricingDraft;confirmed_at:string|null;component_id:string|null};
-export type PricingSession = {id:string;source_name:string;source_kind:string;source_basis:string;extracted_count:number;created_at:string};
+export type PricingSession = {id:string;source_name:string;source_kind:string;source_basis:string;extracted_count:number;created_at:string;remaining?:number};
 export type ExtractedLine = {
   sku?:string|null;name:string;notes?:string|null;sourceUnit?:string|null;sourcePrice?:number|null;materialRate?:number|null;
   labourRate?:number|null;wasteType?:'percent'|'fixed'|'fixed_per_segment'|'none'|null;

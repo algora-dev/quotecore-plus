@@ -55,7 +55,9 @@ export function FileUploader({
 
     if (accept && !accept.includes('*')) {
       const allowedTypes = accept.split(',').map(t => t.trim());
-      if (!allowedTypes.some(type => file.type.match(type.replace('*', '.*')))) {
+      const mimeOk = allowedTypes.some(type => file.type && file.type.match(type.replace('*', '.*')));
+      const extOk = allowedTypes.some(type => type.startsWith('.') && file.name.toLowerCase().endsWith(type.toLowerCase()));
+      if (!mimeOk && !extOk) {
         return `Invalid file type. Allowed: ${accept}`;
       }
     }

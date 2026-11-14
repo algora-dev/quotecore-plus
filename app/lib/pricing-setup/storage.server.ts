@@ -46,7 +46,14 @@ export async function listPricingSessions():Promise<PricingSession[]>{
  const {data,error}=await admin.from('pricing_setup_sessions').select('id,source_name,source_kind,source_basis,extracted_count,created_at')
   .eq('user_id',profile.id).eq('company_id',profile.company_id).order('created_at',{ascending:false}).limit(12);
  if(error)throw Error('Unable to load pricing sessions.');
- return (data??[]) as PricingSession[];
+ const sessions=(data??[]) as PricingSession[];
+ if(!sessions.length)return sessions;
+ const {data:rows,error:rowsError}=await admin.from('pricing_setup_drafts').select('session_id,status')
+  .eq('user_id',profile.id).eq('company_id',profile.company_id).in('session_id',sessions.map(s=>s.id));
+ if(rowsError)throw Error('Unable to load pricing sessions.');
+ const counts=new Map<string,number>();
+ for(const row of rows??[])if(row.status!=='saved')counts.set(row.session_id,(counts.get(row.session_id)??0)+1);
+ return sessions.map(s=>({...s,remaining:counts.get(s.id)??0}));
 }
 export async function loadPricingSession(sessionId:string):Promise<{session:PricingSession;drafts:PricingDraftRow[]}>{
  const {profile,admin}=await scopedContext();

@@ -6,6 +6,7 @@ import { QcButton } from '@/app/components/ui/v2/QcButton';
 import { QcInput, QcField, QcSelect } from '@/app/components/ui/v2/QcField';
 import { QcIcon } from '@/app/components/ui/v2/QcIcon';
 import { ComponentTestPanel } from '@/app/components/pricing/ComponentTestPanel';
+import { FileUploader } from '@/app/components/FileUploader';
 import type {MeasurementSystem} from '@/app/lib/types';
 import type {PricingDraftRow,PricingDraft,EditableDraft,PricingSession} from '@/app/lib/pricing-setup/domain';
 import {validateForConfirmation} from '@/app/lib/pricing-setup/domain';
@@ -190,14 +191,14 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
  return <main className="ps-page pa-page" aria-labelledby="pa-title">
   <div className="pa-top"><Link href={`/${workspaceSlug}/pricing/setup`} className="pa-back"><QcIcon name="back"/> Setup options</Link><Link href={`/${workspaceSlug}/components`}>My Pricing Library</Link></div>
   <header className="ps-head"><p className="ps-eyebrow">PRICING SETUP ASSISTANT</p><h1 id="pa-title">Get your products, rates and services set up.</h1>
-   <p>Use your own prices or choose a ready-made roofing library. We'll help you verify each component before it becomes usable in a real quote.</p></header>
+   <p>Upload a spreadsheet, PDF or photo of your pricing, paste a list, or speak your rates — or start from a ready-made roofing library. We'll help you verify each component before it becomes usable in a real quote.</p></header>
   {error&&<div className="pa-alert" role="alert" style={{whiteSpace:'pre-line'}}>{error}</div>}
   {notice&&<div className="pa-success" role="status">{notice}</div>}
   <section className="pa-entry-options" aria-label="Choose a pricing setup method">
    <button type="button" className={`pa-entry-card ${entryMode==='own'?'pa-entry-active':''}`} onClick={()=>setEntryMode('own')}>
     <span className="pa-entry-tag">I HAVE MY OWN PRICES</span>
     <strong>Use my own prices</strong>
-    <span>Upload a document, paste a list, or speak your materials, services and rates.</span>
+    <span>Upload a spreadsheet, PDF or photo, paste a list, or speak your materials, services and rates.</span>
    </button>
    <button type="button" className={`pa-entry-card ${entryMode==='ready'?'pa-entry-active':''}`} onClick={()=>setEntryMode('ready')}>
     <span className="pa-entry-tag">I NEED A STARTING POINT</span>
@@ -207,9 +208,12 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
   </section>
   {entryMode==='own'&&<section className="pa-panel pa-capture" aria-labelledby="pa-source-title">
    <div className="pa-section-heading"><h2 id="pa-source-title">1. Provide your pricing</h2><span>Files, typed notes or voice</span></div>
-   <QcField label="Upload a spreadsheet, PDF or photo" htmlFor="pa-file" help="CSV, XLSX, TXT, PDF, PNG, JPEG or WebP. Maximum 4 MB. Original uploads are not retained by the self-service importer.">
-    <QcInput id="pa-file" type="file" accept=".csv,.xlsx,.txt,.pdf,.png,.jpg,.jpeg,.webp" disabled={busy} onChange={e=>{const next=e.currentTarget.files?.[0]??null;setFile(next);if(next)setText('');setVoice(false);}}/>
-   </QcField>
+   <FileUploader appearance="v2" accept=".csv,.xlsx,.txt,.pdf,.png,.jpg,.jpeg,.webp" maxSize={4194304}
+    label="Upload a spreadsheet, PDF or photo"
+    description="Click to browse or drag and drop · CSV, XLSX, TXT, PDF, PNG, JPEG or WebP · max 4 MB · originals not retained"
+    onUpload={async next=>{setFile(next);setText('');setVoice(false);}}/>
+   {file&&<div className="pa-file-chip" role="status"><span>{file.name}</span><small>{Math.max(1,Math.round(file.size/1024))} KB selected</small>
+    <QcButton variant="ghost" size="sm" disabled={busy} onClick={()=>setFile(null)}>Remove</QcButton></div>}
    <p className="pa-or">OR</p>
    <QcField label="Type, paste or speak what you charge or pay" htmlFor="pa-text">
     <textarea className="qc-input pa-textarea" id="pa-text" value={text} maxLength={20000} disabled={busy||!!file} onChange={e=>{setText(e.target.value);setVoice(false);}} placeholder="For example: Roof sheeting: supplier cost $32 per m². Labour $18 per m². Or paste your existing list here."/>
@@ -246,7 +250,7 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
     <div className="pa-actions"><span>{starterSlugs.length} library{starterSlugs.length===1?'':'ies'} selected · {starterLibraries.filter(lib=>starterSlugs.includes(lib.slug)).reduce((total,lib)=>total+lib.count,0)} candidate components</span>
      <QcButton variant="primary" disabled={busy||starterSlugs.length===0||(currency.toUpperCase()!=='USD'&&!foreignCurrencyAccepted)} pending={busy} onClick={createReadyMade}>Prepare selected libraries <QcIcon name="arrow"/></QcButton></div>
    </section>}
-  {sessions.length>0&&<section className="pa-past"><strong>Resume an import:</strong> {sessions.map(s=><Link key={s.id} className={current?.session.id===s.id?'pa-current':''} href={`/${workspaceSlug}/pricing/assistant?session=${s.id}`}>{s.source_name} ({s.extracted_count})</Link>)}</section>}
+  {sessions.length>0&&<section className="pa-past"><strong>Resume an import:</strong> {sessions.map(s=><Link key={s.id} className={current?.session.id===s.id?'pa-current':''} href={`/${workspaceSlug}/pricing/assistant?session=${s.id}`}>{s.source_name} ({s.remaining??s.extracted_count} left)</Link>)}</section>}
   {current&&<section className="pa-panel" aria-label="Extracted pricing items">
    <div className="pa-section-heading"><h2>2. Review items from {current.session.source_name}</h2><span>{current.drafts.length} found</span></div>
    <div className="pa-delete-import">{!confirmDelete?<QcButton variant="ghost" size="sm" disabled={busy} onClick={()=>setConfirmDelete(true)}>Delete this import</QcButton>:<div role="group" aria-label="Confirm delete import"><span>Delete all draft items from this import? Already saved components will remain.</span><QcButton variant="danger" size="sm" disabled={busy} onClick={removeCurrentImport}>Delete drafts</QcButton><QcButton variant="ghost" size="sm" onClick={()=>setConfirmDelete(false)}>Cancel</QcButton></div>}</div>

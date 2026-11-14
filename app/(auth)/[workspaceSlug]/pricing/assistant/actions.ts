@@ -9,8 +9,9 @@ import { calculateComponentTest } from '@/app/components/pricing/componentTest';
 
 const uuid=(s:string)=>/^[\da-f]{8}-[\da-f]{4}-[1-8][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i.test(s);
 export async function loadPricingAssistantData(sessionId?:string){
- const sessions=await listPricingSessions();
- const current=sessionId&&uuid(sessionId)?await loadPricingSession(sessionId):sessions[0]?await loadPricingSession(sessions[0].id):null;
+ // Fresh visits start at step one: a session loads only via an explicit resume link, and fully-saved imports are hidden.
+ const sessions=(await listPricingSessions()).filter(s=>s.remaining===undefined||s.remaining>0);
+ const current=sessionId&&uuid(sessionId)?await loadPricingSession(sessionId):null;
  return {sessions,current};
 }
 /** Remove an import's drafts and source excerpts on the user's request. Never delete live components. */

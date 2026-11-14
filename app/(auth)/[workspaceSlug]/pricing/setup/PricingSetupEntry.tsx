@@ -32,12 +32,12 @@ export function PricingSetupEntry({ workspaceSlug, seen, alwaysOpenLibrary }: {
     },
     {
       title: 'Pricing Setup Assistant', category: 'SELF-SERVICE · RECOMMENDED',
-      body: 'Bring your own pricing or choose a ready-made roofing library. We help you review each component before it goes live.',
+      body: 'Upload a spreadsheet, PDF or photo of your prices, paste a list, or start from a ready-made roofing library. Bulk import — we help you review each component before it goes live.',
       linkText: 'Open setup assistant', href: `/${workspaceSlug}/pricing/assistant`, recommended: true,
     },
     {
       title: 'Quick Start', category: 'WE PREPARE YOUR PRICING', price: 'US$99',
-      body: 'Send us your information and we prepare up to 15 pricing components for you to review.',
+      body: 'We set your pricing up — up to 15 individual components. Just send us enough information. A faster start that skips the learning curve and gets you quoting sooner.',
       linkText: 'View Quick Start package',
       href: `https://quote-core.com/quick-start-pricing?workspace=${encodeURIComponent(workspaceSlug)}`, service: true,
     },
@@ -55,14 +55,14 @@ export function PricingSetupEntry({ workspaceSlug, seen, alwaysOpenLibrary }: {
       <p>Your pricing is the materials, products, labour rates, services and charges you use to quote a job. Choose how you want to get started.</p>
     </header>
     <div className="ps-grid" aria-label="Choose how to set up pricing">
-      {options.map((option, i) => <Link
+      {options.map(option => <Link
         href={option.href} key={option.title}
         className={`ps-option ${option.service ? 'ps-option-service' : 'ps-option-self'} ${option.recommended ? 'ps-option-recommended' : ''}`}
         target={option.service ? '_blank' : undefined} rel={option.service ? 'noopener noreferrer' : undefined}
       >
         <div className="ps-option-top">
           <span className="ps-option-category">{option.category}</span>
-          <span className="ps-option-counter">{option.price || `0${i + 1}`}</span>
+          {option.price && <span className="ps-option-price">{option.price}</span>}
         </div>
         <h2>{option.title}</h2>
         <p>{option.body}</p>
