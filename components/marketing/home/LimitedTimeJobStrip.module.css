@@ -1,5 +1,5 @@
 /* Source-aligned with HomeLocked.module.css and Phase 6/7 v2 marketing tokens. */
-.strip { position: relative; overflow: hidden; background: linear-gradient(108deg,#d45216 0%,#e65e21 48%,#d24c17 100%); border-block: 1px solid rgba(121,43,13,.22); color: #ffffff; }
+.strip { position: relative; overflow: hidden; background: linear-gradient(135deg,#ff641f 0%,#ff8a3d 55%,#ffb36b 100%); border-block: 1px solid rgba(197,81,29,.22); color: #ffffff; }
 .strip::before { content: ''; position: absolute; inset: 0; background: linear-gradient(140deg,rgba(255,255,255,.16),transparent 62%); pointer-events: none; }
 .inner { position: relative; width: 100%; max-width: 1280px; margin: auto; padding: 17px 24px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: clamp(20px,4vw,52px); align-items: center; }
 .copy { min-width: 0; }

@@ -78,7 +78,7 @@ export function JobDemoInquiryForm() {
       </>}
       {step===3 && <>
         <div className={styles.contactGrid}><div className={styles.fieldGroup}><label className={styles.label} htmlFor="job-demo-name">Your name *</label><input className={styles.input} id="job-demo-name" autoComplete="name" required value={name} onChange={e=>setName(e.target.value)} /></div><div className={styles.fieldGroup}><label className={styles.label} htmlFor="job-demo-email">Email address *</label><input className={styles.input} id="job-demo-email" autoComplete="email" type="email" required value={email} onChange={e=>setEmail(e.target.value)} /></div></div>
-        <label className={styles.consent}><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)} required/>I have permission to share these documents and understand QuoteCore+ will review them to prepare a personalized demonstration. *</label>
+        <label className={styles.consent}><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)} required/><span className={styles.consentText}>I have permission to share these documents and understand<span className={styles.consentNote}>QuoteCore+ will review them to prepare a personalized demonstration. *</span></span></label>
         <p className={styles.hint}>You can remove customer names and other private details before uploading. No payment or call is required.</p>
       </>}
       {error && <p className={styles.error} role="alert">{error}</p>}
