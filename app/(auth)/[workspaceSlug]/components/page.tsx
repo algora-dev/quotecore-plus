@@ -85,7 +85,7 @@ export default async function ComponentsPage(props: {
       <BackButton href={from === 'inbox' ? `/${workspaceSlug}/inbox` : `/${workspaceSlug}/resources`} label={from === 'inbox' ? 'Back to inbox' : 'Back to resources'} />
       {/* "Where is my takeoff" helper - shown here because this is the landing
           page after the free-takeoff import banner click. */}
-      {process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' && <div className="mb-4 flex justify-end"><Link href={`/${workspaceSlug}/pricing/setup`} className="text-sm font-medium underline underline-offset-4" style={{ color: "var(--qc-text-link)" }}>Need help setting up your pricing?</Link></div>}
+      {process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' && <div className="mb-4 flex justify-end"><Link href={`/${workspaceSlug}/pricing/assistant`} className="qc-button" data-qc-variant="primary" data-qc-size="md">Set up pricing with the assistant</Link></div>}
       <TakeoffDraftNoteBanner />
       {starterBanner && (
         <div className={`mb-4 rounded-xl border p-4 text-sm ${starterBanner.saved < starterBanner.total ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-green-300 bg-green-50 text-green-900'}`} role="status">

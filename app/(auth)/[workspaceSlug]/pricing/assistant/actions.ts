@@ -61,15 +61,8 @@ async function updatePricingDraftInternal(sessionId:string,id:string,edited:unkn
   const errors=validateForConfirmation(data);
   if(confirm&&errors.length)return {ok:false,message:errors.join(' '),errors};
   if(confirm){
-   const tested=calculateComponentTest({
-    name:data.name,measurementType:data.measurementType,materialRate:String(data.materialRate),labourRate:String(data.labourRate),
-    wasteType:data.wasteKind==='unknown'?'none':data.wasteKind,wasteAmount:String(data.wasteValue??0),pitchType:data.pitchType,
-    strategy:data.pricingStrategy,packPrice:String(data.packPrice??''),packSize:String(data.packSize??''),packCoverage:'',heightMm:'',depthMm:'',timeUnit:'hr',
-    soldBy:data.soldBy??'area',coverWidthMm:String(data.coverWidthMm??''),quantitySpacingM:String(data.quantitySpacingM??''),
-    quantitySpacingAllowance:String(data.spacingAllowancePercent),quantitySpacingRoundUp:data.spacingRoundUp,
-    unitsPerAreaEnabled:data.unitsPerAreaEnabled,unitsPerAreaM2:String(data.unitsPerArea??''),
-   },{system:'metric',values:['10'],basis:'plan',pitch:'30'});
-   if(!tested.ok)return {ok:false,message:Object.values(tested.errors)[0]||'Component settings could not be tested.'};
+   const problem=confirmChecks(data);
+   if(problem)return {ok:false,message:problem};
   }
   const patch={draft_data:data,status:confirm?'confirmed':'selected',confirmed_at:confirm?new Date().toISOString():null,
    confirmed_hash:confirm?digest(data):null,updated_at:new Date().toISOString()};
@@ -80,6 +73,42 @@ async function updatePricingDraftInternal(sessionId:string,id:string,edited:unkn
 }
 export async function savePricingDraft(sessionId:string,id:string,edited:unknown){return updatePricingDraftInternal(sessionId,id,edited,false);}
 export async function confirmPricingDraft(sessionId:string,id:string,edited:unknown){return updatePricingDraftInternal(sessionId,id,edited,true);}
+/** Shared confirm gate: schema validation plus a live calculation smoke test on representative inputs. */
+function confirmChecks(data:PricingDraft):string|null{
+ const errors=validateForConfirmation(data);
+ if(errors.length)return errors.join(' ');
+ const tested=calculateComponentTest({
+  name:data.name,measurementType:data.measurementType,materialRate:String(data.materialRate),labourRate:String(data.labourRate),
+  wasteType:data.wasteKind==='unknown'?'none':data.wasteKind,wasteAmount:String(data.wasteValue??0),pitchType:data.pitchType,
+  strategy:data.pricingStrategy,packPrice:String(data.packPrice??''),packSize:String(data.packSize??''),packCoverage:'',heightMm:'',depthMm:'',timeUnit:'hr',
+  soldBy:data.soldBy??'area',coverWidthMm:String(data.coverWidthMm??''),quantitySpacingM:String(data.quantitySpacingM??''),
+  quantitySpacingAllowance:String(data.spacingAllowancePercent),quantitySpacingRoundUp:data.spacingRoundUp,
+  unitsPerAreaEnabled:data.unitsPerAreaEnabled,unitsPerAreaM2:String(data.unitsPerArea??''),
+ },{system:'metric',values:['10'],basis:'plan',pitch:'30'});
+ if(!tested.ok)return Object.values(tested.errors)[0]||'Component settings could not be tested.';
+ return null;
+}
+/** Owner 2026-11-15: one-click confirm for every chosen-but-unconfirmed item. Items failing checks stay for individual review. */
+export async function confirmAllPricingDrafts(sessionId:string){
+ if(!uuid(sessionId))return {ok:false,message:'Invalid import.'};
+ try{
+  const {profile,admin}=await scopedContext();
+  const {drafts}=await loadPricingSession(sessionId);
+  const targets=drafts.filter(d=>d.status==='selected');
+  if(!targets.length)return {ok:false,message:'Choose items first — nothing is waiting for confirmation.'};
+  let confirmed=0;const failures:string[]=[];
+  for(const found of targets){
+   const problem=confirmChecks(found.draft_data);
+   if(problem){failures.push(`${found.draft_data.name}: ${problem}`);continue;}
+   const {error}=await admin.from('pricing_setup_drafts').update({
+    status:'confirmed',confirmed_at:new Date().toISOString(),confirmed_hash:digest(found.draft_data),updated_at:new Date().toISOString(),
+   }).eq('id',found.id).eq('session_id',sessionId).eq('user_id',profile.id).eq('company_id',profile.company_id);
+   if(error)throw Error('Unable to confirm items.');
+   confirmed++;
+  }
+  return {ok:true,confirmed,total:targets.length,failures};
+ }catch(error){return {ok:false,message:error instanceof Error?error.message:'Unable to confirm items.'};}
+}
 
 /** Deterministic, reference-USD research-informed practice examples (not supplier prices). */
 export async function createReadyMadeLibrarySession(slugs: string[], acceptForeignCurrencyExample = false) {

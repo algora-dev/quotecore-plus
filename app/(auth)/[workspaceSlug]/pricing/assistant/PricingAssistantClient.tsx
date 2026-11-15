@@ -10,7 +10,7 @@ import { FileUploader } from '@/app/components/FileUploader';
 import type {MeasurementSystem} from '@/app/lib/types';
 import type {PricingDraftRow,PricingDraft,EditableDraft,PricingSession} from '@/app/lib/pricing-setup/domain';
 import {validateForConfirmation} from '@/app/lib/pricing-setup/domain';
-import {confirmPricingDraft,deletePricingSession,loadPricingAssistantData,prepareReadyMadeLibraries,saveConfirmedPricingDrafts,savePricingDraft,selectPricingDrafts} from './actions';
+import {confirmAllPricingDrafts,confirmPricingDraft,deletePricingSession,loadPricingAssistantData,prepareReadyMadeLibraries,saveConfirmedPricingDrafts,savePricingDraft,selectPricingDrafts} from './actions';
 import type { StarterLibrarySummary } from '@/app/lib/pricing-setup/starter-libraries.server';
 import {createComponentCollection} from '@/app/(auth)/[workspaceSlug]/components/actions';
 import '../setup.css';import './assistant.css';
@@ -22,6 +22,8 @@ const common={area:'Area (m²)',lineal:'Length (m)',quantity:'Quantity (each)',f
 const pitch={none:'No pitch factor',rafter:'Rafter pitch',valley_hip:'Hip / valley pitch'};
 const waste={unknown:'Not found: must decide',none:'No waste',percent:'Percentage',fixed:'Fixed allowance',fixed_per_segment:'Allowance per segment'};
 const origins:Record<string,string>={source:'Extracted',rule:'Roofing rule',inference:'Suggested',missing:'Not found',user:'Edited'};
+/** Green when the value came from the source (or the user); orange when it might need input. Choice-only fields stay white. */
+const tone=(origin:string|undefined,value:unknown)=>value==null||value===''?'pa-in-missing':origin==='source'||origin==='user'?'pa-in-found':'pa-in-missing';
 const fmt=(v:number|null,cur:string)=>v==null?'Not found':new Intl.NumberFormat('en',{style:'currency',currency:cur,maximumFractionDigits:2}).format(v);
 const editorValue=(d:PricingDraft):EditableDraft=>({sku:d.sku,name:d.name,notes:d.notes,sourceUnit:d.sourceUnit,sourcePrice:d.sourcePrice,
  priceBasis:d.priceBasis,materialRate:d.materialRate,labourRate:d.labourRate,measurementType:d.measurementType,componentType:d.componentType,
@@ -63,6 +65,8 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
  useEffect(()=>{if(reviewed&&phase==='review'){
   setEditor(editorValue(reviewed.draft_data));setVerified(false);setTestOpen(false);setAsk('');setAnswer('');
  }},[reviewed?.id,phase]);
+ // Owner 2026-11-15: every step or page change opens at the top of the page, never mid-way.
+ useEffect(()=>{window.scrollTo({top:0,left:0});},[reviewed?.id,phase,current?.session.id]);
  useEffect(()=>()=>{recorder.current?.state==='recording'&&recorder.current.stop();audioStream.current?.getTracks().forEach(t=>t.stop());},[]);
  async function upload(){
   setBusy(true);setError('');setNotice('');
@@ -137,6 +141,15 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
    if(result.saved>0)setPhase('done');
   }catch(e){setError(e instanceof Error?e.message:'Could not save practice components.');}
   finally{setBusy(false);}
+ }
+ async function confirmAllRemaining(){
+  if(!current||busy)return;setBusy(true);setError('');setNotice('');
+  try{const result=await confirmAllPricingDrafts(current.session.id);
+   if(!result.ok)throw Error(result.message);
+   await reload();
+   const failures=result.failures??[];setNotice(failures.length===0?`${result.confirmed} of ${result.total} components confirmed. Save them below.`:`${result.confirmed} of ${result.total} confirmed. The rest need a quick look.`);
+   if(failures.length)setError(failures.join('\n'));
+  }catch(e){setError(e instanceof Error?e.message:'Could not confirm items.');}finally{setBusy(false);}
  }
  async function beginReview(){
   if(!current||chosen.length===0)return;
@@ -277,18 +290,19 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
    </>}
    {phase==='review'&&reviewed&&editor&&<>
      {reviewed.draft_data.practicePricing&&<p className="pa-caution"><strong>Practice pricing:</strong> This component will remain marked PRACTICE even if you confirm it here. Edit and verify your real costs later in My Pricing Library. Example numbers come from USD 2026 and are not currency-converted.</p>}
-     <p className="pa-progress">Review {Math.min(reviewIndex+1,ordered.length)} of {ordered.length} · {fullyConfirmed} individually confirmed</p>
-     <div className="pa-legend" aria-label="Input colour guide"><span><i className="pa-swatch pa-swatch-found"/>Found in your pricing</span><span><i className="pa-swatch pa-swatch-missing"/>Needs your input</span><span><i className="pa-swatch"/>Suggested rule or already filled</span></div>
+     <div className="pa-progress-row"><p className="pa-progress">Review {Math.min(reviewIndex+1,ordered.length)} of {ordered.length} · {fullyConfirmed} individually confirmed</p>
+      <QcButton variant="ghost" size="sm" disabled={busy||ordered.length===0||fullyConfirmed===ordered.length} pending={busy} onClick={confirmAllRemaining}>Confirm all remaining</QcButton></div>
+     <div className="pa-legend" aria-label="Input colour guide"><span><i className="pa-swatch pa-swatch-found"/>Found in your pricing</span><span><i className="pa-swatch pa-swatch-missing"/>Might need your input</span></div>
      <div className="pa-review"><div className="pa-review-head"><div>{reviewed.draft_data.starterLibraryName&&<span className="pa-system-label">{reviewed.draft_data.starterLibraryName}</span>}<span className="pa-sku">{reviewed.draft_data.sku||'No SKU'}</span><h3>{reviewed.draft_data.name}</h3></div><span className="pa-status">{reviewed.status==='confirmed'?'Confirmed':'Needs confirmation'}</span></div>
       <details className="pa-source"><summary>See the original source evidence</summary><blockquote>{reviewed.source_excerpt}</blockquote><p>Fields marked "Roofing rule" are suggestions, not values found in your source.</p></details>
       <div className="pa-fields">
-       <QcField label="SKU / product code" htmlFor="pa-sku"><QcInput id="pa-sku" className={reviewed.draft_data.origins.sku==='source'&&editor.sku?'pa-in-found':''} value={editor.sku} onChange={e=>edit({sku:e.target.value})}/></QcField>
-       <QcField label="Component name" htmlFor="pa-name"><QcInput id="pa-name" className={reviewed.draft_data.origins.name==='source'?'pa-in-found':''} value={editor.name} onChange={e=>edit({name:e.target.value})}/></QcField>
+       <QcField label="SKU / product code" htmlFor="pa-sku"><QcInput id="pa-sku" className={tone(reviewed.draft_data.origins.sku,editor.sku)} value={editor.sku} onChange={e=>edit({sku:e.target.value})}/></QcField>
+       <QcField label="Component name" htmlFor="pa-name"><QcInput id="pa-name" className={tone(reviewed.draft_data.origins.name,editor.name)} value={editor.name} onChange={e=>edit({name:e.target.value})}/></QcField>
        <QcField label={`Material cost (${currency} per canonical measurement unit)`} htmlFor="pa-material" help={`Source: ${reviewed.draft_data.origins.materialRate?origins[reviewed.draft_data.origins.materialRate]:''}. Use zero only if the component has no material cost.`}>
-        <QcInput id="pa-material" type="number" min="0" step="any" className={editor.materialRate==null?'pa-in-missing':reviewed.draft_data.origins.materialRate==='source'?'pa-in-found':''} value={editor.materialRate??''} onChange={e=>edit({materialRate:currencyNumber(e.target.value)})} placeholder="Not found"/>
+        <QcInput id="pa-material" type="number" min="0" step="any" className={tone(reviewed.draft_data.origins.materialRate,editor.materialRate)} value={editor.materialRate??''} onChange={e=>edit({materialRate:currencyNumber(e.target.value)})} placeholder="Not found"/>
        </QcField>
        <QcField label={`Labour cost (${currency} per canonical measurement unit)`} htmlFor="pa-labour" help="Enter zero only if intentional. QuoteCore+ calculates labour on the final quantity after pitch and waste, so verify that matches your charging method.">
-        <QcInput id="pa-labour" type="number" min="0" step="any" className={editor.labourRate==null?'pa-in-missing':reviewed.draft_data.origins.labourRate==='source'?'pa-in-found':''} value={editor.labourRate??''} onChange={e=>edit({labourRate:currencyNumber(e.target.value)})} placeholder="Not found"/>
+        <QcInput id="pa-labour" type="number" min="0" step="any" className={tone(reviewed.draft_data.origins.labourRate,editor.labourRate)} value={editor.labourRate??''} onChange={e=>edit({labourRate:currencyNumber(e.target.value)})} placeholder="Not found"/>
        </QcField>
        <QcField label="Primary or additional component?" htmlFor="pa-component-type">
         <QcSelect id="pa-component-type" value={editor.componentType} onChange={e=>edit({componentType:e.target.value as EditableDraft['componentType']})}>
@@ -296,22 +310,22 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
         </QcSelect>
        </QcField>
        <QcField label="How is the component measured?" htmlFor="pa-measure">
-        <QcSelect id="pa-measure" value={editor.measurementType} onChange={e=>edit({measurementType:e.target.value as EditableDraft['measurementType']})}>
+        <QcSelect id="pa-measure" className={tone(reviewed.draft_data.origins.measurementType,editor.measurementType)} value={editor.measurementType} onChange={e=>edit({measurementType:e.target.value as EditableDraft['measurementType']})}>
          {Object.entries(common).map(([v,label])=><option key={v} value={v}>{label}</option>)}
         </QcSelect>
        </QcField>
        <QcField label="Pitch rule for plan-view measurements" htmlFor="pa-pitch" help="The rule is applied only when projected plan lengths/areas need conversion. The hip/valley rule assumes a conventional 45-degree plan diagonal.">
-        <QcSelect id="pa-pitch" value={editor.pitchType} onChange={e=>edit({pitchType:e.target.value as EditableDraft['pitchType']})}>
+        <QcSelect id="pa-pitch" className={tone(reviewed.draft_data.origins.pitchType,editor.pitchType)} value={editor.pitchType} onChange={e=>edit({pitchType:e.target.value as EditableDraft['pitchType']})}>
          {Object.entries(pitch).map(([v,label])=><option key={v} value={v}>{label}</option>)}
         </QcSelect>
        </QcField>
        <QcField label="Waste allowance" htmlFor="pa-waste" help="Never guessed by the assistant. Choose no waste, or supply your real allowance.">
-        <QcSelect id="pa-waste" value={editor.wasteKind} onChange={e=>edit({wasteKind:e.target.value as EditableDraft['wasteKind'],wasteValue:null})}>
+        <QcSelect id="pa-waste" className={tone(reviewed.draft_data.origins.wasteKind,editor.wasteKind)} value={editor.wasteKind} onChange={e=>edit({wasteKind:e.target.value as EditableDraft['wasteKind'],wasteValue:null})}>
          {Object.entries(waste).map(([v,label])=><option key={v} value={v}>{label}</option>)}
         </QcSelect>
        </QcField>
        {editor.wasteKind!=='unknown'&&editor.wasteKind!=='none'&&<QcField label={editor.wasteKind==='percent'?'Waste percentage':'Fixed waste per item / segment'} htmlFor="pa-waste-value">
-        <QcInput id="pa-waste-value" type="number" min="0" step="any" className={editor.wasteValue==null?'pa-in-missing':''} value={editor.wasteValue??''} onChange={e=>edit({wasteValue:currencyNumber(e.target.value)})}/>
+        <QcInput id="pa-waste-value" type="number" min="0" step="any" className={tone(reviewed.draft_data.origins.wasteValue,editor.wasteValue)} value={editor.wasteValue??''} onChange={e=>edit({wasteValue:currencyNumber(e.target.value)})}/>
        </QcField>}
        <QcField label="Pricing strategy" htmlFor="pa-strategy">
         <QcSelect id="pa-strategy" value={editor.pricingStrategy} onChange={e=>edit({pricingStrategy:e.target.value as EditableDraft['pricingStrategy'],packPrice:null,packSize:null})}>
@@ -346,11 +360,10 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
          <option value="unknown">Source type unspecified (verify rates)</option><option value="purchase">Supplier purchase cost</option><option value="selling">Customer selling price</option><option value="mixed">Mixed source (costs separately checked)</option>
         </QcSelect>
        </QcField>
-       <QcField label="Notes (optional)" htmlFor="pa-notes"><textarea id="pa-notes" className="qc-input pa-textarea" maxLength={3000} value={editor.notes} onChange={e=>edit({notes:e.target.value})}/></QcField>
+       <QcField label="Notes (optional)" htmlFor="pa-notes"><textarea id="pa-notes" className={`qc-input pa-textarea ${tone(reviewed.draft_data.origins.notes,editor.notes)}`} maxLength={3000} value={editor.notes} onChange={e=>edit({notes:e.target.value})}/></QcField>
       </div>
       {editor.sourcePrice!=null&&<p className="pa-source-price">Original listed rate: {fmt(editor.sourcePrice,currency)} {editor.sourceUnit||'(unit not given)'} · {editor.priceBasis} source</p>}
       {hasUnsavedChanges&&<p className="pa-warnings" role="status">You have changes that are not saved or confirmed. Save your draft or confirm this item before moving on or saving the batch.</p>}
-      {reviewed.draft_data.warnings.length>0&&<div className="pa-warnings"><strong>Check these details:</strong><ul>{reviewed.draft_data.warnings.map((w,i)=><li key={i}>{w}</li>)}</ul></div>}
       <div className="pa-help"><strong>Need help with a field?</strong><p>Ask why a pitch, measurement or waste rule was suggested.</p>
        <div className="pa-help-row"><QcInput aria-label="Question for the pricing assistant" value={ask} maxLength={650} onChange={e=>setAsk(e.target.value)} placeholder="Why does this use hip pitch?"/>
         <QcButton disabled={!ask.trim()||asking} pending={asking} variant="secondary" onClick={explain}>Ask</QcButton></div>
