@@ -253,7 +253,7 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
    {phase==='choose'&&<>
     <p>Choose up to {chosenLimit} components in this batch. {isPracticeSession?'Import priced examples directly for a practice quote, or review them individually to understand the settings.':'Review each imported item individually before saving.'} Roofing-system groups are preserved. You can return for the rest.</p>
     {isPracticeSession&&<p className="pa-caution" role="note"><strong>PRACTICE PRICES — NOT VERIFIED.</strong> USD 2026 illustrative direct costs with sample waste; no FX conversion, tax, overhead or margins. The current engine applies waste to both material and labour. A practice quote cannot be shared with customers.</p>}
-    <QcButton variant="ghost" disabled={busy||chosenLimit===0} onClick={()=>{setChosen(current.drafts.filter(d=>d.status!=='saved').slice(0,chosenLimit).map(d=>d.id));setPracticeAcknowledged(false);}}>Select available examples (up to {chosenLimit})</QcButton>
+    <QcButton variant="ghost" disabled={busy||chosenLimit===0} onClick={()=>{setChosen(current.drafts.filter(d=>d.status!=='saved').slice(0,chosenLimit).map(d=>d.id));setPracticeAcknowledged(false);}}>{isPracticeSession?`Select available examples (up to ${chosenLimit})`:`Select all items (up to ${chosenLimit})`}</QcButton>
     <QcField label="Find an item" htmlFor="pa-search"><QcInput id="pa-search" value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Search SKU or name"/></QcField>
     <div className="pa-list" role="group" aria-label="Select extracted items">
     {current.drafts.filter(d=>!filter||`${d.draft_data.sku} ${d.draft_data.name}`.toLowerCase().includes(filter.toLowerCase())).map(d=>
