@@ -16,6 +16,7 @@ export function DoneForYouInquiryButton({
   className = '',
   source = 'done-for-you-page',
   icon = <ClipboardIcon />,
+  formOnly = false,
 }: {
   children?: ReactNode;
   size?: 'default' | 'large';
@@ -23,15 +24,16 @@ export function DoneForYouInquiryButton({
   className?: string;
   source?: string;
   icon?: ReactNode;
+  formOnly?: boolean;
 }) {
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
     trackEvent('dfy_inquiry_open', { source });
-    if (openDoneForYouInquiry()) event.preventDefault();
+    if (openDoneForYouInquiry(formOnly)) event.preventDefault();
   }
 
   return (
     <MarketingButton
-      href="/done-for-you-setup?inquire=1"
+      href={formOnly ? "/done-for-you-setup?inquire=form" : "/done-for-you-setup?inquire=1"}
       variant={variant}
       size={size}
       className={className}

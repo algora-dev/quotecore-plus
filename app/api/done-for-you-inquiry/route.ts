@@ -7,6 +7,7 @@ const MEASUREMENT = new Set(['on-site','printed-plans','digital-plans','aerial',
 const PRICING = new Set(['spreadsheet','supplier-lists','estimating-app','business-software','notes','memory','other']);
 const QUOTE_VOLUME = new Set(['Up to 10','11–30','31–100','100+']);
 const COMPONENT_COUNT = new Set(['Up to 10','11–20','21–50','51–100','100+']);
+const FEATURES = new Set(['digital-takeoff','scan-assist','smart-assistant','offcuts','not-sure']);
 const HANDOVER = new Set(['live','recorded','either','unsure']);
 
 const measurementLabels: Record<string,string> = {
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
   const pricingSources = cleanList(body.pricingSources, PRICING);
   const measurementOther = clean(body.measurementOther, 1200);
   const pricingOther = clean(body.pricingOther, 1200);
+  const desiredFeatures = cleanList(body.desiredFeatures, FEATURES);
   const quoteVolume = clean(body.quoteVolume, 20);
   const componentCount = clean(body.componentCount, 30);
   const handover = clean(body.handover, 20);
@@ -76,13 +78,14 @@ export async function POST(req: NextRequest) {
     ['Where does your pricing live today?',pricingText],
     ['How many quotes do you usually send each week?',quoteVolume],
     ['How many different pricing elements do you currently use?',componentCount],
-    ['How would you prefer Shaun to show you your finished setup?',handoverText],
+    ['Preferred handover',handoverText],
+    ['Requested QuoteCore+ tools', desiredFeatures.join(', ') || 'Please recommend'],
     ['Anything else Shaun should know?',notes || 'None'],
   ];
 
   const teamHtml = `<div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;padding:24px;color:#191B20">
     <h2 style="margin:0 0 4px">New Done For You enquiry</h2>
-    <p style="margin:0 0 22px;color:#596273">Submitted through the 60-second Done For You enquiry form.</p>
+    <p style="margin:0 0 22px;color:#596273">Submitted through the Done For You setup enquiry. No payment has been collected.</p>
     <table style="width:100%;border-collapse:collapse">${rows.map(([label,value])=>`<tr><td style="width:255px;padding:11px 14px 11px 0;border-bottom:1px solid #e5e8ed;font-weight:700;vertical-align:top">${escapeHtml(label)}</td><td style="padding:11px 0;border-bottom:1px solid #e5e8ed;white-space:pre-wrap;line-height:1.5">${escapeHtml(value)}</td></tr>`).join('')}</table>
     <p style="margin-top:22px;color:#596273;font-size:13px">Reply directly to this email to respond to ${escapeHtml(name)} at ${escapeHtml(email)}.</p>
   </div>`;

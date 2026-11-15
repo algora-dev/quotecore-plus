@@ -110,5 +110,7 @@ export interface PricingCalculatorProps {
   continueHref?: (intent: PlanIntent) => string;
   continueLabel?: string;
   resultActions?: ResultActions;
+  /** Public marketing price estimate: show human-help options. Never connects billing. */
+  publicNextSteps?: { callHref: string; doneForYouHref: string };
   notice?: string;
 }

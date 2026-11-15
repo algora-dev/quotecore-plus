@@ -10,6 +10,7 @@ import { DeviceQuestion, VolumeQuestion, MeasurementQuestion, ToolsQuestion, Dis
 import { AssistantQuestion } from './AssistantQuestion';
 import { PlanSummary } from './PlanSummary';
 import { ResultActions } from './ResultActions';
+import { PublicPricingNextSteps } from './PublicPricingNextSteps';
 import { StoryPanel } from './StoryPanel';
 import { Icon } from './Choice';
 import { adjacentScreen, screenReady, stageFor, progressFor, STAGES, type Screen } from './flow';
@@ -36,7 +37,7 @@ export function PricingCalculator(props: PricingCalculatorProps) {
   return <CalculatorInner {...props} key={`${props.catalog.id}:${props.catalog.revision}`} />;
 }
 function CalculatorInner({ catalog, variant = 'page', initialAnswers, startAtReview = false, currentSubscription,
-  onContinue, continueHref, continueLabel, resultActions, notice }: PricingCalculatorProps) {
+  onContinue, continueHref, continueLabel, resultActions, publicNextSteps, notice }: PricingCalculatorProps) {
   const id = useId();
   const [answers, rawDispatch] = useReducer(answersReducer, initialAnswers ?? EMPTY_ANSWERS, normalizeAnswers);
   const [screen, setScreen] = useState<Screen>(startAtReview && initialAnswers && isComplete(initialAnswers, catalog) ? 'review' : 'device');
@@ -155,7 +156,7 @@ function CalculatorInner({ catalog, variant = 'page', initialAnswers, startAtRev
             {screen === 'review' && <><PlanSummary answers={answers} result={result} catalog={catalog} current={variant === 'billing' ? currentSubscription : undefined}
               primaryAction={purchaseAction}
               actionNotice={<>{error && <p className="qcp-error" role="alert">{error}</p>}{success && <p className="qcp-note" role="status">{success}</p>}</>}
-              actions={resultActions && result && intent && variant === 'page' ? <ResultActions intent={intent} result={result} catalog={catalog} options={resultActions} disabled={pending} /> : undefined} />
+              actions={publicNextSteps && variant === 'page' ? <PublicPricingNextSteps callHref={publicNextSteps.callHref} doneForYouHref={publicNextSteps.doneForYouHref} /> : resultActions && result && intent && variant === 'page' ? <ResultActions intent={intent} result={result} catalog={catalog} options={resultActions} disabled={pending} /> : undefined} />
               <Disclosure title="Edit your choices"><div className="qcp-edit-row">
                 {(['device','workload','measurements', ...(hasPlans(answers) ? ['tools'] : []), 'assistant'] as Screen[]).map(s => <QcButton key={s} variant="glass" className="qcp-clear" onClick={() => edit(s)}><Icon name="edit" size={14} />Edit {s === 'device' ? 'device' : s === 'workload' ? 'workload' : s === 'measurements' ? 'measurements' : s === 'tools' ? 'tools' : 'Assistant'}</QcButton>)}
               </div></Disclosure>

@@ -28,7 +28,7 @@ const faqs = [
   {
     question: "What commission do I earn?",
     answer:
-      "A flat 30% of eligible revenue. On referred subscriptions that is 30% of the subscription fees we actually collect, every month for 12 months from the customer's first payment. On Done For You setups it is 30% of the collected setup fee, paid once: a US$499 setup earns you US$149.70. Custom terms may be available for selected partnerships.",
+      "A flat 30% of eligible revenue. On referred subscriptions that is 30% of the subscription fees we actually collect, every month for 12 months from the customer's first payment. On Done For You setups it is 30% of the collected setup fee, paid once: a US$199 setup earns you US$59.70. Custom terms may be available for selected partnerships.",
   },
   {
     question: "How does my discount code work?",
@@ -38,7 +38,7 @@ const faqs = [
   {
     question: "Do I earn commission on Done For You setups?",
     answer:
-      "Yes. Done For You Setup is our configuration service, scoped from US$499 per customer. You earn 30% of the setup fee once it is collected, and it stacks with subscription commission if that customer also subscribes.",
+      "Yes. Done For You Setup is our configuration service, scoped from US$199 per customer. You earn 30% of the setup fee once it is collected, and it stacks with subscription commission if that customer also subscribes.",
   },
   {
     question: "What is the best link to share with someone who wants to try QuoteCore+?",
@@ -156,7 +156,7 @@ const whoProfiles = [
 
 const whatToPromote = [
   { title: "Free Workspace", href: "/free-trial", desc: "The main product entry point. Real QuoteCore+ account, no card, no expiry, with an optional Guided Walkthrough inside." },
-  { title: "Done For You Setup", href: "/done-for-you-setup", desc: "From US$499. Shaun scopes the setup around the customer and you earn 30% of the collected setup fee." },
+  { title: "Done For You Setup", href: "/done-for-you-setup", desc: "From US$199. Shaun scopes the setup around the customer and you earn 30% of the collected setup fee." },
   { title: "Pricing", href: "/pricing", desc: "Explain the public US$29-US$259 monthly range. Customers create the exact plan they need from inside their workspace." },
 ];
 
@@ -281,12 +281,12 @@ export default function DistributorsPage() {
                 <span className="text-sm font-bold text-[#FF6B35]">Done For You setups</span>
                 <h3 className="mt-3 text-xl font-semibold text-zinc-950">30% of the setup fee, paid once.</h3>
                 <p className={`mt-2 ${CARD_BODY}`}>
-                  Done For You Setup is our configuration service, scoped from US$499 per customer. It pays the same flat 30% when the
+                  Done For You Setup is our configuration service, scoped from US$199 per customer. It pays the same flat 30% when the
                   fee is collected, and stacks with subscription commission if the customer also subscribes.
                 </p>
                 <ul className="mt-4 space-y-2">
                   {[
-                    ["US$499 setup", "US$149.70 to you, one-off"],
+                    ["US$199 setup", "US$59.70 to you, one-off"],
                     ["Customer later subscribes", "30% of that too, for 12 months"],
                   ].map(([a, b]) => (
                     <li key={a} className="flex items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-[13px]">
@@ -368,7 +368,7 @@ export default function DistributorsPage() {
               </table>
             </div>
             <p className="mt-4 text-center text-xs leading-5 text-zinc-500">
-              Done For You setups add a one-off 30% on top: a US$499 setup is US$149.70, paid when it is collected.
+              Done For You setups add a one-off 30% on top: a US$199 setup is US$59.70, paid when it is collected.
             </p>
             <p className="mt-2 text-center text-xs leading-5 text-zinc-500">
               Examples use illustrative US$29 and US$59 monthly customer spends. US$29 equals the current starting configuration; current

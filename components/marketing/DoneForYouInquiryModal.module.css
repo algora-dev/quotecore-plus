@@ -72,3 +72,8 @@
 @media (prefers-reduced-motion:reduce) { .progressTrack span { transition:none; } }
 @media (prefers-reduced-transparency:reduce) { .backdrop { backdrop-filter:none; background:rgba(6,7,10,.80); } .modal { background:#0D1014; } }
 @media (forced-colors:active) { .modal,.close,.pathCard,.option,.segment,.handoverOption,.textarea,.input,.explainer { border-color:CanvasText; } .primary,.successMark { background:ButtonFace; color:ButtonText; border:1px solid ButtonText; } }
+
+/* Visible, concise Smart Component example, using the existing modal type scale. */
+.componentExample { margin-top:14px; padding:14px 16px; border:1px solid rgba(231,233,239,.18); border-radius:12px; background:rgba(23,28,35,.62); }
+.componentExample strong { display:block; color:#FFB36B; font-size:13px; font-weight:700; line-height:1.45; }
+.componentExample p { margin:5px 0 0; color:#B9C1CD; font-size:13px; line-height:1.6; }

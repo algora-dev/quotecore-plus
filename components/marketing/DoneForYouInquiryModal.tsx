@@ -6,6 +6,7 @@ import { trackEvent } from '@/lib/analytics';
 import styles from './DoneForYouInquiryModal.module.css';
 
 export const DFY_INQUIRY_EVENT = 'qc:open-dfy-inquiry';
+export const DFY_INQUIRY_FORM_EVENT = 'qc:open-dfy-inquiry-form';
 
 type View = 'choice' | 'form' | 'success';
 type Handover = 'live' | 'recorded' | 'either' | 'unsure';
@@ -15,6 +16,7 @@ type FormState = {
   measurementOther: string;
   pricingSources: string[];
   pricingOther: string;
+  desiredFeatures: string[];
   quoteVolume: string;
   componentCount: string;
   handover: Handover | '';
@@ -27,7 +29,7 @@ type FormState = {
 
 const initialForm: FormState = {
   measurementMethods: [], measurementOther: '', pricingSources: [], pricingOther: '',
-  quoteVolume: '', componentCount: '', handover: '', notes: '', name: '', email: '', businessName: '', website: '',
+  desiredFeatures: [], quoteVolume: '', componentCount: '', handover: '', notes: '', name: '', email: '', businessName: '', website: '',
 };
 
 const measurementOptions = [
@@ -50,6 +52,14 @@ const pricingOptions = [
   ['other', 'Something else'],
 ] as const;
 
+const featureOptions = [
+  ['digital-takeoff', 'Digital roof plan takeoff'],
+  ['scan-assist', 'Roof Scan Assist'],
+  ['smart-assistant', 'Smart Assistant'],
+  ['offcuts', 'Offcut Optimiser'],
+  ['not-sure', 'Help me choose'],
+] as const;
+
 const quoteVolumes = ['Up to 10', '11–30', '31–100', '100+'] as const;
 const componentCounts = ['Up to 10', '11–20', '21–50', '51–100', '100+'] as const;
 const handoverOptions: Array<[Handover, string, string]> = [
@@ -59,9 +69,9 @@ const handoverOptions: Array<[Handover, string, string]> = [
   ['unsure', 'Not sure yet', 'No problem. Shaun can recommend the best handover after reviewing your enquiry.'],
 ];
 
-export function openDoneForYouInquiry(): boolean {
+export function openDoneForYouInquiry(formOnly = false): boolean {
   if (typeof window === 'undefined') return false;
-  const event = new CustomEvent(DFY_INQUIRY_EVENT, { cancelable: true });
+  const event = new CustomEvent(formOnly ? DFY_INQUIRY_FORM_EVENT : DFY_INQUIRY_EVENT, { cancelable: true });
   return !window.dispatchEvent(event);
 }
 
@@ -112,16 +122,19 @@ export function DoneForYouInquiryModal() {
       setOpen(true);
       setError(null);
     };
+    const showForm = (event: Event) => { show(event); setView('form'); setStep(0); };
     window.addEventListener(DFY_INQUIRY_EVENT, show);
+    window.addEventListener(DFY_INQUIRY_FORM_EVENT, showForm);
     const params = new URLSearchParams(window.location.search);
-    if (params.get('inquire') === '1') {
+    if (params.get('inquire') === '1' || params.get('inquire') === 'form') {
       requestAnimationFrame(() => {
         openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         setOpen(true);
+        if (params.get('inquire') === 'form') { setView('form'); setStep(0); }
         setError(null);
       });
     }
-    return () => window.removeEventListener(DFY_INQUIRY_EVENT, show);
+    return () => { window.removeEventListener(DFY_INQUIRY_EVENT, show); window.removeEventListener(DFY_INQUIRY_FORM_EVENT, showForm); };
   }, []);
 
   useEffect(() => {
@@ -195,12 +208,12 @@ export function DoneForYouInquiryModal() {
           <div className={styles.pathGrid}>
             <article className={`${styles.pathCard} ${styles.callCard}`}>
               <div className={styles.pathIcon}>01</div>
-              <div><h3>Talk it through with Shaun</h3><ul className={styles.pathList}><li>25-minute discovery call.</li><li>Tell Shaun how you work and what you would like to improve.</li><li>See a tailored demo, or simply talk through how QuoteCore+ could make it faster and easier.</li><li>Get Shaun's #1 tip for winning more of the jobs you already quote.</li></ul></div>
+              <div><h3>Talk it through with Shaun</h3><ul className={styles.pathList}><li>Free 25-minute discovery call.</li><li>Tell Shaun how you work and what you would like to improve.</li><li>See a tailored demo, or simply talk through how QuoteCore+ could make it faster and easier.</li><li>Get Shaun's #1 tip for winning more of the jobs you already quote.</li></ul></div>
               <button type="button" className={styles.primary} onClick={bookCall}>Book 25 minutes with Shaun <Chevron /></button>
             </article>
             <article className={styles.pathCard}>
               <div className={styles.pathIcon}>02</div>
-              <div><h3>Prefer to inquire without calling?</h3><ul className={styles.pathList}><li>Answer a few quick questions in around 60 seconds.</li><li>Tell us how you work, your quote volume and roughly how much pricing needs configuring.</li><li>Shaun reviews it and emails you a tailored setup recommendation and indicative price or range.</li><li>You'll also get Shaun's #1 tip for winning more of the jobs you already quote.</li></ul></div>
+              <div><h3>Prefer to inquire without calling?</h3><ul className={styles.pathList}><li>Answer a few short questions about your business.</li><li>Tell us how you work, your quote volume and roughly how much pricing needs configuring.</li><li>Our team reviews it and emails you a tailored setup recommendation and indicative price or range.</li><li>You'll also get Shaun's #1 tip for winning more of the jobs you already quote.</li></ul></div>
               <button type="button" className={styles.secondary} onClick={chooseForm}>Inquire without calling <Chevron /></button>
             </article>
           </div>
@@ -237,18 +250,23 @@ export function DoneForYouInquiryModal() {
             <p className={styles.eyebrow}>Setup size</p><h2 id="dfy-inquiry-title">How many different pricing elements do you currently use?</h2>
             <p className={styles.stepLead}>Your best estimate is enough. This helps Shaun estimate how much pricing and configuration work is involved.</p>
             <div className={styles.segmentGrid}>{componentCounts.map((value) => <button key={value} type="button" aria-pressed={form.componentCount === value} className={styles.segment} onClick={() => setForm((current) => ({ ...current, componentCount: value }))}>{value}</button>)}</div>
-            <details className={styles.explainer}><summary>What counts as one pricing element?</summary><p>A pricing element is one distinct product, rate, or reusable price you currently use when quoting. It could be underlay, valleys, hips, fixings, roof coverings or labour. It could also be one combined square-area rate that already covers several of those things. If one rate bundles material, labour, waste or other rules, count that as one element. We only need a rough total of the different elements you would want configured in QuoteCore+.</p></details>
+            <div className={styles.componentExample} role="note"><strong>What counts as one component?</strong><p>One roof covering with its material price, labour rate, waste and pitch settings is one Smart Component. Underlay, a ridge flashing or roofing screws can each be another. A rough count is fine.</p></div>
           </section> : null}
 
           {step === 4 ? <section className={styles.step} aria-labelledby="dfy-inquiry-title">
             <p className={styles.eyebrow}>Handover</p><h2 id="dfy-inquiry-title">How would you prefer Shaun to show you your finished setup?</h2>
             <div className={styles.handoverGrid}>{handoverOptions.map(([value, title, body]) => <button key={value} type="button" aria-pressed={form.handover === value} className={styles.handoverOption} onClick={() => setForm((current) => ({ ...current, handover: value }))}><span><strong>{title}</strong><small>{body}</small></span><b>{form.handover === value ? <Check /> : null}</b></button>)}</div>
-            <label className={styles.label}>Anything else Shaun should know? <span>Optional</span><textarea className={styles.textarea} rows={3} value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} placeholder="Anything unusual about your workflow, pricing or team…" /></label>
+            <div className={styles.fieldGroup}>
+              <h3>Which tools would help your business? <span className={styles.fieldHint}>Optional</span></h3>
+              <p className={styles.fieldHint}>We'll suggest the right subscription in the proposal. You can change it before paying.</p>
+              <div className={styles.optionGrid}>{featureOptions.map(([value, label]) => <button key={value} type="button" aria-pressed={form.desiredFeatures.includes(value)} className={styles.option} onClick={() => setForm((current) => ({ ...current, desiredFeatures: toggleValue(current.desiredFeatures, value) }))}><span>{label}</span><b>{form.desiredFeatures.includes(value) ? <Check /> : null}</b></button>)}</div>
+            </div>
+            <label className={styles.label}>Anything else our team should know? <span>Optional</span><textarea className={styles.textarea} rows={3} value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} placeholder="Anything unusual about your workflow, pricing or team…" /></label>
           </section> : null}
 
           {step === 5 ? <section className={styles.step} aria-labelledby="dfy-inquiry-title">
             <p className={styles.eyebrow}>Your proposal</p><h2 id="dfy-inquiry-title">Where should Shaun send it?</h2>
-            <p className={styles.stepLead}>He’ll review your answers and email you with the likely setup, recommended QuoteCore+ features, an indicative price or range, and any next steps.</p>
+            <p className={styles.stepLead}>Our team will review your answers, ask for missing details if necessary, and send a proposal with the recommended features and final scope. A payment link is sent only after you agree.</p>
             <div className={styles.contactGrid}>
               <label className={styles.label}>Your name<input className={styles.input} value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} autoComplete="name" /></label>
               <label className={styles.label}>Email address<input className={styles.input} type="email" inputMode="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} autoComplete="email" /></label>
@@ -260,7 +278,7 @@ export function DoneForYouInquiryModal() {
 
           {error ? <p className={styles.error} role="alert">{error}</p> : null}
           <footer className={styles.formFooter}>
-            <span>{step < 5 ? 'Most people finish in around 60 seconds.' : 'No payment or commitment required.'}</span>
+            <span>{step < 5 ? 'No payment is required to make an enquiry.' : 'No payment or commitment required.'}</span>
             {step < 5 ? <button type="button" className={styles.primary} disabled={!canContinue} onClick={nextStep}>Continue <Chevron /></button> : <button type="button" className={styles.primary} disabled={!canContinue || pending} onClick={() => void submit()}>{pending ? 'Sending…' : 'Send my enquiry'} {!pending ? <Chevron /> : null}</button>}
           </footer>
         </div> : null}
@@ -269,7 +287,7 @@ export function DoneForYouInquiryModal() {
           <div className={styles.successMark}><Check /></div>
           <p className={styles.eyebrow}>Enquiry sent</p>
           <h2 id="dfy-inquiry-title">Thanks, {form.name.split(' ')[0] || 'we have it'}.</h2>
-          <p>Shaun will review your answers and email you with the likely setup, recommended QuoteCore+ features, an indicative price or range, any next steps, and his #1 tip for winning more of the jobs you already quote. If he needs one missing detail, he can ask by email.</p>
+          <p>Our team will review your answers and contact you to agree the setup, subscription and full price. You can ask for changes before receiving a secure payment link. No payment has been taken.</p>
           <div className={styles.successEmail}>{form.email}</div>
           <button type="button" className={styles.secondary} onClick={closeModal}>Close</button>
         </div> : null}

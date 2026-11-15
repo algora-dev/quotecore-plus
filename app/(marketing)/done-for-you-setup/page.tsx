@@ -3,6 +3,8 @@ import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import DfyPageViewTracker from '@/components/DfyPageViewTracker';
 import { DoneForYouInquiryButton } from '@/components/marketing/DoneForYouInquiryButton';
+import { MarketingButton } from '@/components/marketing/MarketingButton';
+import { doneForYouCallHref } from '@/lib/booking';
 import YouTubeLite from '@/components/YouTubeLite';
 import { siteUrl, buildBreadcrumbSchema } from '@/lib/schema';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
@@ -10,14 +12,14 @@ import styles from './DoneForYouSetup.module.css';
 
 export const metadata: Metadata = {
   title: 'Done For You QuoteCore+ Setup | Get a Tailored Proposal',
-  description: 'Tell us how you currently work and get a tailored Done For You proposal. Book 25 minutes with Shaun or send a quick enquiry in around 60 seconds.',
+  description: 'From US$199: up to 15 Smart Components, three months of entry-level QuoteCore+, personalised training and three months of support. Enquire or book a 25-minute call before paying.',
   alternates: {
     canonical: 'https://quote-core.com/done-for-you-setup',
     languages: hreflangLanguages('/done-for-you-setup'),
   },
   openGraph: {
     title: 'Done For You QuoteCore+ Setup | Get a Tailored Proposal',
-    description: 'Tell us how you measure, price and quote. Choose a 25-minute call with Shaun or a quick enquiry and get a tailored Done For You proposal.',
+    description: 'Done For You QuoteCore+ setup from US$199. Pricing components, three months of software, a live or recorded walkthrough, and three months of support.',
     url: 'https://quote-core.com/done-for-you-setup',
     siteName: 'QuoteCore+',
     type: 'website',
@@ -26,7 +28,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Done For You QuoteCore+ Setup | Get a Tailored Proposal',
-    description: 'Book 25 minutes with Shaun or send a quick 60-second enquiry and get a tailored Done For You proposal.',
+    description: 'A tailored Done For You setup from US$199. Talk to our team or send a form, agree the full scope, then pay.',
     images: ['/images/social/og-done-for-you.jpg'],
   },
 };
@@ -37,18 +39,11 @@ const breadcrumbSchema = buildBreadcrumbSchema([
 ]);
 
 const faqs = [
-  {
-    q: 'Do I have to book a call?',
-    a: 'No. If you prefer, send a quick enquiry in around 60 seconds. Shaun can review how you work, your quote volume, how many pricing elements need configuring and your preferred handover, then email you a tailored proposal without a call.',
-  },
-  {
-    q: 'What do I need to send Shaun?',
-    a: 'Whatever you already use can help: price lists, spreadsheets, supplier information, labour rates, old quotes or notes. It does not need to be cleaned up first, and you may not need to send anything until after the initial enquiry.',
-  },
-  {
-    q: 'What happens after the first three months?',
-    a: 'You can continue on the QuoteCore+ plan that makes sense for your ongoing usage. The expected plan and price are made clear as part of the Done For You scope before you commit.',
-  },
+  { q: 'Do I need to pay before sending my details?', a: 'No. Send an enquiry or book a 25-minute call. Our team reviews your setup, asks for anything missing, and sends a proposal with the full scope, subscription and price. A secure Stripe payment link is provided only after you agree.' },
+  { q: 'What does the US$199 base package include?', a: 'Up to 15 Smart Components using your supplied pricing and rules, the entry paid QuoteCore+ configuration for three months, a live handover or custom recorded walkthrough, and three months of reasonable setup and product support. More pricing components, higher usage or extended services are quoted separately.' },
+  { q: 'Can I change the proposal?', a: 'Yes. We can adjust the number of components, features and training before you accept or pay.' },
+  { q: 'What do I need to provide?', a: 'Tell us how you measure and quote, how many products and rates you use, and what you would like configured. Spreadsheets, supplier lists, labour rates, old quotes and notes are all helpful. We will request files or details we still need.' },
+  { q: 'What happens after the first three months?', a: 'You can continue on the paid configuration agreed in your proposal at the disclosed ongoing monthly price, or change or cancel it under the subscription terms. We will explain this before you make a payment.' },
 ];
 
 const faqSchema = {
@@ -62,21 +57,9 @@ const faqSchema = {
 };
 
 const callSteps = [
-  {
-    step: '01 · Tell',
-    title: 'Tell Shaun how you currently work',
-    body: 'How you measure, price and quote today, roughly how often you quote, what pricing you already have, and what currently feels slow or difficult.',
-  },
-  {
-    step: '02 · Work it out',
-    title: 'Figure out what you would actually need',
-    body: 'Which QuoteCore+ features would help, roughly how much you would use them, how much setup work is involved, and what kind of handover would suit you.',
-  },
-  {
-    step: '03 · 25 minutes well spent',
-    title: '25 minutes well spent, either way',
-    body: 'Whether we set everything up or you decide to do it yourself, you will leave with a much clearer understanding of how QuoteCore+ can help, plus one practical idea you can use to win more of the quotes you already send.',
-  },
+  { step: '01 · SHARE', title: 'Tell us what you need', body: 'Send the step-by-step enquiry or book a free 25-minute call. Explain how you work and which pricing or tools you would like.' },
+  { step: '02 · AGREE', title: 'We scope your setup', body: 'A member of our team reviews the details, asks questions if needed, and sends a proposal with the exact configuration, subscription and one-time price.' },
+  { step: '03 · BEGIN', title: 'Approve, then pay securely', body: 'You can request changes or decline. Once you approve the scope, we send your Stripe payment link. Only then do we start the agreed setup.' },
 ];
 
 function ArrowIcon() {
@@ -102,26 +85,27 @@ export default function DoneForYouSetupPage() {
             <div className={styles.heroLayout}>
               <div className={styles.heroCopy}>
                 <p className={styles.eyebrow}>Done For You QuoteCore+ setup</p>
-                <h1 id="dfy-title"><span className={styles.heroPrimary}>Tell us how you work.</span><br /><span className={styles.heroGradient}>We&apos;ll scope the rest.</span></h1>
-                <p className={styles.heroLead}>Book 25 minutes with Shaun, or send a quick enquiry in around 60 seconds. We&apos;ll work out how QuoteCore+ could make measuring, pricing and quoting faster, what setup is involved, and what a tailored Done For You proposal would look like.</p>
+                <h1 id="dfy-title"><span className={styles.heroPrimary}>Your setup, handled for you.</span><br /><span className={styles.heroGradient}>From US$199.</span></h1>
+                <p className={styles.heroLead}>We configure your pricing, help you choose the right tools, and show you how to use QuoteCore+ on your own work. Send an enquiry or book a 25-minute call. We confirm the full price before you pay.</p>
                 <div className={styles.heroActions}>
-                  <DoneForYouInquiryButton size="large" source="dfy-hero">Inquire about Done For You</DoneForYouInquiryButton>
+                  <DoneForYouInquiryButton formOnly size="large" source="dfy-hero">Send a setup enquiry</DoneForYouInquiryButton>
+                  <MarketingButton href={doneForYouCallHref} size="large" variant="glass">Book a 25-minute call</MarketingButton>
                 </div>
                 <div className={styles.tipStrip}>
                   <img src="/shaun-smiling.jpg" alt="" aria-hidden="true" />
-                  <p><strong>Prefer to talk it through?</strong> Spend 25 minutes with Shaun. Tell him how you currently work, see how QuoteCore+ could make it faster and easier, and take away his #1 tip for winning more of the jobs you already quote.</p>
+                  <p><strong>Prefer to talk it through?</strong> Book 25 minutes to discuss your workflow, required pricing and features. We will send a proposal you can review and change, with no obligation.</p>
                 </div>
               </div>
 
               <aside className={styles.offerCard} aria-label="Done For You setup starting price and inclusions">
                 <p className={styles.offerKicker}>Done For You setup</p>
-                <div className={styles.startPrice}><strong>$499+</strong><small>USD</small></div>
+                <div className={styles.startPrice}><strong>$199</strong><small>USD · from</small></div>
                 <div className={styles.offerRule} />
                 <ul>
-                  <li><CheckIcon /><span><strong>Your account configured for you</strong><br />Pricing, components and agreed workflow</span></li>
-                  <li><CheckIcon /><span><strong>3 months of QuoteCore+ included</strong><br />The subscription level your setup actually needs</span></li>
-                  <li><CheckIcon /><span><strong>Personalised handover</strong><br />Live one-to-one or a custom recorded walkthrough</span></li>
-                  <li><CheckIcon /><span><strong>3 months of ongoing support</strong><br />Help while you start using it for real</span></li>
+                  <li><CheckIcon /><span><strong>Your account configured for you</strong><br />Up to 15 components and agreed core setup</span></li>
+                  <li><CheckIcon /><span><strong>3 months of QuoteCore+ included</strong><br />Entry paid configuration; higher tiers quoted separately</span></li>
+                  <li><CheckIcon /><span><strong>Personalised handover</strong><br />One live walkthrough or a custom recording</span></li>
+                  <li><CheckIcon /><span><strong>3 months of ongoing support</strong><br />Setup and product help after handover</span></li>
                 </ul>
               </aside>
             </div>
@@ -132,7 +116,7 @@ export default function DoneForYouSetupPage() {
           <div className={styles.container}>
             <div className={styles.sectionIntroSingle}>
               <p className={styles.lightEyebrow}>Prefer to talk it through?</p>
-              <h2 id="process-title">25 minutes with Shaun is still the fastest way to scope it.</h2>
+              <h2 id="process-title">Tell us what you need. We’ll do the setup.</h2>
             </div>
             <ol className={styles.processList}>
               {callSteps.map((item) => (
@@ -143,8 +127,8 @@ export default function DoneForYouSetupPage() {
               ))}
             </ol>
             <div className={styles.discoveryNote}>
-              <p><strong>There is no obligation to purchase anything on the call.</strong> It is a discovery call designed to learn how you work and what you are likely to need. Tell Shaun what you can, there is no need to be on camera or physically show him anything, and we can send you a tailored proposal after the call for you to review, accept or decline in your own time.</p>
-              <DoneForYouInquiryButton source="dfy-process">Inquire about Done For You</DoneForYouInquiryButton>
+              <p><strong>There is no obligation to purchase anything after the call or enquiry.</strong> A member of our team will confirm the setup requirements, suggested subscription and final price. You can ask for changes before we send the secure Stripe payment link.</p>
+              <DoneForYouInquiryButton formOnly source="dfy-process">Send an enquiry</DoneForYouInquiryButton>
             </div>
           </div>
         </section>
@@ -170,7 +154,7 @@ export default function DoneForYouSetupPage() {
                 <h2 id="pricing-title">Why can the price change?<br /><span className={styles.pricingGradient}>A solo operator and a larger roofing business can need very different setups.</span></h2>
               </div>
             </div>
-            <p className={styles.pricingLead}>Done For You starts from $499. Your final price reflects the amount of pricing and configuration work involved, the QuoteCore+ features and usage your first three months need to include, and any additional one-to-one help you want.</p>
+            <p className={styles.pricingLead}>Done For You starts at US$199 for up to 15 Smart Components, three months of the entry paid configuration, your choice of live or recorded training, and three months of support. More components, higher-feature subscriptions or more extensive work receive an agreed custom price. No payment is requested until you accept the proposal.</p>
           </div>
         </section>
 
@@ -186,7 +170,7 @@ export default function DoneForYouSetupPage() {
                 <article className={styles.choiceCard}>
                   <span>Option 1</span>
                   <h3>Live one-to-one</h3>
-                  <p>Work through your configured account with Shaun using your pricing and one of your own real or previous jobs. The standard package includes one one-hour session.</p>
+                  <p>Work through your configured account with Shaun using your pricing and one of your own real or previous jobs. The standard package includes one live training session.</p>
                 </article>
                 <article className={styles.choiceCard}>
                   <span>Option 2</span>
@@ -196,7 +180,7 @@ export default function DoneForYouSetupPage() {
               </div>
               <div className={styles.supportBox}>
                 <strong>Then you have Shaun&apos;s support for three months.</strong>
-                <p>A quick answer, a short video, a quick call, or help inside your account when something needs fixing or explaining. Whatever makes the most sense for the problem.</p>
+                <p>Ask questions about the configuration and using the included features. Additional custom builds or new pricing work are quoted separately.</p>
               </div>
             </div>
 
@@ -215,11 +199,12 @@ export default function DoneForYouSetupPage() {
           <div className={`${styles.container} ${styles.finalInner}`}>
             <p className={styles.eyebrow}>Done For You enquiry</p>
             <h2 id="final-title">Tell us how you work.<br />Get a tailored proposal.</h2>
-            <p>Choose a 25-minute call with Shaun or send a quick enquiry in around 60 seconds. We&apos;ll use what you tell us to scope the setup, likely QuoteCore+ features and indicative price or range.</p>
+            <p>Tell us about your business through the form or a free 25-minute call. We will recommend a setup, agree the price with you, and send a payment link only when you are happy with the proposal.</p>
             <div className={styles.finalActions}>
-              <DoneForYouInquiryButton size="large" source="dfy-final">Inquire about Done For You</DoneForYouInquiryButton>
+              <DoneForYouInquiryButton formOnly size="large" source="dfy-final">Send a setup enquiry</DoneForYouInquiryButton>
+              <MarketingButton href={doneForYouCallHref} variant="glass" size="large">Book a 25-minute call</MarketingButton>
             </div>
-            <div className={styles.finalTip}><img src="/shaun-smiling.jpg" alt="" aria-hidden="true" /><span><strong>No obligation:</strong> choose the call or the form, then review the proposal in your own time.</span></div>
+            <div className={styles.finalTip}><img src="/shaun-smiling.jpg" alt="" aria-hidden="true" /><span><strong>No obligation:</strong> review and revise the proposal before you make any payment.</span></div>
           </div>
         </section>
 

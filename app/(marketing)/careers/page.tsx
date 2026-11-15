@@ -438,7 +438,7 @@ export default function CareersPage() {
           <div className="mt-7 grid gap-4 lg:grid-cols-2">
             <div className="rounded-2xl border border-[#FF6B35]/35 bg-[#FF6B35]/5 p-6">
               <p className="text-xs font-semibold uppercase tracking-[.14em] text-[#BD4A1A]">Done For You setup</p>
-              <p className="mt-3 text-3xl font-bold text-slate-900">$499+</p>
+              <p className="mt-3 text-3xl font-bold text-slate-900">$199+</p>
               <p className="mt-2 text-sm leading-7 text-slate-600">The final price is scoped to the actual work. A solo operator with a small pricing library is a very different setup from a larger business with more products, rules, users and usage.</p>
               <div className="mt-5">
                 <CheckList

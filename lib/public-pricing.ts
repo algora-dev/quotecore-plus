@@ -17,7 +17,7 @@ export const publicPricing = {
   currency: 'USD',
   monthlyMin: centsToWhole(minMonthlyCents),
   monthlyMax: centsToWhole(maxMonthlyCents),
-  doneForYouStarting: 499,
+  doneForYouStarting: 199,
   hasFreeWorkspace: true,
   hasMoneyBackGuarantee: false,
 } as const;

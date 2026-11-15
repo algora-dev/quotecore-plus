@@ -7,11 +7,13 @@ import { WorkflowExplorer } from './WorkflowExplorer';
 import { Icon } from './Icon';
 import { homepageConfig, type HomepageConfig } from './homepage-config';
 import styles from './HomeLocked.module.css';
+import { LimitedTimeJobStrip } from './LimitedTimeJobStrip';
 
 function c(...names: string[]) { return names.map((name) => styles[name]).filter(Boolean).join(' '); }
 
 export default function MarketingHomepage({ config = homepageConfig }: { config?: HomepageConfig; preview?: boolean }) {
   const bookingHref = config.bookingHref || '/contact';
+  const bookingIsExternal = bookingHref.startsWith('https://');
   return <div className={styles.root}>
     <a className={c('skip-link')} href="#homepage-main">Skip to content</a>
     <BlogHeader homepage />
@@ -24,9 +26,11 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
             <p className={styles.eyebrow}>Roofing estimating &amp; quoting</p>
             <h1>Quote roofing jobs <span className={styles.gradient}>faster.</span><br />No matter how you <span className={styles.gradient}>currently work.</span></h1>
             <p className={c('hero-kicker')}>Start with a plan, a satellite image, your own measurements, or simply tell QuoteCore+ what you have.</p>
-            <div className={c('hero-action')}><MarketingButton href={bookingHref} className={c('btn','btn-primary')}>Book a free 25-minute call with Shaun →</MarketingButton></div>
+            <div className={c('hero-action')}>
+              <FreeWorkspaceButton className={c('btn','btn-primary')}>Create Free Workspace →</FreeWorkspaceButton>
+              <Link href={bookingHref} target={bookingIsExternal ? '_blank' : undefined} rel={bookingIsExternal ? 'noopener noreferrer' : undefined} className={c('hero-call-link')}>Or book a free 25-minute call with Shaun ↗</Link>
+            </div>
             <div className={c('hero-founder')}><img className={c('hero-founder-avatar')} src="/shaun-smiling.jpg" alt="Shaun, founder of QuoteCore+" /><div className={c('hero-founder-copy')}><div className={c('hero-founder-topline')}><strong>Shaun · Founder</strong><span>20+ years roofing &amp; construction</span></div><div className={c('hero-founder-line')}>Bring a job or tell me how you quote. I&apos;ll show you a faster way.</div></div></div>
-            <span className={c('call-bonus')}>Plus: Shaun&apos;s #1 tip for winning more of the quotes you already sent.</span>
           </div>
           <div className={c('proof-stack')} aria-label="Two ways to quote faster">
             <article className={c('proof-card','proof-card-simple')}><div className={c('proof-simple-inner')}><div className={c('speed-question')}>How fast is it?</div><p className={c('time','proof-time')}><strong>2 minutes 27 seconds</strong></p><h3 className={c('proof-condition')}>When you need to measure the job</h3><p className={c('proof-path')}>Blank roof plan or satellite image → customer quote</p><a className={c('proof-simple-cta')} href="/fastest-roofing-estimating-software">Watch the full flow →</a></div></article>
@@ -34,6 +38,8 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
           </div>
         </div>
       </section>
+
+      <LimitedTimeJobStrip />
 
       <section className={c('price-strip')} id="pricing"><div className={c('wrap','price-layout')}>
         <div><p className={styles.eyebrow}>Pricing that fits your business</p><h2>Only pay for what you need.</h2><p className={c('price-copy')}>Try QuoteCore+ first, learn which tools and usage fit the way you work, then create your exact plan inside your account.</p></div>
