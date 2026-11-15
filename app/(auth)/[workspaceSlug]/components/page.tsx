@@ -1,4 +1,4 @@
-import { loadComponentLibrary, hasSeenComponentsIntro, loadComponentCollections, hasDismissedComponentEditWarning } from './actions';
+import { loadComponentLibrary, hasSeenComponentsIntro, loadComponentCollections, hasDismissedComponentEditWarning, hasDismissedPracticeBanner } from './actions';
 import { ComponentList } from './component-list';
 import Link from 'next/link';
 import { PendingUpdatesBanner } from './PendingUpdatesBanner';
@@ -56,6 +56,7 @@ export default async function ComponentsPage(props: {
     && collections.some(c => c.id === collection)
     ? collection : undefined;
   const editWarningDismissed = await hasDismissedComponentEditWarning();
+  const practiceBannerDismissed = await hasDismissedPracticeBanner();
   let smartAssistantAvailable = false;
   try {
     const supabase = await createSupabaseServerClient();
@@ -116,6 +117,7 @@ export default async function ComponentsPage(props: {
         isDemoWorkspace={isDemo}
         initialLibraryId={requestedLibraryId}
         editWarningDismissed={editWarningDismissed}
+        practiceBannerDismissed={practiceBannerDismissed}
         restoreDraftId={restoreDraftId}
         highlightComponentId={createdComponentId}
         isSupplier={(company as { is_supplier?: boolean }).is_supplier ?? false}

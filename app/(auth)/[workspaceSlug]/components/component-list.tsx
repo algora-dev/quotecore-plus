@@ -20,7 +20,7 @@ import { unitsPerDisplayedAreaToMetric, unitsPerMetricAreaToDisplayed } from '@/
 import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useEffect, useRef } from 'react';
-import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning } from './actions';
+import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning, dismissPracticeBanner } from './actions';
 import { verifyPracticeComponent } from './practice-actions';
 import { AddFromCatalogModal } from './components/AddFromCatalogModal';
 import type {
@@ -54,6 +54,7 @@ export function ComponentList({
   reviewImported = false,
   componentCollections = [],
   editWarningDismissed = false,
+  practiceBannerDismissed = false,
   restoreDraftId,
   highlightComponentId,
   isSupplier = false,
@@ -83,6 +84,8 @@ export function ComponentList({
   initialLibraryId?: string;
   /** Per-user: true when the user has ticked "Don't show me this warning anymore". */
   editWarningDismissed?: boolean;
+  /** Per-user: true when the user has hidden the practice-pricing banner (owner 2026-11-15). */
+  practiceBannerDismissed?: boolean;
   /** Draft ID from ?restore= query param - loads a saved calculator draft. */
   restoreDraftId?: string;
   /** Component ID from ?created= - scrolls to + highlights a component just
@@ -850,6 +853,7 @@ export function ComponentList({
   const [editWarningOpen, setEditWarningOpen] = useState(false);
   const [editWarningDontShow, setEditWarningDontShow] = useState(false);
   const [editWarningDismissedState, setEditWarningDismissedState] = useState(editWarningDismissed);
+  const [practiceBannerHidden, setPracticeBannerHidden] = useState(practiceBannerDismissed);
   const [pendingUpdateData, setPendingUpdateData] = useState<{ id: string; input: Partial<ComponentLibraryInsert> } | null>(null);
 
   async function confirmDeleteComp() {
@@ -1168,10 +1172,13 @@ export function ComponentList({
         <h1 className="qc-library-title text-xl md:text-2xl font-semibold text-slate-900">Pricing library</h1>
         <p className="text-xs md:text-sm text-slate-500 mt-1">Find and reuse Smart Components™: saved materials, labour and measurement settings for your quotes.</p>
       </div>
-      {process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' && components.some(c => (c as unknown as {pricing_setup_practice?:boolean}).pricing_setup_practice) && (
-        <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 mb-3">
-          <strong>Practice pricing in this library.</strong> Some components use fictitious example costs from a 2026 USD benchmark. They are for learning how to quote, not customer estimates. They can be tested on jobs, but any quote made with them cannot be shared with customers. Open and edit each component, then explicitly verify its real costs and rules before using it for business.
-          <span className="block mt-1">The current calculator applies configured waste to both material and labour quantities. If your workspace is not in USD, example numbers are not FX converted.</span>
+      {process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' && !practiceBannerHidden && components.some(c => (c as unknown as {pricing_setup_practice?:boolean}).pricing_setup_practice) && (
+        <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 mb-3 flex items-start justify-between gap-3">
+          <div>
+            <strong>Practice pricing in this library.</strong> Some components use fictitious example costs from a 2026 USD benchmark. They are for learning how to quote, not customer estimates. They can be tested on jobs, but any quote made with them cannot be shared with customers. Open and edit each component, then explicitly verify its real costs and rules before using it for business.
+            <span className="block mt-1">The current calculator applies configured waste to both material and labour quantities. If your workspace is not in USD, example numbers are not FX converted.</span>
+          </div>
+          <button type="button" onClick={() => { setPracticeBannerHidden(true); void dismissPracticeBanner(); }} className="shrink-0 rounded-lg border border-amber-400 px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100" aria-label="Hide this practice pricing notice">Hide</button>
         </div>
       )}
       <PricingIntroduction open={learning} onOpen={() => setLearning(true)} onDismiss={() => setLearning(false)}

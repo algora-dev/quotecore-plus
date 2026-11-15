@@ -383,6 +383,60 @@ export async function dismissComponentEditWarning(): Promise<{ ok: boolean; erro
   }
 }
 
+/**
+ * Returns true if the current user has hidden the practice-pricing banner
+ * on the pricing library page (owner 2026-11-15: banner is dismissible).
+ */
+export async function hasDismissedPracticeBanner(): Promise<boolean> {
+  try {
+    const user = await requireUser();
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from('copilot_progress')
+      .select('dismiss_practice_pricing_banner')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (error) {
+      console.error('[hasDismissedPracticeBanner] read failed:', error);
+      return false;
+    }
+    return data?.dismiss_practice_pricing_banner === true;
+  } catch (err) {
+    console.error('[hasDismissedPracticeBanner] threw:', err);
+    return false;
+  }
+}
+
+/**
+ * Persist the user's choice to hide the practice-pricing banner.
+ */
+export async function dismissPracticeBanner(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const profile = await requireCompanyContext();
+    const supabase = await createSupabaseServerClient();
+    const { error: upsertError } = await supabase
+      .from('copilot_progress')
+      .upsert(
+        {
+          user_id: profile.id,
+          company_id: profile.company_id,
+          dismiss_practice_pricing_banner: true,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' },
+      );
+    if (upsertError) {
+      console.error('[dismissPracticeBanner] upsert failed:', upsertError);
+      return { ok: false, error: upsertError.message };
+    }
+    return { ok: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[dismissPracticeBanner] threw:', message);
+    return { ok: false, error: message };
+  }
+}
+
 export async function deleteComponent(id: string) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
