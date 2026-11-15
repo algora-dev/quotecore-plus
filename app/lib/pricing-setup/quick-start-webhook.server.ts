@@ -1,4 +1,4 @@
-import 'server-only';
+﻿import 'server-only';
 import type Stripe from 'stripe';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import { createAdminClient } from '@/app/lib/supabase/admin';
@@ -29,8 +29,8 @@ export async function handlePricingQuickStartStripeEvent(event:Stripe.Event):Pro
  if(!failed){
   // Non-critical notification; paid orders remain queryable in the admin console.
   try{await sendEmail({to:'info@quote-core.com',subject:`Quick Start payment received: ${orderId}`,
-   text:`A $99 Quick Start payment has been verified.\nOrder: ${orderId}\nCustomer: ${order.contact_email}\nOpen the internal Quick Start queue to review their private files and fulfill the order.`,
-   html:`<p>A US$99 Quick Start payment has been verified.</p><p>Order ID: ${orderId}</p><p>Customer: ${String(order.contact_email).replace(/[&<>]/g,'')}</p><p>Review it in the internal Quick Start queue.</p>`});}catch{/* Queryable in admin. */}
+   text:`A US$49 Quick Start payment has been verified.\nOrder: ${orderId}\nCustomer: ${order.contact_email}\nOpen the internal Quick Start queue to review their private files and fulfill the order.`,
+   html:`<p>A US$49 Quick Start payment has been verified.</p><p>Order ID: ${orderId}</p><p>Customer: ${String(order.contact_email).replace(/[&<>]/g,'')}</p><p>Review it in the internal Quick Start queue.</p>`});}catch{/* Queryable in admin. */}
  }
  return failed?'ok:quick_start_payment_failed':'ok:quick_start_paid';
 }

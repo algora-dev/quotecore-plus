@@ -13,10 +13,16 @@ import { smartAssistantFeatureAvailable } from '@/app/lib/smart-assistant/access
 
 export default async function ComponentsPage(props: {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams: Promise<{ restore?: string; created?: string; from?: string; learn?: string; guided?: string; reviewImport?: string; collection?: string }>;
+  searchParams: Promise<{ restore?: string; created?: string; from?: string; learn?: string; guided?: string; reviewImport?: string; collection?: string; starterSaved?: string; starterTotal?: string }>;
 }) {
   const { workspaceSlug } = await props.params;
-  const { restore: restoreDraftId, created: createdComponentId, from, learn, guided, reviewImport, collection } = await props.searchParams;
+  const { restore: restoreDraftId, created: createdComponentId, from, learn, guided, reviewImport, collection, starterSaved, starterTotal } = await props.searchParams;
+  // One-click ready-made prepare lands here (owner 2026-11-15). Numeric only — never render raw query text.
+  const savedCount = Number.parseInt(String(starterSaved ?? ''), 10);
+  const totalCount = Number.parseInt(String(starterTotal ?? ''), 10);
+  const starterBanner = Number.isFinite(savedCount) && savedCount > 0
+    ? { saved: savedCount, total: Number.isFinite(totalCount) ? totalCount : savedCount }
+    : null;
   let components;
 
   try {
@@ -80,6 +86,15 @@ export default async function ComponentsPage(props: {
           page after the free-takeoff import banner click. */}
       {process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' && <div className="mb-4 flex justify-end"><Link href={`/${workspaceSlug}/pricing/setup`} className="text-sm font-medium underline underline-offset-4" style={{ color: "var(--qc-text-link)" }}>Need help setting up your pricing?</Link></div>}
       <TakeoffDraftNoteBanner />
+      {starterBanner && (
+        <div className={`mb-4 rounded-xl border p-4 text-sm ${starterBanner.saved < starterBanner.total ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-green-300 bg-green-50 text-green-900'}`} role="status">
+          {starterBanner.saved < starterBanner.total ? (
+            <><strong>{starterBanner.saved} of {starterBanner.total} practice components were added to your libraries.</strong> The rest need more Smart Component places — free some up or upgrade your plan, then resume from the Pricing Setup Assistant.</>
+          ) : (
+            <><strong>{starterBanner.saved} practice components are ready in your pricing libraries</strong> — find them in the library list on this page. They are clearly marked PRACTICE: test them on a quote any time, but they cannot be sent to customers until you verify your own costs.</>
+          )}
+        </div>
+      )}
       {pendingUpdates.length > 0 && (
         <PendingUpdatesBanner workspaceSlug={workspaceSlug} updates={pendingUpdates} />
       )}

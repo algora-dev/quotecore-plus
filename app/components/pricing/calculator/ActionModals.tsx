@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, type ReactNode } from 'react';
 import type { CalculatorCatalog, ResultActions, TeamMember } from './types';
 import { FocusDialog } from './FocusDialog';
@@ -24,7 +24,7 @@ export function ActionModal({ kind, options, catalog, onClose, action, notice }:
   onClose: () => void; action: ReactNode; notice?: ReactNode;
 }) {
   const booking = kind === 'book-demo';
-  const setupStartingPrice = catalog.currency === 'NZD' ? 'NZ$899' : 'US$499';
+  const setupStartingPrice = catalog.currency === 'NZD' ? 'NZ$899' : 'US$199';
   return <FocusDialog title={booking ? 'See how it could fit the way you work' : 'Let’s get you ready to work'}
     eyebrow={booking ? '25 minutes · Free · No pressure' : 'Done-for-You setup'} onClose={onClose}>
     <p className="qcp-dialog-intro">{booking

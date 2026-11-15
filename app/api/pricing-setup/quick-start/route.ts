@@ -58,7 +58,7 @@ export async function POST(request:NextRequest){
   if(companyError||!company?.slug)throw Error('Unable to identify workspace for checkout return.');
   const returnUrl=`${url.origin}/${encodeURIComponent(company.slug)}/pricing/quick-start`;
   const session=await stripe.checkout.sessions.create({mode:'payment',
-   line_items:[{price_data:{currency:'usd',unit_amount:9900,product_data:{name:'QuoteCore+ Quick Start Pricing Setup',description:'Preparation of up to 15 Smart Components from your supplied pricing.'}},quantity:1}],
+   line_items:[{price_data:{currency:'usd',unit_amount:4900,product_data:{name:'QuoteCore+ Quick Start Pricing Setup',description:'Preparation of up to 15 Smart Components from your supplied pricing.'}},quantity:1}],
    customer_email:profile.email,client_reference_id:profile.company_id,
    metadata:{pricing_setup_product:'quick_start',company_id:profile.company_id,order_id:order.id},
    success_url:`${returnUrl}?checkout=success`,

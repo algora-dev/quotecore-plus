@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import Link from 'next/link';
 import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
@@ -6,7 +6,7 @@ import styles from './QuickStartPricing.module.css';
 
 export const metadata: Metadata = {
   title: 'Quick Start Pricing Setup — $99 | QuoteCore+',
-  description: 'Send QuoteCore+ your existing pricing and we will prepare up to 15 Smart Components for your review. A focused one-time setup service for $99.',
+  description: 'Send QuoteCore+ your existing pricing and we will prepare up to 15 Smart Components for your review. A focused one-time setup service from US$49.',
   alternates: { canonical: 'https://quote-core.com/quick-start-pricing' },
 };
 
@@ -24,7 +24,7 @@ export default async function QuickStartPricingPage({ searchParams }: {
     <main className={styles.page}>
       <section className={styles.hero} aria-labelledby="qs-heading">
         <p className={styles.eyebrow}>QUOTECORE+ QUICK START</p>
-        <p className={styles.price}>US$99 <span>one-time</span></p>
+        <p className={styles.price}>From US$49 <span>one-time</span></p>
         <h1 id="qs-heading">Your pricing, prepared for you.</h1>
         <p className={styles.lead}>Send us the products, materials, services and rates you already use. We'll organise them into up to 15 Smart Components in your QuoteCore+ workspace, then ask you to review the result.</p>
         <div className={styles.actions}>

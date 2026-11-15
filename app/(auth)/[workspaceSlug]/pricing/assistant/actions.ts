@@ -91,6 +91,40 @@ export async function createReadyMadeLibrarySession(slugs: string[], acceptForei
  }
 }
 
+/**
+ * One-click "Prepare selected libraries" (owner 2026-11-15): create the ready-made
+ * session, then practice-import every included draft immediately, in server-side
+ * chunks of 25 so selecting all libraries (35 components) lands in one click. The
+ * user is then redirected to the pricing library page — there is no step after
+ * prepare. Capacity is still enforced per component inside the practice import;
+ * anything that does not fit stays in the session for a later resume.
+ */
+export async function prepareReadyMadeLibraries(slugs: string[], acceptForeignCurrencyExample = false) {
+ try {
+  const created = await createReadyMadeLibrarySession(slugs, acceptForeignCurrencyExample);
+  if (!created.ok) return { ok: false as const, saved: 0, total: 0, message: created.message };
+  if (!created.sessionId) return { ok: false as const, saved: 0, total: 0, message: 'Could not load the ready-made libraries.' };
+  const sessionId = created.sessionId;
+  const { drafts } = await loadPricingSession(sessionId);
+  const eligible = drafts.filter(d => d.status !== 'saved' && d.draft_data.starterLibrarySlug).map(d => d.id);
+  let saved = 0;
+  const errors: string[] = [];
+  for (let i = 0; i < eligible.length; i += 25) {
+   const selected = await selectPricingDrafts(sessionId, eligible.slice(i, i + 25));
+   if (!selected.ok) { errors.push(selected.message ?? 'Could not select the example components.'); continue; }
+   const result = await saveConfirmedPricingDrafts(sessionId, 'starter:auto', true);
+   saved += result.saved;
+   errors.push(...result.errors);
+  }
+  if (saved === 0) {
+   return { ok: false as const, saved: 0, total: eligible.length, message: errors[0] || 'No components could be prepared.' };
+  }
+  return { ok: true as const, saved, total: eligible.length, message: errors.slice(0, 3).join('\n') };
+ } catch (error) {
+  return { ok: false as const, saved: 0, total: 0, message: error instanceof Error ? error.message : 'Could not prepare the ready-made libraries.' };
+ }
+}
+
 /** Resolve a user-owned private collection for a confirmed starter component. */
 async function resolveStarterDestination(
  sessionId: string,

@@ -10,7 +10,7 @@ import { FileUploader } from '@/app/components/FileUploader';
 import type {MeasurementSystem} from '@/app/lib/types';
 import type {PricingDraftRow,PricingDraft,EditableDraft,PricingSession} from '@/app/lib/pricing-setup/domain';
 import {validateForConfirmation} from '@/app/lib/pricing-setup/domain';
-import {confirmPricingDraft,createReadyMadeLibrarySession,deletePricingSession,loadPricingAssistantData,saveConfirmedPricingDrafts,savePricingDraft,selectPricingDrafts} from './actions';
+import {confirmPricingDraft,deletePricingSession,loadPricingAssistantData,prepareReadyMadeLibraries,saveConfirmedPricingDrafts,savePricingDraft,selectPricingDrafts} from './actions';
 import type { StarterLibrarySummary } from '@/app/lib/pricing-setup/starter-libraries.server';
 import {createComponentCollection} from '@/app/(auth)/[workspaceSlug]/components/actions';
 import '../setup.css';import './assistant.css';
@@ -79,19 +79,15 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
    if(!next)throw Error('Import saved but results could not be loaded. Refresh this page.');
   }catch(e){setError(e instanceof Error?e.message:'Import failed.');}finally{setBusy(false);}
  }
- async function createReadyMade(){
+ async function prepareReadyMade(){
   if(!starterSlugs.length)return;
   setBusy(true);setError('');setNotice('');
   try{
-   const result=await createReadyMadeLibrarySession(starterSlugs,foreignCurrencyAccepted);
-   if(!result.ok)throw Error(result.message);
-   if(!result.sessionId)throw Error('Could not load the ready-made libraries.');
-   const next=await refresh(result.sessionId);
-   setChosen([]);setPracticeAcknowledged(false);
-   setPhase('choose');setEntryMode('choose');
-   setNotice(`${result.count} priced practice components prepared. Choose the examples you want to import or review. They remain blocked from customer sending until verified.`);
-   router.replace(`/${workspaceSlug}/pricing/assistant?session=${result.sessionId}`);
-  }catch(e){setError(e instanceof Error?e.message:'Could not create ready-made libraries.');}
+   const result=await prepareReadyMadeLibraries(starterSlugs,foreignCurrencyAccepted);
+   if(!result.ok||result.saved<=0)throw Error(result.message||'No components could be prepared. Check your Smart Component places and try again.');
+   setStarterSlugs([]);setForeignCurrencyAccepted(false);
+   router.push(`/${workspaceSlug}/components?starterSaved=${result.saved}&starterTotal=${result.total}`);
+  }catch(e){setError(e instanceof Error?e.message:'Could not prepare the ready-made libraries.');}
   finally{setBusy(false);}
  }
  function toggleStarter(slug:string){setStarterSlugs(old=>old.includes(slug)?old.filter(s=>s!==slug):[...old,slug]);}
@@ -197,19 +193,19 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
   <section className="pa-entry-options" aria-label="Choose a pricing setup method">
    <button type="button" className={`pa-entry-card ${entryMode==='own'?'pa-entry-active':''}`} onClick={()=>setEntryMode('own')}>
     <span className="pa-entry-tag">I HAVE MY OWN PRICES</span>
-    <strong>Use my own prices</strong>
-    <span>Upload a spreadsheet, PDF or photo, paste a list, or speak your materials, services and rates.</span>
+    <strong>Upload or add my prices</strong>
+    <span>Upload a spreadsheet, PDF, photo or text document — wherever you keep your materials, services and rates — or type them in. We'll extract the information we can find, then you confirm or edit it.</span>
    </button>
    <button type="button" className={`pa-entry-card ${entryMode==='ready'?'pa-entry-active':''}`} onClick={()=>setEntryMode('ready')}>
     <span className="pa-entry-tag">I NEED A STARTING POINT</span>
     <strong>Start with a ready-made library</strong>
-    <span>Pick the roofing systems you work with. Explore real estimating rules and add your own costs.</span>
+    <span>{starterLibraries.length?`${starterLibraries.length} editable example libraries`:'Editable example libraries'} based on the roofing products you normally work with. Start quoting while you figure out your own pricing.</span>
    </button>
   </section>
   {entryMode==='own'&&<section className="pa-panel pa-capture" aria-labelledby="pa-source-title">
-   <div className="pa-section-heading"><h2 id="pa-source-title">1. Provide your pricing</h2><span>Files, typed notes or voice</span></div>
+   <div className="pa-section-heading"><h2 id="pa-source-title">1. Upload your pricing</h2><span>However you currently store it — or type or speak it below</span></div>
    <FileUploader appearance="v2" accept=".csv,.xlsx,.txt,.pdf,.png,.jpg,.jpeg,.webp" maxSize={4194304}
-    label="Upload a spreadsheet, PDF or photo"
+    label="Upload your pricing however you store it"
     description="Click to browse or drag and drop · CSV, XLSX, TXT, PDF, PNG, JPEG or WebP · max 4 MB · originals not retained"
     onUpload={async next=>{setFile(next);setText('');setVoice(false);}}/>
    {file&&<div className="pa-file-chip" role="status"><span>{file.name}</span><small>{Math.max(1,Math.round(file.size/1024))} KB selected</small>
@@ -248,7 +244,7 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
     {currency.toUpperCase()!=='USD'&&<label className="pa-check pa-caution"><input type="checkbox" checked={foreignCurrencyAccepted} onChange={e=>setForeignCurrencyAccepted(e.target.checked)}/><span>My workspace uses <strong>{currency}</strong>. I understand these are USD-origin example numbers that will display as <strong>{currency} without any currency conversion</strong>. They are fictitious practice figures, not real local material or labour rates.</span></label>}
     {capacity.available!==null&&<p className="pa-capacity" role="status">Your workspace has <strong>{capacity.available} of {capacity.limit}</strong> Smart Component places available. Select whichever items fit when reviewing. <Link href={`/${workspaceSlug}/account/billing/build-setup`}>See paid-plan options</Link>.</p>}
     <div className="pa-actions"><span>{starterSlugs.length} library{starterSlugs.length===1?'':'ies'} selected · {starterLibraries.filter(lib=>starterSlugs.includes(lib.slug)).reduce((total,lib)=>total+lib.count,0)} candidate components</span>
-     <QcButton variant="primary" disabled={busy||starterSlugs.length===0||(currency.toUpperCase()!=='USD'&&!foreignCurrencyAccepted)} pending={busy} onClick={createReadyMade}>Prepare selected libraries <QcIcon name="arrow"/></QcButton></div>
+     <QcButton variant="primary" disabled={busy||starterSlugs.length===0||(currency.toUpperCase()!=='USD'&&!foreignCurrencyAccepted)||(capacity.available!==null&&capacity.available<=0)} pending={busy} onClick={prepareReadyMade}>Prepare selected libraries <QcIcon name="arrow"/></QcButton></div>
    </section>}
   {sessions.length>0&&<section className="pa-past"><strong>Resume an import:</strong> {sessions.map(s=><Link key={s.id} className={current?.session.id===s.id?'pa-current':''} href={`/${workspaceSlug}/pricing/assistant?session=${s.id}`}>{s.source_name} ({s.remaining??s.extracted_count} left)</Link>)}</section>}
   {current&&<section className="pa-panel" aria-label="Extracted pricing items">

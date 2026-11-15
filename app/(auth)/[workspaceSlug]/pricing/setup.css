@@ -14,8 +14,13 @@
 .ps-option>p{font-size:13.5px;color:#c6d0dc;line-height:1.65;margin:0;max-width:430px}
 .ps-option-link{margin-top:auto;padding-top:14px;font-size:13px;font-weight:750;color:#ffb27d}
 .ps-option-service-note{font-size:11px;color:#abb5c0;margin-top:-6px}
-.ps-foot{display:flex;justify-content:space-between;align-items:center;gap:20px;border-top:1px solid var(--qc-border-divider);margin-top:28px;padding-top:24px}.ps-foot h2{font-weight:650;font-size:16px}.ps-foot p,.ps-note{font-size:13px;line-height:1.5;color:var(--qc-text-secondary)}
-.ps-preference{display:flex;gap:12px;align-items:center;margin-top:20px;font-size:14px;cursor:pointer}.ps-preference input{width:18px;height:18px;accent-color:var(--qc-color-orange-core)}.ps-note{margin-top:20px}.ps-error{color:var(--qc-color-danger);margin-top:10px}
+.ps-option-main{display:flex;flex-direction:column;gap:10px;flex:1;min-width:0;text-decoration:none;color:inherit}
+.ps-option-main:hover,.ps-option-main:focus-visible{outline:0}
+.ps-option-pref{display:flex;gap:10px;align-items:flex-start;border-top:1px solid rgba(239,244,250,.14);margin-top:4px;padding-top:12px;font-size:12.5px;line-height:1.45;color:#c6d0dc;cursor:pointer}
+.ps-option-pref:hover{color:#fff}
+.ps-option-pref input{width:16px;height:16px;margin:1px 0 0;flex-shrink:0;accent-color:var(--qc-color-orange-core)}
+.ps-note{font-size:13px;line-height:1.5;color:var(--qc-text-secondary)}
+.ps-note{margin-top:20px}.ps-error{color:var(--qc-color-danger);margin-top:10px}
 .ps-back{display:inline-flex;align-items:center;gap:6px;margin-bottom:26px;font-size:13px;color:var(--qc-text-link);text-decoration:none}.ps-back:hover{text-decoration:underline}.ps-back svg{width:16px;height:16px}
-@media(max-width:740px){.ps-grid{grid-template-columns:1fr}.ps-option{min-height:195px;padding:22px 18px}.ps-foot{align-items:flex-start;flex-direction:column}}
+@media(max-width:740px){.ps-grid{grid-template-columns:1fr}.ps-option{min-height:195px;padding:22px 18px}}
 @media(prefers-reduced-motion:reduce){.ps-option{transition:none}.ps-option:hover{transform:none}}
