@@ -1139,9 +1139,9 @@ export function ComponentList({
               {process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' && (
                 <div className="rounded-xl border border-slate-200 p-3 text-sm">
                   <strong className="block text-slate-900">Need an example to start with?</strong>
-                  <p className="mt-1 text-slate-600">Explore ready-made roofing libraries, choose the components you need, and add your own costs.</p>
+                  <p className="mt-1 text-slate-600">Explore test libraries, choose the components you need, and add your own costs.</p>
                   <Link className="mt-2 inline-block font-semibold underline underline-offset-4" href={`/${workspaceSlug}/pricing/assistant?start=ready`}>
-                    Choose a ready-made library
+                    Choose a test library
                   </Link>
                 </div>
               )}
@@ -1328,23 +1328,19 @@ export function ComponentList({
             onGuided={() => { void startGuidedIdentity(); }}
             onQuick={() => { void startNew(); }} />
           {process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' && (
+            <>
             <Link href={`/${workspaceSlug}/pricing/assistant?start=ready`}
               className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
               data-qc-variant="ghost" data-qc-size="md">
-              Ready-made roofing libraries
+              Test Libraries
             </Link>
+            <Link href={`/${workspaceSlug}/pricing/assistant`}
+              className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
+              data-qc-variant="secondary" data-qc-size="md">
+              Use pricing assistant
+            </Link>
+            </>
           )}
-          <button data-qc-variant="ghost"
-            onClick={() => {
-              void mayLeaveEditor().then(leave => { if (leave) { cancelEdit(); setShowCatalogModal(true); } });
-            }}
-            className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
-          >
-            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-            </svg>
-            Add from catalogue
-          </button>
           {/* Owner 2026-09-29: Flashings entry button hidden on the pricing
               library page for now, along with its upgrade modal and plan gate. */}
         </div>

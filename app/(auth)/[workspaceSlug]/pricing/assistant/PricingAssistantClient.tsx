@@ -91,7 +91,7 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
    if(!result.ok||result.saved<=0)throw Error(result.message||'No components could be prepared. Check your Smart Component places and try again.');
    setStarterSlugs([]);setForeignCurrencyAccepted(false);
    router.push(`/${workspaceSlug}/components?starterSaved=${result.saved}&starterTotal=${result.total}`);
-  }catch(e){setError(e instanceof Error?e.message:'Could not prepare the ready-made libraries.');}
+  }catch(e){setError(e instanceof Error?e.message:'Could not prepare the test libraries.');}
   finally{setBusy(false);}
  }
  function toggleStarter(slug:string){setStarterSlugs(old=>old.includes(slug)?old.filter(s=>s!==slug):[...old,slug]);}
@@ -201,18 +201,18 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
  return <main className="ps-page pa-page" aria-labelledby="pa-title">
   <div className="pa-top"><Link href={`/${workspaceSlug}/pricing/setup`} className="pa-back"><QcIcon name="back"/> Setup options</Link><Link href={`/${workspaceSlug}/components`}>My Pricing Library</Link></div>
   <header className="ps-head"><p className="ps-eyebrow">PRICING SETUP ASSISTANT</p><h1 id="pa-title">Get your products, rates and services set up.</h1>
-   <p>Upload a spreadsheet, PDF or photo of your pricing, paste a list, or speak your rates — or start from a ready-made roofing library. We'll help you verify each component before it becomes usable in a real quote.</p></header>
+   <p>Upload a spreadsheet, PDF or photo of your pricing, paste a list, or speak your rates – or start from test libraries. We'll help you verify each component before it becomes usable in a real quote.</p></header>
   {error&&<div className="pa-alert" role="alert" style={{whiteSpace:'pre-line'}}>{error}</div>}
   {notice&&<div className="pa-success" role="status">{notice}</div>}
   {entryMode==='choose'&&!current&&<section className="pa-entry-options" aria-label="Choose a pricing setup method">
    <button type="button" className="pa-entry-card" onClick={()=>setEntryMode('own')}>
     <span className="pa-entry-tag">I HAVE MY OWN PRICES</span>
     <strong>Upload or add my prices</strong>
-    <span>Upload a spreadsheet, PDF, photo or text document — wherever you keep your materials, services and rates — or type them in. We'll extract the information we can find, then you confirm or edit it.</span>
+    <span>Upload a spreadsheet, PDF, photo or text document – wherever you keep your materials, services and rates – or type them in. We'll extract the information we can find, then you confirm or edit it.</span>
    </button>
    <button type="button" className="pa-entry-card" onClick={()=>setEntryMode('ready')}>
     <span className="pa-entry-tag">I NEED A STARTING POINT</span>
-    <strong>Start with a ready-made library</strong>
+    <strong>Start with test libraries</strong>
     <span>{starterLibraries.length?`${starterLibraries.length} editable example libraries`:'Editable example libraries'} based on the roofing products you normally work with. Start quoting while you figure out your own pricing.</span>
    </button>
    {resumableSessions.length>0&&<div className="pa-entry-card pa-entry-resume">
@@ -223,7 +223,7 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
   </section>}
   {!current&&entryMode!=='choose'&&<div className="pa-method-switch"><QcButton variant="ghost" size="sm" disabled={busy} onClick={()=>setEntryMode('choose')}><QcIcon name="back"/> Choose a different method</QcButton></div>}
   {entryMode==='own'&&!current&&<section className="pa-panel pa-capture" aria-labelledby="pa-source-title">
-   <div className="pa-section-heading"><h2 id="pa-source-title">1. Upload your pricing</h2><span>However you currently store it — or type or speak it below</span></div>
+   <div className="pa-section-heading"><h2 id="pa-source-title">1. Upload your pricing</h2><span>However you currently store it – or type or speak it below</span></div>
    <FileUploader appearance="v2" accept=".csv,.xlsx,.txt,.pdf,.png,.jpg,.jpeg,.webp" maxSize={4194304}
     label="Upload your pricing however you store it"
     description="Click to browse or drag and drop · CSV, XLSX, TXT, PDF, PNG, JPEG or WebP · max 4 MB · originals not retained"
@@ -249,7 +249,7 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
     <div className="pa-section-heading"><h2 id="pa-ready-title">Choose your roofing systems</h2><span>One or more</span></div>
     <p>Select the roof coverings you normally estimate or install. These complete <strong>practice-priced</strong> examples include material cost, labour, example waste, measurement and pitch rules.</p>
     {starterError&&<p className="pa-alert" role="alert">{starterError}</p>}
-    <div className="pa-ready-grid" role="group" aria-label="Ready-made roofing libraries">
+    <div className="pa-ready-grid" role="group" aria-label="Test libraries">
      {starterLibraries.map(lib=><div className={`pa-ready-option ${starterSlugs.includes(lib.slug)?'pa-ready-selected':''}`} key={lib.slug}>
       <label className="pa-ready-heading">
        <input type="checkbox" checked={starterSlugs.includes(lib.slug)} onChange={()=>toggleStarter(lib.slug)} disabled={busy}/>
@@ -271,7 +271,7 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
    <div className="pa-delete-import">{!confirmDelete?<QcButton variant="ghost" size="sm" disabled={busy} onClick={()=>setConfirmDelete(true)}>Delete this import</QcButton>:<div role="group" aria-label="Confirm delete import"><span>Delete all draft items from this import? Already saved components will remain.</span><QcButton variant="danger" size="sm" disabled={busy} onClick={removeCurrentImport}>Delete drafts</QcButton><QcButton variant="ghost" size="sm" onClick={()=>setConfirmDelete(false)}>Cancel</QcButton></div>}</div>
    {phase==='choose'&&<>
     <p>Choose up to {chosenLimit} components in this batch. {isPracticeSession?'Import priced examples directly for a practice quote, or review them individually to understand the settings.':'Review each imported item individually before saving.'} Roofing-system groups are preserved. You can return for the rest.</p>
-    {isPracticeSession&&<p className="pa-caution" role="note"><strong>PRACTICE PRICES — NOT VERIFIED.</strong> USD 2026 illustrative direct costs with sample waste; no FX conversion, tax, overhead or margins. The current engine applies waste to both material and labour. A practice quote cannot be shared with customers.</p>}
+    {isPracticeSession&&<p className="pa-caution" role="note"><strong>PRACTICE PRICES – NOT VERIFIED.</strong> USD 2026 illustrative direct costs with sample waste; no FX conversion, tax, overhead or margins. The current engine applies waste to both material and labour. A practice quote cannot be shared with customers.</p>}
     <QcButton variant="ghost" disabled={busy||chosenLimit===0} onClick={()=>{setChosen(current.drafts.filter(d=>d.status!=='saved').slice(0,chosenLimit).map(d=>d.id));setPracticeAcknowledged(false);}}>{isPracticeSession?`Select available examples (up to ${chosenLimit})`:`Select all items (up to ${chosenLimit})`}</QcButton>
     <QcField label="Find an item" htmlFor="pa-search"><QcInput id="pa-search" value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Search SKU or name"/></QcField>
     <div className="pa-list" role="group" aria-label="Select extracted items">
@@ -290,8 +290,7 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
    </>}
    {phase==='review'&&reviewed&&editor&&<>
      {reviewed.draft_data.practicePricing&&<p className="pa-caution"><strong>Practice pricing:</strong> This component will remain marked PRACTICE even if you confirm it here. Edit and verify your real costs later in My Pricing Library. Example numbers come from USD 2026 and are not currency-converted.</p>}
-     <div className="pa-progress-row"><p className="pa-progress">Review {Math.min(reviewIndex+1,ordered.length)} of {ordered.length} · {fullyConfirmed} individually confirmed</p>
-      <QcButton variant="ghost" size="sm" disabled={busy||ordered.length===0||fullyConfirmed===ordered.length} pending={busy} onClick={confirmAllRemaining}>Confirm all remaining</QcButton></div>
+     <p className="pa-progress">Review {Math.min(reviewIndex+1,ordered.length)} of {ordered.length} · {fullyConfirmed} individually confirmed</p>
      <div className="pa-legend" aria-label="Input colour guide"><span><i className="pa-swatch pa-swatch-found"/>Found in your pricing</span><span><i className="pa-swatch pa-swatch-missing"/>Might need your input</span></div>
      <div className="pa-review"><div className="pa-review-head"><div>{reviewed.draft_data.starterLibraryName&&<span className="pa-system-label">{reviewed.draft_data.starterLibraryName}</span>}<span className="pa-sku">{reviewed.draft_data.sku||'No SKU'}</span><h3>{reviewed.draft_data.name}</h3></div><span className="pa-status">{reviewed.status==='confirmed'?'Confirmed':'Needs confirmation'}</span></div>
       <details className="pa-source"><summary>See the original source evidence</summary><blockquote>{reviewed.source_excerpt}</blockquote><p>Fields marked "Roofing rule" are suggestions, not values found in your source.</p></details>
@@ -380,10 +379,10 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
       {validateForConfirmation({...reviewed.draft_data,...editor}).length>0&&<p className="pa-warnings">{validateForConfirmation({...reviewed.draft_data,...editor})[0]}</p>}
       <label className="pa-check"><input type="checkbox" checked={verified} onChange={e=>setVerified(e.target.checked)}/> I have checked this component's rates, measurement, pitch and waste rules.</label>
       <div className="pa-actions">
-       <QcButton variant="ghost" onClick={()=>setReviewIndex(v=>Math.max(0,v-1))} disabled={busy||hasUnsavedChanges||reviewIndex===0}>Previous</QcButton>
-       <QcButton variant="ghost" disabled={busy} pending={busy} onClick={()=>reviewAction(false)}>Save draft</QcButton>
+       <button type="button" className="pa-text-link" onClick={()=>setReviewIndex(v=>Math.max(0,v-1))} disabled={busy||hasUnsavedChanges||reviewIndex===0}>Previous</button>
+       <button type="button" className="pa-text-link" disabled={busy} onClick={()=>void reviewAction(false)}>Save draft</button>
        <QcButton variant="primary" disabled={busy||!verified||validateForConfirmation({...reviewed.draft_data,...editor}).length>0} pending={busy} onClick={()=>reviewAction(true)}>Confirm component <QcIcon name="check"/></QcButton>
-       <QcButton variant="secondary" disabled={busy||hasUnsavedChanges||reviewIndex>=ordered.length-1} onClick={()=>setReviewIndex(v=>v+1)}>Next <QcIcon name="arrow"/></QcButton>
+       <button type="button" className="pa-text-link" disabled={busy||hasUnsavedChanges||reviewIndex>=ordered.length-1} onClick={()=>setReviewIndex(v=>v+1)}>Next</button>
       </div>
      </div>
     </>}
@@ -391,8 +390,11 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
       {isStarterSession?<div className="pa-destination-note"><strong>One library per roofing system</strong><p>Confirmed components will be added to new, separate libraries named for each selected roofing system. You can edit them normally in My Pricing Library.</p></div>:<div className="pa-library"><label htmlFor="pa-collection">Destination library</label><QcSelect id="pa-collection" value={selectedLibrary} onChange={e=>setSelectedLibrary(e.target.value)}><option value="">Choose a library</option>{libraries.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</QcSelect>
        <div className="pa-add-library"><QcInput aria-label="New library name" placeholder="Or create a new library" value={newLibrary} onChange={e=>setNewLibrary(e.target.value)}/><QcButton variant="secondary" disabled={addingLibrary||!newLibrary.trim()} onClick={addLibrary}>Create</QcButton></div>
       </div>}
-      <QcButton variant="primary" disabled={busy||hasUnsavedChanges||fullyConfirmed===0||(!isStarterSession&&!selectedLibrary)} pending={busy} onClick={saveAll}>Save {fullyConfirmed} approved components <QcIcon name="check"/></QcButton>
-      <QcButton variant="ghost" disabled={hasUnsavedChanges} onClick={()=>setPhase('choose')}>Back to item selection</QcButton>
+      <div className="pa-save-actions">
+       <QcButton variant="secondary" disabled={busy||ordered.length===0||fullyConfirmed===ordered.length} pending={busy} onClick={confirmAllRemaining}><QcIcon name="check"/>Confirm all remaining</QcButton>
+       <QcButton variant="primary" disabled={busy||hasUnsavedChanges||fullyConfirmed===0||(!isStarterSession&&!selectedLibrary)} pending={busy} onClick={saveAll}>Save {fullyConfirmed} approved components <QcIcon name="arrow"/></QcButton>
+      </div>
+      <button type="button" className="pa-text-link" disabled={hasUnsavedChanges} onClick={()=>setPhase('choose')}>Back to item selection</button>
      </div>}
     {phase==='done'&&<div className="pa-done"><h3>{savedCount} components saved to My Pricing Library</h3><p>{isPracticeSession?'These components use PRACTICE PRICES. You can test them on a quote, but the application blocks customer sending. Edit and verify each component using your actual costs, then create a fresh quote for customers.':'You can now use your verified pricing in a quote. Double-check current costs, measurements, tax and margins before sending.'}</p>
       <div className="pa-actions"><Link href={`/${workspaceSlug}/quotes/new`} className="qc-button" data-qc-variant="primary" data-qc-size="md">Create my first quote <QcIcon name="arrow"/></Link>

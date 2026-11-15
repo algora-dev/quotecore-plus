@@ -95,7 +95,7 @@ export async function confirmAllPricingDrafts(sessionId:string){
   const {profile,admin}=await scopedContext();
   const {drafts}=await loadPricingSession(sessionId);
   const targets=drafts.filter(d=>d.status==='selected');
-  if(!targets.length)return {ok:false,message:'Choose items first — nothing is waiting for confirmation.'};
+  if(!targets.length)return {ok:false,message:'Choose items first – nothing is waiting for confirmation.'};
   let confirmed=0;const failures:string[]=[];
   for(const found of targets){
    const problem=confirmChecks(found.draft_data);
@@ -116,7 +116,7 @@ export async function createReadyMadeLibrarySession(slugs: string[], acceptForei
   const result = await createStarterLibraryDraftSession(slugs, acceptForeignCurrencyExample);
   return { ok: true as const, ...result };
  } catch (error) {
-  return { ok: false as const, message: error instanceof Error ? error.message : 'Unable to create a ready-made library draft.' };
+  return { ok: false as const, message: error instanceof Error ? error.message : 'Unable to create a test library draft.' };
  }
 }
 
@@ -124,7 +124,7 @@ export async function createReadyMadeLibrarySession(slugs: string[], acceptForei
  * One-click "Prepare selected libraries" (owner 2026-11-15): create the ready-made
  * session, then practice-import every included draft immediately, in server-side
  * chunks of 25 so selecting all libraries (35 components) lands in one click. The
- * user is then redirected to the pricing library page — there is no step after
+ * user is then redirected to the pricing library page – there is no step after
  * prepare. Capacity is still enforced per component inside the practice import;
  * anything that does not fit stays in the session for a later resume.
  */
@@ -132,7 +132,7 @@ export async function prepareReadyMadeLibraries(slugs: string[], acceptForeignCu
  try {
   const created = await createReadyMadeLibrarySession(slugs, acceptForeignCurrencyExample);
   if (!created.ok) return { ok: false as const, saved: 0, total: 0, message: created.message };
-  if (!created.sessionId) return { ok: false as const, saved: 0, total: 0, message: 'Could not load the ready-made libraries.' };
+  if (!created.sessionId) return { ok: false as const, saved: 0, total: 0, message: 'Could not load the test libraries.' };
   const sessionId = created.sessionId;
   const { drafts } = await loadPricingSession(sessionId);
   const eligible = drafts.filter(d => d.status !== 'saved' && d.draft_data.starterLibrarySlug).map(d => d.id);
@@ -150,7 +150,7 @@ export async function prepareReadyMadeLibraries(slugs: string[], acceptForeignCu
   }
   return { ok: true as const, saved, total: eligible.length, message: errors.slice(0, 3).join('\n') };
  } catch (error) {
-  return { ok: false as const, saved: 0, total: 0, message: error instanceof Error ? error.message : 'Could not prepare the ready-made libraries.' };
+  return { ok: false as const, saved: 0, total: 0, message: error instanceof Error ? error.message : 'Could not prepare the test libraries.' };
  }
 }
 
@@ -185,7 +185,7 @@ async function resolveStarterDestination(
    .eq('session_id', sessionId).eq('library_slug', slug)
    .eq('company_id', profile.company_id).eq('user_id', profile.id).maybeSingle();
   if (raced?.collection_id) return raced.collection_id as string;
-  throw Error('Could not attach the ready-made library to this setup.');
+  throw Error('Could not attach the test library to this setup.');
  }
  return created.id;
 }
@@ -211,11 +211,11 @@ export async function saveConfirmedPricingDrafts(sessionId:string,collectionId:s
   const pending=drafts.filter(row=>practiceImport
    ? ['selected','confirmed'].includes(row.status) && row.draft_data.starterLibrarySlug && row.draft_data.practicePricing
    : row.status==='confirmed');
-  if(practiceImport && !starterAuto)return {ok:false,message:'Only ready-made practice libraries support quick import.',saved:0,errors:[] as string[]};
+  if(practiceImport && !starterAuto)return {ok:false,message:'Only test libraries support quick import.',saved:0,errors:[] as string[]};
   if(practiceImport){
    const {data:sessionRow,error:sessionError}=await admin.from('pricing_setup_sessions')
     .select('source_name').eq('id',sessionId).eq('user_id',profile.id).eq('company_id',profile.company_id).maybeSingle();
-   if(sessionError||!sessionRow?.source_name?.startsWith('Ready-made:'))return {ok:false,message:'This is not a ready-made practice import.',saved:0,errors:[] as string[]};
+   if(sessionError||!sessionRow?.source_name?.startsWith('Ready-made:'))return {ok:false,message:'This is not a test library import.',saved:0,errors:[] as string[]};
    const ids=[...new Set(pending.map(x=>x.draft_data.practicePriceSetId))];
    if(ids.length!==1||!ids[0])return {ok:false,message:'Practice price-set provenance is missing.',saved:0,errors:[] as string[]};
    const {data:set,error:setError}=await admin.from('pricing_starter_price_sets')

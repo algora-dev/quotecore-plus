@@ -57,13 +57,13 @@ export async function listStarterLibrarySummaries(): Promise<StarterLibrarySumma
   const { admin } = await scopedContext();
   const { data: rawLibraries, error } = await admin.from('pricing_starter_libraries')
     .select('slug,name,description,version,sort_order').eq('published', true).order('sort_order', { ascending: true });
-  if (error) throw new Error('Ready-made libraries are not configured. Apply the starter-library migration.');
+  if (error) throw new Error('Test libraries are not configured. Apply the starter-library migration.');
   const libs = z.array(publishedLibrarySchema).parse(rawLibraries ?? []);
   if (!libs.length) return [];
   const { data: rawItems, error: itemError } = await admin.from('pricing_starter_items')
     .select('library_slug,code,name,measurement_type,pitch_type,source_unit,notes').in('library_slug', libs.map(lib => lib.slug))
     .eq('included_by_default', true).order('sort_order', { ascending: true });
-  if (itemError) throw new Error('Ready-made library items are not available.');
+  if (itemError) throw new Error('Test library items are not available.');
   const set = await publishedUsdPriceSet(admin);
   const costs = await publishedPrices(admin,set.id,libs.map(x=>x.slug));
   const groups = new Map<string, StarterLibrarySummary['items']>();
@@ -81,7 +81,7 @@ export async function listStarterLibrarySummaries(): Promise<StarterLibrarySumma
 /** Starter generation is deterministic and costs no model tokens. Nothing is written to component_library. */
 export async function createStarterLibraryDraftSession(slugs: string[], allowForeignCurrencyExamples = false) {
   if (!Array.isArray(slugs) || !slugs.length || slugs.length > 5 || new Set(slugs).size !== slugs.length || slugs.some(slug => !slugSchema.safeParse(slug).success)) {
-    throw new Error('Choose between one and five different ready-made roofing libraries.');
+    throw new Error('Choose between one and five different test libraries.');
   }
   const { admin, profile } = await scopedContext();
   const {data:company,error:companyError}=await admin.from('companies').select('default_currency').eq('id',profile.company_id).maybeSingle();
@@ -99,18 +99,18 @@ export async function createStarterLibraryDraftSession(slugs: string[], allowFor
     .eq('company_id', profile.company_id).like('source_name', 'Ready-made:%')
     .gte('created_at', since.toISOString());
   if (usageError) throw new Error('Unable to verify starter-library usage.');
-  if ((count ?? 0) >= 10) throw new Error('You have reached today\'s ready-made library setup limit. Resume an existing draft instead.');
+  if ((count ?? 0) >= 10) throw new Error('You have reached today\'s test library setup limit. Resume an existing draft instead.');
 
   const { data: rawLibraries, error } = await admin.from('pricing_starter_libraries')
     .select('slug,name,description,version,sort_order').eq('published', true).in('slug', slugs);
-  if (error) throw new Error('Ready-made libraries are not configured. Apply the starter-library migration.');
+  if (error) throw new Error('Test libraries are not configured. Apply the starter-library migration.');
   const libs = z.array(publishedLibrarySchema).parse(rawLibraries ?? []);
   if (libs.length !== slugs.length) throw new Error('One of the selected roofing libraries is no longer available.');
   const { data: rawItems, error: itemsError } = await admin.from('pricing_starter_items')
     .select('library_slug,code,name,notes,measurement_type,pitch_type,takeoff_slot,source_unit,sort_order')
     .in('library_slug', slugs).eq('included_by_default', true)
     .order('sort_order', { ascending: true });
-  if (itemsError) throw new Error('Ready-made library items are unavailable.');
+  if (itemsError) throw new Error('Test library items are unavailable.');
   const items = z.array(starterItemSchema).parse(rawItems ?? []);
   const bySlug = new Map(libs.map(lib => [lib.slug, lib]));
   const priceMap=await publishedPrices(admin,priceSet.id,slugs);
@@ -127,7 +127,7 @@ export async function createStarterLibraryDraftSession(slugs: string[], allowFor
     const draft: PricingDraft = pricingDraftSchema.parse({
       ...draftFromExtraction({
         sku: item.code, name: item.name, notes: item.notes, sourceUnit: item.source_unit,
-        sourceIndex: i + 1, excerpt: `Ready-made roofing library: ${lib.name}. ${item.name}.`,
+        sourceIndex: i + 1, excerpt: `Test library: ${lib.name}. ${item.name}.`,
       }, 'unknown'),
       // Master template fields, not probabilistic name matching, are authoritative.
       measurementType: item.measurement_type,
@@ -142,7 +142,7 @@ export async function createStarterLibraryDraftSession(slugs: string[], allowFor
       practicePriceSetId:priceSet.id,
       materialRate:example.material_cost,labourRate:example.labour_cost,
       wasteKind:example.waste_kind,wasteValue:example.waste_value,
-      notes:`${item.notes} | PRACTICE ONLY — Illustrative USD 2026 direct-cost allocation, not a supplier quote. No tax, margin, overhead or logistics included.${currencyMessage}`.slice(0,3000),
+      notes:`${item.notes} | PRACTICE ONLY – Illustrative USD 2026 direct-cost allocation, not a supplier quote. No tax, margin, overhead or logistics included.${currencyMessage}`.slice(0,3000),
       priceBasis:'unknown',
       origins: {
         sku: 'rule', name: 'rule', notes: 'rule', measurementType: 'rule', pitchType: 'rule',
@@ -159,7 +159,7 @@ export async function createStarterLibraryDraftSession(slugs: string[], allowFor
     });
     return {
       draft,
-      excerpt: `Ready-made ${lib.name} (template v${lib.version}) · ${item.code}: ${item.notes}. Example cost basis: USD, US benchmark 2026.`,
+      excerpt: `Test library ${lib.name} (template v${lib.version}) · ${item.code}: ${item.notes}. Example cost basis: USD, US benchmark 2026.`,
     };
   });
   return insertPricingSession({

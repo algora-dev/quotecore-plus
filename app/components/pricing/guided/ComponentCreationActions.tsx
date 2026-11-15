@@ -8,13 +8,13 @@ export function ComponentCreationActions({ onGuided, onQuick, disabled = false }
   onGuided: () => void; onQuick: () => void; disabled?: boolean;
 }) {
   return <div data-qc-ui="v2" className="qc-identity-entry" role="group" aria-label="Create a Smart Component™">
-    <QcButton variant="primary" disabled={disabled} className="qc-identity-glint" onClick={onGuided}
-      data-copilot="add-component-guided" aria-label="Create with guidance, one step at a time">
-      <QcIcon name="assistant" />Create with guidance
-    </QcButton>
-    <QcButton variant="secondary" disabled={disabled} className="qc-identity-glint" onClick={onQuick}
+    <QcButton variant="primary" disabled={disabled} className="qc-identity-glint" onClick={onQuick}
       data-copilot="add-component" aria-label="Quick create, open the existing editor">
       <QcIcon name="plus" />Quick create
+    </QcButton>
+    <QcButton variant="secondary" disabled={disabled} className="qc-identity-glint" onClick={onGuided}
+      data-copilot="add-component-guided" aria-label="Create with guidance, one step at a time">
+      <QcIcon name="assistant" />Create with guidance
     </QcButton>
   </div>;
 }

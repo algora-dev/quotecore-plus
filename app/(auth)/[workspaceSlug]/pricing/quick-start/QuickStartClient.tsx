@@ -18,7 +18,7 @@ export function QuickStartClient({checkout,orders}:{checkout:string;orders:{id:s
    <li>Components prepared in your workspace for your final review.</li>
    <li>Access to our existing tutorials for creating quotes.</li>
   </ul>
-  <p style={{fontSize:13,color:'var(--qc-text-secondary)'}}>This is a pricing-entry service, not Full Done For You setup. It does not include custom one-to-one training, a subscription upgrade or three months of personalised support. Your workspace's component allowance still applies. US$49 covers up to 15 components — if you need more, we'll agree any adjusted price with you before extra work starts.</p>
+  <p style={{fontSize:13,color:'var(--qc-text-secondary)'}}>This is a pricing-entry service, not Full Done For You setup. It does not include custom one-to-one training, a subscription upgrade or three months of personalised support. Your workspace's component allowance still applies. US$49 covers up to 15 components – if you need more, we'll agree any adjusted price with you before extra work starts.</p>
   {checkout==='success'&&<div className="pa-success" role="status">Checkout returned successfully. We will confirm payment from Stripe before starting your setup. Refresh to view your request's status.</div>}
   {checkout==='cancelled'&&<div className="pa-alert" role="status">Checkout was cancelled. No new payment has been confirmed.</div>}
   {error&&<div className="pa-alert" role="alert">{error}</div>}
