@@ -191,13 +191,13 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
    <p>Upload a spreadsheet, PDF or photo of your pricing, paste a list, or speak your rates — or start from a ready-made roofing library. We'll help you verify each component before it becomes usable in a real quote.</p></header>
   {error&&<div className="pa-alert" role="alert" style={{whiteSpace:'pre-line'}}>{error}</div>}
   {notice&&<div className="pa-success" role="status">{notice}</div>}
-  <section className="pa-entry-options" aria-label="Choose a pricing setup method">
-   <button type="button" className={`pa-entry-card ${entryMode==='own'?'pa-entry-active':''}`} onClick={()=>setEntryMode('own')}>
+  {entryMode==='choose'&&!current&&<section className="pa-entry-options" aria-label="Choose a pricing setup method">
+   <button type="button" className="pa-entry-card" onClick={()=>setEntryMode('own')}>
     <span className="pa-entry-tag">I HAVE MY OWN PRICES</span>
     <strong>Upload or add my prices</strong>
     <span>Upload a spreadsheet, PDF, photo or text document — wherever you keep your materials, services and rates — or type them in. We'll extract the information we can find, then you confirm or edit it.</span>
    </button>
-   <button type="button" className={`pa-entry-card ${entryMode==='ready'?'pa-entry-active':''}`} onClick={()=>setEntryMode('ready')}>
+   <button type="button" className="pa-entry-card" onClick={()=>setEntryMode('ready')}>
     <span className="pa-entry-tag">I NEED A STARTING POINT</span>
     <strong>Start with a ready-made library</strong>
     <span>{starterLibraries.length?`${starterLibraries.length} editable example libraries`:'Editable example libraries'} based on the roofing products you normally work with. Start quoting while you figure out your own pricing.</span>
@@ -207,8 +207,9 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
     <strong>Resume an import</strong>
     <div className="pa-resume-list">{resumableSessions.map(s=><Link key={s.id} href={`/${workspaceSlug}/pricing/assistant?session=${s.id}`}>{s.source_name} <small>({s.remaining??s.extracted_count} left)</small></Link>)}</div>
    </div>}
-  </section>
-  {entryMode==='own'&&<section className="pa-panel pa-capture" aria-labelledby="pa-source-title">
+  </section>}
+  {!current&&entryMode!=='choose'&&<div className="pa-method-switch"><QcButton variant="ghost" size="sm" disabled={busy} onClick={()=>setEntryMode('choose')}><QcIcon name="back"/> Choose a different method</QcButton></div>}
+  {entryMode==='own'&&!current&&<section className="pa-panel pa-capture" aria-labelledby="pa-source-title">
    <div className="pa-section-heading"><h2 id="pa-source-title">1. Upload your pricing</h2><span>However you currently store it — or type or speak it below</span></div>
    <FileUploader appearance="v2" accept=".csv,.xlsx,.txt,.pdf,.png,.jpg,.jpeg,.webp" maxSize={4194304}
     label="Upload your pricing however you store it"
