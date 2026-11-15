@@ -55,9 +55,9 @@ export function PricingSetupEntry({ workspaceSlug, seen, alwaysOpenLibrary }: {
       <div className="ps-option ps-option-self" aria-label="Do it myself — open my pricing library">
         <Link href={`/${workspaceSlug}/components`} className="ps-option-main">
           <div className="ps-option-top">
-            <span className="ps-option-category">DO IT MYSELF</span>
+            <span className="ps-option-category">MANUAL ENTRY</span>
           </div>
-          <h2>Open My Pricing Library</h2>
+          <h2>Navigate to My Pricing Library</h2>
           <p>The normal way in. This is your pricing library — add the products, materials, labour rates and services you use, at your own pace. Start from scratch or use the guided creator.</p>
           <span className="ps-option-link">Open My Pricing Library <span aria-hidden="true"> →</span></span>
         </Link>

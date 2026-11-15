@@ -184,6 +184,7 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
  }
  const remaining=current?.drafts.filter(d=>d.status!=='saved'&&d.status!=='skipped')??[];
  const fullyConfirmed=ordered.filter(d=>d.status==='confirmed').length;
+ const resumableSessions=sessions.filter(s=>s.id!==current?.session.id);
  return <main className="ps-page pa-page" aria-labelledby="pa-title">
   <div className="pa-top"><Link href={`/${workspaceSlug}/pricing/setup`} className="pa-back"><QcIcon name="back"/> Setup options</Link><Link href={`/${workspaceSlug}/components`}>My Pricing Library</Link></div>
   <header className="ps-head"><p className="ps-eyebrow">PRICING SETUP ASSISTANT</p><h1 id="pa-title">Get your products, rates and services set up.</h1>
@@ -201,6 +202,11 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
     <strong>Start with a ready-made library</strong>
     <span>{starterLibraries.length?`${starterLibraries.length} editable example libraries`:'Editable example libraries'} based on the roofing products you normally work with. Start quoting while you figure out your own pricing.</span>
    </button>
+   {resumableSessions.length>0&&<div className="pa-entry-card pa-entry-resume">
+    <span className="pa-entry-tag">PICK UP WHERE YOU LEFT OFF</span>
+    <strong>Resume an import</strong>
+    <div className="pa-resume-list">{resumableSessions.map(s=><Link key={s.id} href={`/${workspaceSlug}/pricing/assistant?session=${s.id}`}>{s.source_name} <small>({s.remaining??s.extracted_count} left)</small></Link>)}</div>
+   </div>}
   </section>
   {entryMode==='own'&&<section className="pa-panel pa-capture" aria-labelledby="pa-source-title">
    <div className="pa-section-heading"><h2 id="pa-source-title">1. Upload your pricing</h2><span>However you currently store it — or type or speak it below</span></div>
@@ -246,7 +252,6 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
     <div className="pa-actions"><span>{starterSlugs.length} library{starterSlugs.length===1?'':'ies'} selected · {starterLibraries.filter(lib=>starterSlugs.includes(lib.slug)).reduce((total,lib)=>total+lib.count,0)} candidate components</span>
      <QcButton variant="primary" disabled={busy||starterSlugs.length===0||(currency.toUpperCase()!=='USD'&&!foreignCurrencyAccepted)||(capacity.available!==null&&capacity.available<=0)} pending={busy} onClick={prepareReadyMade}>Prepare selected libraries <QcIcon name="arrow"/></QcButton></div>
    </section>}
-  {sessions.length>0&&<section className="pa-past"><strong>Resume an import:</strong> {sessions.map(s=><Link key={s.id} className={current?.session.id===s.id?'pa-current':''} href={`/${workspaceSlug}/pricing/assistant?session=${s.id}`}>{s.source_name} ({s.remaining??s.extracted_count} left)</Link>)}</section>}
   {current&&<section className="pa-panel" aria-label="Extracted pricing items">
    <div className="pa-section-heading"><h2>2. Review items from {current.session.source_name}</h2><span>{current.drafts.length} found</span></div>
    <div className="pa-delete-import">{!confirmDelete?<QcButton variant="ghost" size="sm" disabled={busy} onClick={()=>setConfirmDelete(true)}>Delete this import</QcButton>:<div role="group" aria-label="Confirm delete import"><span>Delete all draft items from this import? Already saved components will remain.</span><QcButton variant="danger" size="sm" disabled={busy} onClick={removeCurrentImport}>Delete drafts</QcButton><QcButton variant="ghost" size="sm" onClick={()=>setConfirmDelete(false)}>Cancel</QcButton></div>}</div>
@@ -272,16 +277,17 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
    {phase==='review'&&reviewed&&editor&&<>
      {reviewed.draft_data.practicePricing&&<p className="pa-caution"><strong>Practice pricing:</strong> This component will remain marked PRACTICE even if you confirm it here. Edit and verify your real costs later in My Pricing Library. Example numbers come from USD 2026 and are not currency-converted.</p>}
      <p className="pa-progress">Review {Math.min(reviewIndex+1,ordered.length)} of {ordered.length} · {fullyConfirmed} individually confirmed</p>
+     <div className="pa-legend" aria-label="Input colour guide"><span><i className="pa-swatch pa-swatch-found"/>Found in your pricing</span><span><i className="pa-swatch pa-swatch-missing"/>Needs your input</span><span><i className="pa-swatch"/>Suggested rule or already filled</span></div>
      <div className="pa-review"><div className="pa-review-head"><div>{reviewed.draft_data.starterLibraryName&&<span className="pa-system-label">{reviewed.draft_data.starterLibraryName}</span>}<span className="pa-sku">{reviewed.draft_data.sku||'No SKU'}</span><h3>{reviewed.draft_data.name}</h3></div><span className="pa-status">{reviewed.status==='confirmed'?'Confirmed':'Needs confirmation'}</span></div>
       <details className="pa-source"><summary>See the original source evidence</summary><blockquote>{reviewed.source_excerpt}</blockquote><p>Fields marked "Roofing rule" are suggestions, not values found in your source.</p></details>
       <div className="pa-fields">
-       <QcField label="SKU / product code" htmlFor="pa-sku"><QcInput id="pa-sku" value={editor.sku} onChange={e=>edit({sku:e.target.value})}/></QcField>
-       <QcField label="Component name" htmlFor="pa-name"><QcInput id="pa-name" value={editor.name} onChange={e=>edit({name:e.target.value})}/></QcField>
+       <QcField label="SKU / product code" htmlFor="pa-sku"><QcInput id="pa-sku" className={reviewed.draft_data.origins.sku==='source'&&editor.sku?'pa-in-found':''} value={editor.sku} onChange={e=>edit({sku:e.target.value})}/></QcField>
+       <QcField label="Component name" htmlFor="pa-name"><QcInput id="pa-name" className={reviewed.draft_data.origins.name==='source'?'pa-in-found':''} value={editor.name} onChange={e=>edit({name:e.target.value})}/></QcField>
        <QcField label={`Material cost (${currency} per canonical measurement unit)`} htmlFor="pa-material" help={`Source: ${reviewed.draft_data.origins.materialRate?origins[reviewed.draft_data.origins.materialRate]:''}. Use zero only if the component has no material cost.`}>
-        <QcInput id="pa-material" type="number" min="0" step="any" value={editor.materialRate??''} onChange={e=>edit({materialRate:currencyNumber(e.target.value)})} placeholder="Not found"/>
+        <QcInput id="pa-material" type="number" min="0" step="any" className={editor.materialRate==null?'pa-in-missing':reviewed.draft_data.origins.materialRate==='source'?'pa-in-found':''} value={editor.materialRate??''} onChange={e=>edit({materialRate:currencyNumber(e.target.value)})} placeholder="Not found"/>
        </QcField>
        <QcField label={`Labour cost (${currency} per canonical measurement unit)`} htmlFor="pa-labour" help="Enter zero only if intentional. QuoteCore+ calculates labour on the final quantity after pitch and waste, so verify that matches your charging method.">
-        <QcInput id="pa-labour" type="number" min="0" step="any" value={editor.labourRate??''} onChange={e=>edit({labourRate:currencyNumber(e.target.value)})} placeholder="Not found"/>
+        <QcInput id="pa-labour" type="number" min="0" step="any" className={editor.labourRate==null?'pa-in-missing':reviewed.draft_data.origins.labourRate==='source'?'pa-in-found':''} value={editor.labourRate??''} onChange={e=>edit({labourRate:currencyNumber(e.target.value)})} placeholder="Not found"/>
        </QcField>
        <QcField label="Primary or additional component?" htmlFor="pa-component-type">
         <QcSelect id="pa-component-type" value={editor.componentType} onChange={e=>edit({componentType:e.target.value as EditableDraft['componentType']})}>
@@ -304,7 +310,7 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
         </QcSelect>
        </QcField>
        {editor.wasteKind!=='unknown'&&editor.wasteKind!=='none'&&<QcField label={editor.wasteKind==='percent'?'Waste percentage':'Fixed waste per item / segment'} htmlFor="pa-waste-value">
-        <QcInput id="pa-waste-value" type="number" min="0" step="any" value={editor.wasteValue??''} onChange={e=>edit({wasteValue:currencyNumber(e.target.value)})}/>
+        <QcInput id="pa-waste-value" type="number" min="0" step="any" className={editor.wasteValue==null?'pa-in-missing':''} value={editor.wasteValue??''} onChange={e=>edit({wasteValue:currencyNumber(e.target.value)})}/>
        </QcField>}
        <QcField label="Pricing strategy" htmlFor="pa-strategy">
         <QcSelect id="pa-strategy" value={editor.pricingStrategy} onChange={e=>edit({pricingStrategy:e.target.value as EditableDraft['pricingStrategy'],packPrice:null,packSize:null})}>
@@ -314,20 +320,20 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
         </QcSelect>
        </QcField>
        {editor.pricingStrategy!=='per_unit'&&<>
-        <QcField label="Price per pack" htmlFor="pa-pack-price"><QcInput id="pa-pack-price" type="number" min="0" step="any" value={editor.packPrice??''} onChange={e=>edit({packPrice:currencyNumber(e.target.value)})}/></QcField>
-        <QcField label={editor.pricingStrategy==='per_pack_area'?'Coverage per pack (m²)':'Length per pack (m)'} htmlFor="pa-pack-size"><QcInput id="pa-pack-size" type="number" min="0.0001" step="any" value={editor.packSize??''} onChange={e=>edit({packSize:currencyNumber(e.target.value)})}/></QcField>
+        <QcField label="Price per pack" htmlFor="pa-pack-price"><QcInput id="pa-pack-price" type="number" min="0" step="any" className={editor.packPrice==null?'pa-in-missing':''} value={editor.packPrice??''} onChange={e=>edit({packPrice:currencyNumber(e.target.value)})}/></QcField>
+        <QcField label={editor.pricingStrategy==='per_pack_area'?'Coverage per pack (m²)':'Length per pack (m)'} htmlFor="pa-pack-size"><QcInput id="pa-pack-size" type="number" min="0.0001" step="any" className={editor.packSize==null?'pa-in-missing':''} value={editor.packSize??''} onChange={e=>edit({packSize:currencyNumber(e.target.value)})}/></QcField>
        </>}
        <details className="pa-advanced"><summary>Advanced measurement and quantity settings</summary>
         {editor.measurementType==='area'&&<>
          <QcField label="Sold by" htmlFor="pa-sold-by"><QcSelect id="pa-sold-by" value={editor.soldBy??'area'} onChange={e=>edit({soldBy:e.target.value as 'area'|'lineal',coverWidthMm:null})}>
           <option value="area">Area</option><option value="lineal">Length with a cover width</option>
          </QcSelect></QcField>
-         {editor.soldBy==='lineal'&&<QcField label="Cover width (mm)" htmlFor="pa-cover-width"><QcInput id="pa-cover-width" type="number" min="1" step="any" value={editor.coverWidthMm??''} onChange={e=>edit({coverWidthMm:currencyNumber(e.target.value)})}/></QcField>}
+         {editor.soldBy==='lineal'&&<QcField label="Cover width (mm)" htmlFor="pa-cover-width"><QcInput id="pa-cover-width" type="number" min="1" step="any" className={editor.coverWidthMm==null?'pa-in-missing':''} value={editor.coverWidthMm??''} onChange={e=>edit({coverWidthMm:currencyNumber(e.target.value)})}/></QcField>}
          <label className="pa-check"><input type="checkbox" checked={editor.unitsPerAreaEnabled} onChange={e=>edit({unitsPerAreaEnabled:e.target.checked})}/> Track supplementary units per square metre</label>
-         {editor.unitsPerAreaEnabled&&<QcField label="Supplementary units per m²" htmlFor="pa-area-units"><QcInput id="pa-area-units" type="number" min="0" step="any" value={editor.unitsPerArea??''} onChange={e=>edit({unitsPerArea:currencyNumber(e.target.value)})}/></QcField>}
+         {editor.unitsPerAreaEnabled&&<QcField label="Supplementary units per m²" htmlFor="pa-area-units"><QcInput id="pa-area-units" type="number" min="0" step="any" className={editor.unitsPerArea==null?'pa-in-missing':''} value={editor.unitsPerArea??''} onChange={e=>edit({unitsPerArea:currencyNumber(e.target.value)})}/></QcField>}
         </>}
         {editor.measurementType==='quantity_by_spacing'&&<>
-         <QcField label="Spacing distance (metres)" htmlFor="pa-spacing"><QcInput id="pa-spacing" type="number" min="0.0001" step="any" value={editor.quantitySpacingM??''} onChange={e=>edit({quantitySpacingM:currencyNumber(e.target.value)})}/></QcField>
+         <QcField label="Spacing distance (metres)" htmlFor="pa-spacing"><QcInput id="pa-spacing" type="number" min="0.0001" step="any" className={editor.quantitySpacingM==null?'pa-in-missing':''} value={editor.quantitySpacingM??''} onChange={e=>edit({quantitySpacingM:currencyNumber(e.target.value)})}/></QcField>
          <QcField label="Spacing allowance (%)" htmlFor="pa-spacing-allowance"><QcInput id="pa-spacing-allowance" type="number" min="0" max="100" step="any" value={editor.spacingAllowancePercent} onChange={e=>edit({spacingAllowancePercent:Number(e.target.value)||0})}/></QcField>
          <QcField label="Round up quantities to next" htmlFor="pa-round-up"><QcSelect id="pa-round-up" value={editor.spacingRoundUp} onChange={e=>edit({spacingRoundUp:Number(e.target.value) as 1|5|10})}>
           <option value="1">Whole unit</option><option value="5">5 units</option><option value="10">10 units</option>
