@@ -30,13 +30,12 @@ export function shellRoute(pathname: string, slug: string) {
   const builder = section === 'quotes' && !!record && record !== 'new' &&
     (!detail || ['build', 'blank-build', 'customer-edit', 'labor-sheet'].includes(detail));
   const editor = builder || (section === 'material-orders' && record === 'create');
-  const focused = (section === 'quotes' && record === 'new');
   const label = !section ? 'Home' : section === 'quotes' && detail === 'summary' ? 'Job space' : takeoff ? 'Digital takeoff' :
     builder ? (detail === 'customer-edit' ? 'Customer quote editor' : detail === 'labor-sheet' ? 'Labour sheet' : 'Quote builder') :
     ({ 'job-spaces': 'Job Spaces', quotes: 'Quotes', 'material-orders': 'Orders', orders: 'Orders', invoices: 'Invoices',
       components: 'My Pricing Library', pricing: 'My Pricing Library', resources: 'Resources', assistant: 'Smart Assistant', account: 'Account',
       tutorials: 'Tutorials', inbox: 'Message Center', supplier: 'Supplier' } as Record<string, string>)[section] ?? 'Resources';
-  return { width: takeoff ? 'immersive' : editor ? 'editor' : focused ? 'focused' : 'wide',
+  return { width: takeoff ? 'immersive' : editor ? 'editor' : 'wide',
     // The user-facing shell has two states. Rail stays available internally,
     // but ordinary editor routes do not expose or force a third navigation state.
     defaultMode: (takeoff ? 'hidden' : 'expanded') as ShellMode, label };

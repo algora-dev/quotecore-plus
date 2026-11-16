@@ -984,6 +984,49 @@ export async function addQuoteComponentsBulk(
   return data;
 }
 
+/**
+ * Batch move (owner 2026-11-16): assign many quote_components to one work
+ * area — or back to "Whole job" with a null target — in ONE round trip.
+ * Powers the guided builder's whole-job → area movers. Measurements and
+ * entries hang off the component itself, so they ride along untouched.
+ */
+export async function moveQuoteComponentsToArea(componentIds: string[], roofAreaId: string | null) {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  const ids = [...new Set(componentIds.filter(Boolean))].slice(0, 100);
+  if (ids.length === 0) return;
+
+  // Ownership in one pass: every component must resolve to the SAME
+  // company-owned quote, and a non-null target area must sit on that quote.
+  // (The UI only ever offers areas of the current quote; enforce it here too.)
+  const { data: compsRaw, error: fetchError } = await supabase
+    .from('quote_components')
+    .select('id, quote_id')
+    .in('id', ids);
+  if (fetchError) throw new Error(fetchError.message);
+  const comps = (compsRaw ?? []) as Array<{ id: string; quote_id: string }>;
+  if (comps.length !== ids.length) throw new Error('Component not found');
+  const quoteIds = [...new Set(comps.map(c => c.quote_id))];
+  if (quoteIds.length !== 1) throw new Error('Components must belong to one quote');
+  const quoteId = quoteIds[0];
+  await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
+  if (roofAreaId) {
+    const { data: area, error: areaError } = await supabase
+           .from('quote_roof_areas')
+      .select('id, quote_id')
+      .eq('id', roofAreaId)
+      .single();
+    if (areaError || !area) throw new Error('Work area not found');
+    if (area.quote_id !== quoteId) throw new Error('Work area belongs to a different quote');
+  }
+
+  const { error } = await supabase
+    .from('quote_components')
+    .update({ quote_roof_area_id: roofAreaId })
+    .in('id', ids);
+  if (error) throw new Error(error.message);
+}
+
 export async function removeQuoteComponent(id: string) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();

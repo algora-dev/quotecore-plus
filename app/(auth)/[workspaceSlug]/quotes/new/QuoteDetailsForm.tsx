@@ -303,14 +303,14 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
         <section className="qce-section" aria-labelledby={`${id}-question`}>
           {choosing || !entryMode ? <>
             <h2 id={`${id}-question`}>Do you already have the measurements?</h2>
-            <p className="qce-subtitle">Two ways to start. The same pricing workspace afterwards.</p>
+            <p className="qce-subtitle">Three ways to start. The same pricing workspace afterwards.</p>
             <MeasurementChoiceCards ref={modeRef} value={entryMode} onSelect={selectMode}
-              digitalAvailable={digitalTakeoffAvailable} disabled={locked} describedBy={validationAttempted && !entryMode ? `${id}-mode-error` : undefined} />
+              digitalAvailable={digitalTakeoffAvailable} disabled={locked} describedBy={validationAttempted && !entryMode ? `${id}-mode-error` : undefined}
+              blankSelected={entryMode === 'blank'} onSelectBlank={() => selectMode('blank')} />
             {validationAttempted && !entryMode && <p id={`${id}-mode-error`} className="qce-error">Choose how to get your measurements.</p>}
-            <div className="qce-other"><span>Not using measurements?</span>
-              <QcButton size="sm" aria-pressed={entryMode === 'blank'} onClick={() => selectMode('blank')}>Write a line-by-line quote</QcButton>
-              {entryMode && <QcButton size="sm" onClick={() => { choiceChanged.current = true; setChoosing(false); }}>Keep current choice</QcButton>}
-            </div>
+            {entryMode && <div className="qce-other">
+              <QcButton size="sm" onClick={() => { choiceChanged.current = true; setChoosing(false); }}>Keep current choice</QcButton>
+            </div>}
           </> : <div className="qce-chosen">
             <div><p className="qce-help">{entryMode === 'blank' ? 'Standard quote' : 'Measurements'}</p>
               <h2 id={`${id}-question`} ref={choiceSummaryRef} tabIndex={-1}>{entryMode === 'manual' ? 'I have measurements' : entryMode === 'digital' ? 'I need to measure' : 'Line-by-line quote'}</h2>

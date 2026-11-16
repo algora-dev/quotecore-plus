@@ -20,6 +20,7 @@ import type {
 import { RoofAreaCard } from './RoofAreaCard';
 import { ExpandableComponent } from './ExpandableComponent';
 import { AddFromLibrary } from './AddFromLibrary';
+import { WholeJobMovePanel } from './MoveWholeJob';
 
 type RoofAreaUpdateHandler = ComponentProps<typeof RoofAreaCard>['onUpdate'];
 
@@ -35,6 +36,8 @@ interface Props {
   defaultCollectionId?: string | null;
   /** Batch add (owner 2026-10-17): all selected components in one round trip. */
   onAddFromLibraryBatch?: (libIds: string[], areaId: string | null, type: 'main' | 'extra') => Promise<QuoteComponentRow[]>;
+  /** Batch move (owner 2026-11-16): assign ungrouped whole-job components to a work area in one round trip. */
+  onMoveComponentsToArea?: (componentIds: string[], areaId: string) => Promise<void>;
   currency: string;
   totals: { totalMaterials: number; totalLabour: number; grandTotal: number };
   onCreateArea: (label: string) => Promise<QuoteRoofAreaRow | null>;
@@ -79,6 +82,7 @@ export function GuidedQuoteSetup({
   collections = [],
   defaultCollectionId,
   onAddFromLibraryBatch,
+  onMoveComponentsToArea,
   currency,
   totals,
   onCreateArea,
@@ -400,6 +404,11 @@ export function GuidedQuoteSetup({
                   appearance="guided"
                 />
 
+                {onMoveComponentsToArea && ungroupedComponents.length > 0 && roofAreas.length > 0 && (
+                  <WholeJobMovePanel components={ungroupedComponents} areas={roofAreas} currency={currency} busy={busy}
+                    onMove={onMoveComponentsToArea} />
+                )}
+
                 <div className="qb-guided-component-list">
                   {ungroupedComponents.length === 0 && <p className="qb-guided-empty-line">No components added yet.</p>}
                   {ungroupedComponents.map(component => (
@@ -522,6 +531,12 @@ export function GuidedQuoteSetup({
                   placeholder="Choose a component, product or service..."
                   appearance="guided"
                 />
+
+                {onMoveComponentsToArea && ungroupedComponents.length > 0 && (
+                  <WholeJobMovePanel components={ungroupedComponents} areas={[activeArea]} currency={currency} busy={busy}
+                    fixedTargetAreaId={activeArea.id} fixedTargetLabel={activeArea.label}
+                    onMove={onMoveComponentsToArea} />
+                )}
 
                 <div className="qb-guided-component-list">
                   {activeComponents.length === 0 && (

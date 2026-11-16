@@ -3,7 +3,7 @@ import { QuoteJourneyContext } from '@/app/components/quote-entry/QuoteJourneyCo
 import { useState, useRef, useEffect, useId, type ReactNode, Fragment } from 'react';
 import Link from 'next/link';
 import { COMPONENT_FOCUS_EVENT, componentFocusId } from '@/app/lib/smart-assistant/v2/component-focus';
-import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, addQuoteComponentsBulk, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins, combineLinealEntries, splitLinealEntries, createSharedMeasurement, removeSharedMeasurement } from '../actions';
+import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, addQuoteComponentsBulk, moveQuoteComponentsToArea, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins, combineLinealEntries, splitLinealEntries, createSharedMeasurement, removeSharedMeasurement } from '../actions';
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { entryLabel, addMoreLabel, measurementTypeLabel } from '@/app/lib/types';
@@ -593,6 +593,12 @@ export function QuoteBuilder({
     setComponents(prev => prev.map(c => c.id === compId ? { ...c, ...updates } : c));
   }
 
+  /** Batch move (owner 2026-11-16): whole-job components → work area, one round trip. */
+  async function handleMoveComponentsToArea(componentIds: string[], areaId: string) {
+    await moveQuoteComponentsToArea(componentIds, areaId);
+    setComponents(prev => prev.map(c => componentIds.includes(c.id) ? { ...c, quote_roof_area_id: areaId } : c));
+  }
+
 
   // Helper to format component quantity with correct units
   function formatQuantity(qty: number, measurementType: string): string {
@@ -856,6 +862,7 @@ export function QuoteBuilder({
           onRemoveEntry={handleRemoveEntry}
           onRemoveComponent={handleRemoveComponent}
           onUpdateComponent={handleUpdateCompSettings}
+          onMoveComponentsToArea={handleMoveComponentsToArea}
           onCombineEntries={handleCombineEntries}
           onSplitEntries={handleSplitEntries}
           sharedMeasurements={sharedMeasurements}
