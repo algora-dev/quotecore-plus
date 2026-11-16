@@ -170,6 +170,23 @@
 /* Restyle round (owner 2026-11-16): standard 1120px content width like the rest of the app, three equal start cards, bolder choice cards. */
 .qce-paths{gap:16px}
 @media (max-width: 1024px) { .qce-paths { grid-template-columns: 1fr; } }
+
+/* Owner 2026-11-16 round 3: dark-theme start cards following the pricing-setup
+   design standard (.ps-option family) — premium dark gradient, orange accents,
+   rotated hairline decoration, recommended-style selected state. */
+.qce-path{min-height:200px;padding:25px 24px;background:linear-gradient(140deg,#1f2b3a 0%,#121923 100%);border:1px solid #344253;color:#f6f8fb;position:relative;overflow:hidden;transition:border-color .16s,box-shadow .16s,transform .16s}
+.qce-path::after{content:'';pointer-events:none;position:absolute;right:-30px;bottom:-55px;width:190px;height:100px;border:1px solid rgba(239,244,250,.12);transform:rotate(-25deg);border-radius:18px}
+.qce-path:hover:not(:disabled){border-color:#ff9e63;background:linear-gradient(140deg,#1f2b3a 0%,#121923 100%);box-shadow:0 6px 24px rgba(18,25,35,.18),0 0 0 2px rgba(255,107,53,.2);transform:translateY(-2px)}
+.qce-path:active:not(:disabled){box-shadow:0 0 0 2px rgba(255,107,53,.35)}
+.qce-path[aria-pressed='true']{border-color:var(--qc-color-orange-core,#ff641f);background:linear-gradient(140deg,#3a281a 0%,#241a12 48%,#121923 100%);box-shadow:0 0 0 1px rgba(255,100,31,.25),0 10px 30px rgba(255,100,31,.10)}
+.qce-path[aria-pressed='true']::after{border-color:rgba(255,190,140,.18)}
+.qce-path:disabled{cursor:not-allowed;opacity:.55;background:linear-gradient(140deg,#232c38 0%,#161d27 100%)}
+.qce-path-icon{background:rgba(255,107,53,.14);border:1px solid rgba(255,150,90,.4);color:#ffb27d}
+.qce-path-copy strong{color:#fff;letter-spacing:-.01em}
+.qce-path-copy>span{color:#c6d0dc}
+.qce-path-copy small{color:#ffb27d;font-weight:700}
+.qce-path-check{color:#ffb27d}
+@media (prefers-reduced-motion:reduce){.qce-path{transition:none}.qce-path:hover:not(:disabled){transform:none}}
 .qce-path{min-height:172px;padding:24px;gap:14px;transition:border-color .16s,box-shadow .16s,transform .16s}
 .qce-path:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(18,25,35,.10),0 0 0 2px rgba(255,107,53,.20)}
 .qce-path-icon{width:40px;height:40px;flex:0 0 40px;background:var(--qc-color-orange-wash,#fff4eb);border-radius:12px}
