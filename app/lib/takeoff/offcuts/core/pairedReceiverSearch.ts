@@ -166,7 +166,7 @@ function transact(r: SolveRequest, seed: Solution, c: Candidate, check: () => vo
     (fingerprint(p) !== fingerprint(s.placements.find(q => q.demandId === p.demandId)) ||
       fingerprint(originalDemands.get(p.demandId)) !== fingerprint(nowDemands.get(p.demandId)))))
     throw new PairedReceiverRejection('unrelated-bank-changed');
-  s.layoutLabel = c.chainMode ? 'Reversed banks — linked valley cuts' : 'Reversed banks — paired hip families'; s.objective = 'installation';
+  s.layoutLabel = c.chainMode ? 'Reversed banks – linked valley cuts' : 'Reversed banks – paired hip families'; s.objective = 'installation';
   s.layoutId = planSignature(s); s.orderReady = false; s.status = 'prototype-review';
   s.issues = s.issues.filter(i => i.severity !== 'error');
   return s;

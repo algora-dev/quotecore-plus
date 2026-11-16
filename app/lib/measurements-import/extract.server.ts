@@ -3,7 +3,7 @@ import { xlsxToMatrices } from '@/app/lib/pricing-setup/parse-spreadsheet';
 import { kindFromUnit, type ExtractedMeasurementLine } from './domain';
 
 /** Strict AI output contract: measurement/quantity lines only. `kind` uses the
- * AI's physical reading (area/length/count) — the source unit remains the
+ * AI's physical reading (area/length/count) – the source unit remains the
  * authority and is re-derived locally by the normalizer. */
 const FIELD_SCHEMA = {
   type: 'object', additionalProperties: false,
@@ -27,7 +27,7 @@ const FIELD_SCHEMA = {
 } as const;
 
 const SYSTEM = `You are a specialist roofing MEASUREMENT extraction service for QuoteCore+.
-Extract measurement and quantity lines from the user's text, photograph, PDF or spreadsheet content. Measurements and quantities ONLY — never prices, costs, rates or product prices from price lists.
+Extract measurement and quantity lines from the user's text, photograph, PDF or spreadsheet content. Measurements and quantities ONLY – never prices, costs, rates or product prices from price lists.
 Extract up to 60 distinct measured items, preserving the source order. sourceIndex starts at 1.
 GROUP repeated measurements of the SAME item into ONE line with multiple entries: five separate 10 m hip runs become one line labelled hips with entries [10,10,10,10,10]. A single written total (50 m) stays one entry.
 kind: "area" for surface/coverage measurements (m², ft², squares), "length" for linear runs (ridge, hip, valley, eaves, barge, gutter in m/ft), "count" for counted items (ea, pcs, no).

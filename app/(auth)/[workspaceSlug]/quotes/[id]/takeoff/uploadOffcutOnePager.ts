@@ -36,7 +36,7 @@ export async function uploadOffcutOnePagerFile(
   return saveGeneratedQuoteFileMetadata({
     companyId: profile.company_id,
     fileType: 'offcuts',
-    fileName: `Offcut plan — ${safeLabel}.pdf`,
+    fileName: `Offcut plan – ${safeLabel}.pdf`,
     storagePath: data.path,
     quoteId,
   });
@@ -78,7 +78,7 @@ export async function uploadOffcutOverlayImageFile(
   return saveGeneratedQuoteFileMetadata({
     companyId: profile.company_id,
     fileType: 'offcuts',
-    fileName: `Offcut plan image — ${safeLabel}.${ext}`,
+    fileName: `Offcut plan image – ${safeLabel}.${ext}`,
     storagePath: data.path,
     quoteId,
   });

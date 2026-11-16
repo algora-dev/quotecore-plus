@@ -531,7 +531,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     return `<details data-lazy-trace="${id}" ${loadedTraces.has(id)?'open':''}><summary>Detailed decision log</summary>${lead}<div data-trace-body="${id}">${loadedTraces.has(id)?traceBody(trace):'<p class="qc-muted">Open to load details. The full retained trace is always included in Export diagnostics.</p>'}</div></details>`;
   }
   function traceBody(trace:DecisionTrace):string {
-    return `<ol class="qc-trace-events">${trace.events.slice(0,100).map(e=>`<li><details><summary>${esc(e.action)} — ${esc(e.message)}</summary>${e.data?`<pre>${esc(JSON.stringify(e.data,null,2))}</pre>`:''}</details></li>`).join('')}</ol><details><summary>Candidate comparisons</summary><pre>${esc(JSON.stringify(trace.candidates,null,2))}</pre></details>`;
+    return `<ol class="qc-trace-events">${trace.events.slice(0,100).map(e=>`<li><details><summary>${esc(e.action)} – ${esc(e.message)}</summary>${e.data?`<pre>${esc(JSON.stringify(e.data,null,2))}</pre>`:''}</details></li>`).join('')}</ol><details><summary>Candidate comparisons</summary><pre>${esc(JSON.stringify(trace.candidates,null,2))}</pre></details>`;
   }
   function render(resetScroll = false): void {
     if(disposed)return;

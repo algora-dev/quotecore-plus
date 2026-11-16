@@ -403,14 +403,14 @@ export default async function QuoteSummaryPage({
   return (
     <div className="qc-job-space" data-qc-ui="v2">
       {quoteUsesPracticePricing && <div role="alert" className="m-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
-        <strong>PRACTICE QUOTE — EXAMPLE PRICES, NOT A CUSTOMER ESTIMATE.</strong> This quote includes unverified starter-library pricing. Use it to learn measuring and quoting. Customer sending and new public acceptance links are blocked. After verifying your real costs in My Pricing Library, create a fresh quote. The original quote stays in practice mode.
+        <strong>PRACTICE QUOTE – EXAMPLE PRICES, NOT A CUSTOMER ESTIMATE.</strong> This quote includes unverified starter-library pricing. Use it to learn measuring and quoting. Customer sending and new public acceptance links are blocked. After verifying your real costs in My Pricing Library, create a fresh quote. The original quote stays in practice mode.
       </div>}
       <JobHeader title={quote.job_name || quote.site_address || quote.customer_name}
         customer={quote.customer_name} address={quote.site_address} quoteLabel={`Quote #${quote.quote_number || 'DRAFT'}`}
         status={jobStatus.label} statusTone={jobStatus.tone} updatedLabel={formatJobDate(quote.updated_at)}
         backHref={backHref} backLabel={backLabel} editHref={editHref}
         primarySend={!quoteUsesPracticePricing && hasCustomerQuote && !quote.accepted_at && !quote.declined_at && !quote.withdrawn_at && overviewModel.revisionCount === 0}
-        sendAction={quoteUsesPracticePricing ? <span className="text-xs font-semibold text-amber-700">Practice only — sending disabled</span> :
+        sendAction={quoteUsesPracticePricing ? <span className="text-xs font-semibold text-amber-700">Practice only – sending disabled</span> :
             <SendDocumentButton
               entityKind="quote"
               entityId={id}

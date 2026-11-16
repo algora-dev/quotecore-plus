@@ -76,7 +76,7 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
   }, []);
 
   // Free Workspace (owner 2026-11-04): the FreeWorkspaceCard is their tier
-  // surface and the build-setup page is their purchase path — never show the
+  // surface and the build-setup page is their purchase path – never show the
   // subscriber change wizard to a company with no Stripe subscription.
   if (info?.free) return null;
 
@@ -116,7 +116,7 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
           </div>
         </div>
         {/* Admin-granted / comped setups (owner 2026-11-04): no Stripe
-            subscription to swap, but self-serve is UNIFIED — same "Change my
+            subscription to swap, but self-serve is UNIFIED – same "Change my
             plan" path as everyone else; checkout converts the grant into a
             real subscription in place. */}
         <div className="flex flex-col sm:flex-row gap-2 sm:items-start sm:justify-end">
@@ -128,7 +128,7 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
                 Change my plan
               </button>
               <p className="text-xs text-slate-500 sm:text-right leading-relaxed max-w-[280px]">
-                Your current setup is complimentary — it keeps working until you pick your own plan. <Link href="?tab=support" className="font-medium text-orange-600 hover:underline">Contact us</Link> any time for help.
+                Your current setup is complimentary – it keeps working until you pick your own plan. <Link href="?tab=support" className="font-medium text-orange-600 hover:underline">Contact us</Link> any time for help.
               </p>
             </div>
           ) : (

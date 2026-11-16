@@ -10,7 +10,7 @@ function lockPage(): () => void {
 }
 /** Native modal: top-layer rendering, inert background, Escape and focus containment.
  * No portal needed; scoped QuoteCore tokens stay inherited. Real booking remains host-owned.
- * bare=true (owner 2026-11-03): chrome-less variant for embedded calculators — the
+ * bare=true (owner 2026-11-03): chrome-less variant for embedded calculators – the
  * title/eyebrow are screen-reader-only, the close button floats as a chip, and the
  * qcp-dialog-bare CSS collapses the modal to a compact single-column host. */
 export function FocusDialog({ title, eyebrow, onClose, wide, bare, children }: {

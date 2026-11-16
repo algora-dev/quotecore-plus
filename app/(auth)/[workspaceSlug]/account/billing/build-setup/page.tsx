@@ -68,13 +68,13 @@ export default async function BuildSetupPage() {
     && snapRow.stripe_subscription_id.startsWith('admin-free-');
 
   // Checkout-eligible (owner 2026-11-04): ANY custom company with no real
-  // Stripe subscription yet — free workspaces AND comped team-granted
+  // Stripe subscription yet – free workspaces AND comped team-granted
   // accounts. The purchase path is identical for both; paid subscribers use
   // the in-app change wizard in Billing instead.
   checkoutEligible = !co?.stripe_subscription_id;
 
   // Marker grants (free/comped) store CALCULATOR-vocabulary codes directly
-  // (core_high, scan_high, ...) — not the catalog vocabulary the paid
+  // (core_high, scan_high, ...) – not the catalog vocabulary the paid
   // reconciler writes (core_access, capacity_high, ...). The strict decoder
   // accepts catalog codes only, so run it for REAL subscribers; filter marker
   // codes to the known calculator set instead. This throw was the build-setup
@@ -107,7 +107,7 @@ export default async function BuildSetupPage() {
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{checkoutEligible ? 'Change your plan' : 'Review your setup'}</h1>
           <p className="mt-2 text-sm md:text-base text-slate-600">
             {checkoutEligible
-              ? 'Configure the setup that fits your work, then pay securely to activate it. Your current workspace keeps working — nothing changes until payment completes.'
+              ? 'Configure the setup that fits your work, then pay securely to activate it. Your current workspace keeps working – nothing changes until payment completes.'
               : 'Explore a setup that fits your work now. Your current subscription stays unchanged while you compare.'}
           </p>
         </div>

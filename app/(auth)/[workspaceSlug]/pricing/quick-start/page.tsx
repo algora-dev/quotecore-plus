@@ -17,7 +17,7 @@ export default async function QuickStartPage({params,searchParams}:{params:Promi
    <Link href={`/${workspaceSlug}/pricing/setup`} className="ps-back"><QcIcon name="back"/> Setup options</Link>
    <header className="ps-head" style={{marginBottom:8}}>
      <p className="ps-eyebrow">QUICK START · ONE-TIME SERVICE</p>
-     <h1 id="quick-start-title">We set your pricing up — your first 15 components.</h1>
+     <h1 id="quick-start-title">We set your pricing up – your first 15 components.</h1>
      <p>Send your existing prices and product or service details. We'll extract what we can, ask about anything missing, and prepare up to 15 Smart Components in your workspace for your review. The fastest way past the learning curve to your first quote.</p>
    </header>
    <QuickStartClient checkout={checkout||''} orders={orders}/>

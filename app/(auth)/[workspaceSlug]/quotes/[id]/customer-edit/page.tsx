@@ -74,7 +74,7 @@ export default async function CustomerQuoteEditPage({
 
   return (
     <>{demo && <div className="border-b border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-900">DEMO - NOT A REAL QUOTE · Example pricing only. Open the safe customer preview from the guide.</div>}
-    {quoteUsesPracticePricing && <div role="alert" className="border-b border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">PRACTICE QUOTE — Contains illustrative, unverified material and labour rates. For internal learning only. Customer sending and acceptance links are blocked. Verify your pricing, then create a new quote to send.</div>}
+    {quoteUsesPracticePricing && <div role="alert" className="border-b border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">PRACTICE QUOTE – Contains illustrative, unverified material and labour rates. For internal learning only. Customer sending and acceptance links are blocked. Verify your pricing, then create a new quote to send.</div>}
     <CustomerQuoteEditor
       practicePricing={quoteUsesPracticePricing}
       showWatermark={showWatermark}

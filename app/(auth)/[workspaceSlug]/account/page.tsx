@@ -110,7 +110,7 @@ export default async function AccountPage() {
   const userEmail = user?.email || authUser?.email || '';
 
   // Free accounts get the FreeWorkspaceCard as their ONLY plan surface on
-  // Billing — the paid usage panel and subscriber card are never sent to
+  // Billing – the paid usage panel and subscriber card are never sent to
   // them at all (no flash, owner 2026-11-04).
   const isFreeWorkspace = typeof freeGrantRes?.data?.stripe_subscription_id === 'string'
     && (freeGrantRes.data.stripe_subscription_id as string).startsWith('admin-free-');

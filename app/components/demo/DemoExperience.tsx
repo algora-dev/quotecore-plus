@@ -379,7 +379,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
               <p>Open <b className="qc-demo-act">Test Component</b>, enter the measurement above, then choose <b className="qc-demo-act">Calculate</b>.</p>
             </div>}
             {step.target === 'takeoff' && (guidedTakeoffDone ? <div className="qc-demo-note" role="status">
-              <strong>Nice — your component is on the plan.</strong>
+              <strong>Nice – your component is on the plan.</strong>
               <p>Keep exploring the canvas, or save and move to the next step.</p>
               <div className="qc-demo-actions"><QcButton variant="primary" onClick={() => window.dispatchEvent(new Event('qc-demo-takeoff-save-continue'))}>Save &amp; continue</QcButton><QcButton variant="ghost" onClick={collapse}>Keep exploring</QcButton></div>
             </div> : <p className="qc-demo-note">{triedAdding || session.skylightAdded ? <><strong>Nice, you added your component.</strong> Keep experimenting if you like, then {touchTakeoff ? <>press <strong className="qc-demo-act">Save &amp; continue</strong></> : <>click <strong className="qc-demo-act">Finish &amp; Save</strong></>} to progress. Whatever is on the final canvas is what you save.</> : <><strong>Add your component{state.guided_created_component_name ? `: “${state.guided_created_component_name}”` : ''}.</strong> {touchTakeoff ? <><strong>For the best experience, turn your phone sideways and turn off the tab bar in horizontal view in your phone settings.</strong> Open the <strong className="qc-demo-act">Components</strong> rail on the right. In <strong className="qc-demo-act">Component</strong>, the second dropdown, choose the component you just created. Tap <strong className="qc-demo-act">+ New entry</strong>, then draw the area on the plan. The prepared roof is already measured; your additions are real.</> : <>Click the <strong className="qc-demo-act">+ Add component</strong> button in the Components panel, find the component you named, then click it. In the toolbar under “Area”, select <strong className="qc-demo-act">Polygon</strong> or <strong className="qc-demo-act">Rectangle</strong> and draw the area on the plan. The prepared scan is precomputed; your measurements and edits are real.</>}</>}</p>)}
@@ -393,7 +393,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
                 <p className="qc-demo-copy-status" role="status">{copyStatus || (units ? assistantInstruction : 'Loading your measurement system…')}</p>
                 {assistantFoundReady && <div className="qc-demo-note qc-demo-assistant-found" role="status">
                   <strong>{assistantFoundCount === 1 ? 'Matching quote found.' : `${assistantFoundCount} matching quotes found.`}</strong>
-                  <p>Open the suggested <b className="qc-demo-act">quote</b> in Smart Assistant if you want to inspect the Job Space. You can also finish now — you’ve completed the find task.</p>
+                  <p>Open the suggested <b className="qc-demo-act">quote</b> in Smart Assistant if you want to inspect the Job Space. You can also finish now – you’ve completed the find task.</p>
                   <div className="qc-demo-actions"><QcButton variant="primary" pending={pending} onClick={() => void runCommand({ action: 'finish-assistant' })}>Finish Smart Assistant guide</QcButton></div>
                 </div>}
 

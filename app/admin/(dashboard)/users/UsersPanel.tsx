@@ -47,7 +47,7 @@ function formatLastActive(iso: string | null): string {
 }
 
 function PlanBadge({ code, status, hasSub, billingModel, free }: { code: string | null; status?: string | null; hasSub?: boolean; billingModel?: string | null; free?: boolean }) {
-  // Free Workspace signups (owner 2026-11-04): distinct slate "Free" pill —
+  // Free Workspace signups (owner 2026-11-04): distinct slate "Free" pill –
   // free-tier users, not custom-plan subscribers.
   if (free) {
     return (

@@ -41,7 +41,7 @@
           "title": "Choose the measurement type",
           "elementId": "component-measurement",
           "until": "selected:component-measurement",
-          "say": "How is it measured — area, lineal, quantity, or fixed?"
+          "say": "How is it measured – area, lineal, quantity, or fixed?"
         },
         {
           "id": "create-component-6",

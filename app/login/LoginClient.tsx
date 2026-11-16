@@ -116,7 +116,7 @@ function LoginForm() {
             <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
               <p className="text-sm font-medium text-blue-900">This email already has an account</p>
               <p className="text-xs text-blue-700 mt-1">
-                We&apos;ve emailed you a sign-in link — open it from any device to continue. You can also use &ldquo;Email me a login link&rdquo; below.
+                We&apos;ve emailed you a sign-in link – open it from any device to continue. You can also use &ldquo;Email me a login link&rdquo; below.
               </p>
             </div>
           )}

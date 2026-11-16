@@ -157,7 +157,7 @@ function canonicalForComponent(entry: number, unit: string, family: 'area' | 'li
 }
 
 /** Confirm: selected lines become real quote components with entries. Partial
- * success by design — failing lines stay for review, imported ones never duplicate. */
+ * success by design – failing lines stay for review, imported ones never duplicate. */
 export async function confirmMeasurementImport(importId: string): Promise<
   { ok: boolean; imported: number; total: number; failures: string[]; quoteId: string } | { ok: false; message: string }
 > {
@@ -186,7 +186,7 @@ export async function confirmMeasurementImport(importId: string): Promise<
       const family = component ? familyOf(component.measurement_type) : 'special';
       if (family === 'area' || family === 'lineal') {
         const badUnit = data.entries.some(e => canonicalForComponent(e.value, data.unit, family) === null);
-        if (badUnit) problems.push(`The unit "${data.unit || '—'}" is not recognised. Set the unit (m, m², ft, ft², sq, ea…) and retry.`);
+        if (badUnit) problems.push(`The unit "${data.unit || '–'}" is not recognised. Set the unit (m, m², ft, ft², sq, ea…) and retry.`);
       }
       if (problems.length) { failures.push(`${label}: ${problems[0]}`); continue; }
       if (!component) { failures.push(`${label}: that component is not in your library.`); continue; }

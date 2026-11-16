@@ -1,5 +1,5 @@
 /* Shared CSS-only hover tooltip. Single source of truth for QuoteCore+ v2
-   surfaces — attribute `data-qc-tip`, optional `qc-tip-above` modifier for
+   surfaces – attribute `data-qc-tip`, optional `qc-tip-above` modifier for
    elements near the page bottom (e.g. footer CTAs).
    Owner 2026-11-16: replaces the two conflicting global [data-tip] rules that
    overrode each other depending on stylesheet load order. */

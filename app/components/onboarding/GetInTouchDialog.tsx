@@ -35,7 +35,7 @@ function optionsFor(source: string): Option[] {
     {
       id: 'message',
       title: 'Send us a message',
-      sub: 'A quick question or something not working — we reply fast.',
+      sub: 'A quick question or something not working – we reply fast.',
       href: contactHref(`${source}_message`),
       icon: CHAT_ICON,
     },

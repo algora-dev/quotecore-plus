@@ -220,7 +220,7 @@ export function searchInstallationPlans(r:SolveRequest,options:InstallationSearc
             donorFaceIds:scope.donorFaceIds,receiverFaceIds:scope.receiverFaceIds,siteSetoutConfirmed:false,reuseEndTrimMm:0};
           s.installationPlan.connectedReversal=deriveConnectedDonorCertificate(r,s,scope,planSignature(previous));
           if(!connectedReversalReferenceMatches(previous,s))throw new Error('connected-reference-mismatch');
-          s.layoutLabel='Reversed banks — connected cuts';
+          s.layoutLabel='Reversed banks – connected cuts';
           accept(s,variant.id);
         }catch(e){
           if(e instanceof InstallationDeadline||e instanceof Error&&/cancel|time limit/i.test(e.message))throw e;

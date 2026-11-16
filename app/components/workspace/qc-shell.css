@@ -169,7 +169,7 @@ html[data-takeoff-immersive='touch'] .qc-main { max-width:none; padding:0; }
   white-space: nowrap;
 }
 /* Owner 2026-11-04: active segment uses the EXACT v2 primary-button recipe
-   (qc.css C01 primary) — same gradient, border, ink and highlight tokens as
+   (qc.css C01 primary) – same gradient, border, ink and highlight tokens as
    the Guided Walkthrough / Add-your-pricing buttons. No bespoke treatment. */
 .qc-demo-toggle-seg.is-active {
   background: var(--qc-gradient-primary, linear-gradient(135deg, #FF641F 0%, #FF8A3D 55%, #FFB36B 100%));

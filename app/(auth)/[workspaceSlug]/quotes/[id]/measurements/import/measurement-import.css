@@ -60,7 +60,7 @@
 .mi-added-check{color:var(--qc-color-success-ink);background:var(--qc-color-success-bg)}
 .mi-skip-mark{color:var(--qc-text-secondary);background:var(--qc-bg-subtle)}
 
-/* Review round 3 (owner 2026-11-16): quote-builder-style display — numbered
+/* Review round 3 (owner 2026-11-16): quote-builder-style display – numbered
    entry rows with waste-adjusted values, quantity + item&labour figures,
    inline create-component picker. Appended last; grep below if overriding. */
 .mi-entries{display:grid;gap:6px;align-items:stretch}

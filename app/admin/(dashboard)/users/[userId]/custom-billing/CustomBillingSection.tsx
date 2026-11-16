@@ -2,7 +2,7 @@
 
 /**
  * Admin custom-billing section (2026-10-12): mirrors the owner-verified user
- * flows — the same calculator, the same preview/confirm shape. Two modes:
+ * flows – the same calculator, the same preview/confirm shape. Two modes:
  *  - Grant/comp (no Stripe charge; legacy->custom migration path)
  *  - Stripe-linked change (admin-initiated swap + proration, update.ts path)
  */

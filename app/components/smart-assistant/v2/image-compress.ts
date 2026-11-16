@@ -3,7 +3,7 @@
 /**
  * Client-side photo compression before Smart Assistant upload (owner 2026-10-31).
  * Serverless request bodies cap near 4.5 MB, so phone photos are downscaled to
- * ~2000px JPEG first — the same approach the free quote generator uses. If the
+ * ~2000px JPEG first – the same approach the free quote generator uses. If the
  * browser cannot process the image, the original file is returned untouched and
  * the server-side size/type guard rejects it with a clear message.
  */

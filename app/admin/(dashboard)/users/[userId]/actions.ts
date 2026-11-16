@@ -235,7 +235,7 @@ export async function adminOverridePlan(
 }
 
 // ---------------------------------------------------------------------------
-// P8: Custom-setup (V5) admin powers — the grant moved to
+// P8: Custom-setup (V5) admin powers – the grant moved to
 // custom-billing/actions.ts (2026-10-12): it now re-validates the calculator
 // setup server-side against the pinned catalogue instead of a coarse tier
 // form, so admin grants match checkout/change entitlements exactly.

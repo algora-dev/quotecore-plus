@@ -121,7 +121,7 @@ export function QuotePreview({
   return (
     <div className="qc-output qc-output-quote">
       {practicePricing && <div role="note" style={{border:'2px solid #b45309',color:'#92400e',background:'#fffbeb',padding:'10px 16px',marginBottom:'14px',fontWeight:800,fontSize:'14px',textAlign:'center'}}>
-        PRACTICE QUOTE — ILLUSTRATIVE PRICES ONLY — NOT FOR CUSTOMER USE
+        PRACTICE QUOTE – ILLUSTRATIVE PRICES ONLY – NOT FOR CUSTOMER USE
       </div>}
       <DocumentHeader title={documentTitle} number={`#${quote.quote_number || 'DRAFT'}`}
         companyName={companyName} logo={companyLogoUrl} selection={selection}

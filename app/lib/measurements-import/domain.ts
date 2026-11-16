@@ -144,10 +144,10 @@ export function validateForImport(
     problems.push(`This line looks like ${line.kind === 'area' ? 'an area' : line.kind === 'lineal' ? 'a length' : 'a count'} but the chosen component measures ${family === 'area' ? 'area' : family === 'lineal' ? 'length' : 'counts'}. Swap the component or edit the line.`);
   }
   if (toCanonicalValue(line.entries[0]?.value ?? NaN, line.unit, line.kind) === null && line.kind !== 'quantity') {
-    problems.push(`The unit "${line.unit || '—'}" was not recognised. Enter it as m, m², ft, ft², sq or ea.`);
+    problems.push(`The unit "${line.unit || '–'}" was not recognised. Enter it as m, m², ft, ft², sq or ea.`);
   }
   if (line.combineEntries && family === 'lineal' && line.entries.length < 2) {
-    problems.push('Nothing to combine yet — add another entry first.');
+    problems.push('Nothing to combine yet – add another entry first.');
   }
   void resolvedBasis(line, sessionDefault);
   return problems;

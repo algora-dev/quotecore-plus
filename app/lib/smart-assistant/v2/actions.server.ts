@@ -195,18 +195,18 @@ export async function proposeLibraryComponentCreate(client: SupabaseClient, acce
         collection_id: collection.id, is_active: true, sort_order: nextSort,
     };
     const changes: ChangeRow[] = [
-        { label: 'Name', before: '—', after: input.name },
-        { label: 'Collection', before: '—', after: collection.name },
-        { label: 'Measured as', before: '—', after: measurementLabel(input.measurement_type) },
-        { label: 'Material rate', before: '—', after: String(input.material_rate) },
-        { label: 'Labour rate', before: '—', after: String(input.labour_rate) },
-        { label: 'Waste', before: '—', after: wasteLabel(input.waste_type, input.waste_percent, input.waste_fixed) },
-        { label: 'Pitch factor', before: '—', after: pitchLabel(input.pitch_type) },
+        { label: 'Name', before: '–', after: input.name },
+        { label: 'Collection', before: '–', after: collection.name },
+        { label: 'Measured as', before: '–', after: measurementLabel(input.measurement_type) },
+        { label: 'Material rate', before: '–', after: String(input.material_rate) },
+        { label: 'Labour rate', before: '–', after: String(input.labour_rate) },
+        { label: 'Waste', before: '–', after: wasteLabel(input.waste_type, input.waste_percent, input.waste_fixed) },
+        { label: 'Pitch factor', before: '–', after: pitchLabel(input.pitch_type) },
     ];
     if (input.sold_by !== null)
-        changes.push({ label: 'Sold as', before: '—', after: soldLabel(input.sold_by) });
+        changes.push({ label: 'Sold as', before: '–', after: soldLabel(input.sold_by) });
     if (input.cover_width_mm !== null)
-        changes.push({ label: 'Cover width (mm)', before: '—', after: String(input.cover_width_mm) });
+        changes.push({ label: 'Cover width (mm)', before: '–', after: String(input.cover_width_mm) });
     return storeProposal(access, runId, { kind: 'library_create', target: null, targetKind: 'library', targetId: id, sections: ['components'], before: { collection: { id: collection.id, name: collection.name }, duplicate_check: existing.length }, after: { component },
         title: `Add library component ${input.name.slice(0, 160)}`, changes,
         note: 'Not applied yet. Confirming adds this one component to your reusable library. Existing quotes are untouched.', permissionRevision: access.permissionRevision }, { kind: 'library_create', component, collection_id: collection.id });

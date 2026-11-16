@@ -99,7 +99,7 @@ export function AddToPhone() {
           <div><p className="text-sm font-semibold text-slate-900">1. Scan with your phone camera</p><p className="mt-1 text-sm leading-6 text-slate-600">Open the link and sign in if asked. Then choose your phone below for the last few steps.</p>{url && <p className="mt-3 break-all rounded-lg bg-slate-50 px-2.5 py-2 text-[11px] text-slate-500">{url}</p>}</div>
         </div>}
 
-        {mobile && <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm leading-6 text-slate-700"><strong className="text-slate-950">You’re already on your phone.</strong> No QR code needed—follow the steps below.</div>}
+        {mobile && <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm leading-6 text-slate-700"><strong className="text-slate-950">You’re already on your phone.</strong> No QR code needed–follow the steps below.</div>}
 
         <div className="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1" role="tablist" aria-label="Phone type">
           <button type="button" role="tab" aria-selected={platform === 'ios'} onClick={() => setPlatform('ios')} className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition ${platform === 'ios' ? 'bg-gradient-to-r from-[#FF641F] via-[#FF8A3D] to-[#FFB36B] text-[#191B20] shadow-sm' : 'text-slate-600 hover:bg-white'}`}>iPhone / iPad</button>

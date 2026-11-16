@@ -556,7 +556,7 @@ export async function loadCustomSetupInfo(): Promise<{ ok: boolean; monthlyCents
     const resolved = await resolveBillingType(profile.company_id).catch(() => null);
     const adminGranted = resolved?.kind === 'custom_admin_granted';
     // Free Workspace marker (owner 2026-11-04): 'admin-free-*' grant ids. These
-    // are free-tier users with NO subscription to change — the FreeWorkspaceCard
+    // are free-tier users with NO subscription to change – the FreeWorkspaceCard
     // is their tier surface and the build-setup page is their purchase path.
     const free = String(data.stripe_subscription_id ?? '').startsWith('admin-free-');
     let creditBalanceCents = 0;

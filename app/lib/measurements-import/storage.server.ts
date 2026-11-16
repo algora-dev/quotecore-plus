@@ -46,10 +46,10 @@ function lineDataFromExtraction(line: ExtractedMeasurementLine, components: Matc
   const kind = line.kind ?? unitKind;
   const match = matchLine(line.label, kind, components);
   const warnings: string[] = [];
-  if (!line.unit) warnings.push('No unit was found — set it while reviewing.');
-  else if (kindFromUnit(line.unit) === null) warnings.push(`The unit "${line.unit}" was not recognised — check it while reviewing.`);
-  if (line.kind && unitKind && line.kind !== unitKind) warnings.push('Source unit and reading disagree — check the measurement kind.');
-  if (match.confidence === 'low') warnings.push('This match is a guess — check the component.');
+  if (!line.unit) warnings.push('No unit was found – set it while reviewing.');
+  else if (kindFromUnit(line.unit) === null) warnings.push(`The unit "${line.unit}" was not recognised – check it while reviewing.`);
+  if (line.kind && unitKind && line.kind !== unitKind) warnings.push('Source unit and reading disagree – check the measurement kind.');
+  if (match.confidence === 'low') warnings.push('This match is a guess – check the component.');
   return measurementLineSchema.parse({
     label: line.label,
     unit: line.unit,

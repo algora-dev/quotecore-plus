@@ -10,7 +10,7 @@
  */
 
 /** Founder welcome video (mp4, served same-origin from
- * public/onboarding/welcome-video.mp4 — Shaun's recording, added 2026-11-14).
+ * public/onboarding/welcome-video.mp4 – Shaun's recording, added 2026-11-14).
  * If emptied, the modal falls back to the Done For You overview video below. */
 export const WELCOME_VIDEO_URL = '/onboarding/welcome-video.mp4';
 

@@ -10,7 +10,7 @@ const looseAdmin = () => createAdminClient() as unknown as { from(table: string)
 
 /**
  * Free Workspace tier card (owner request 2026-11-02): makes the tier real
- * and visible in Account → Billing — every quota with live usage and the
+ * and visible in Account → Billing – every quota with live usage and the
  * monthly reset date. Self-gating: renders nothing for non-free setups.
  */
 export async function FreeWorkspaceCard({ companyId, slug, storageUsedBytes = 0 }: { companyId: string; slug: string; storageUsedBytes?: number | null }) {

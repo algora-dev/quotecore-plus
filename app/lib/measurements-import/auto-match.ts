@@ -1,5 +1,5 @@
 /** Pure auto-match: extracted measurement lines ↔ pricing-library components.
- * No IO — trivially unit-testable. Scoring blends token overlap with the
+ * No IO – trivially unit-testable. Scoring blends token overlap with the
  * roofing rulebook's keyword slots (the same rules the pricing assistant
  * uses), then guards against measurement-family mismatches. */
 import { classifyRoofing } from '@/app/lib/pricing-setup/roofing-rules';

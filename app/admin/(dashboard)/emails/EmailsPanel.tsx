@@ -114,7 +114,7 @@ export function EmailsPanel({
         </div>
       ) : (
         <div className="mt-4 rounded-xl border border-dashed border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          No active template found — seed outreach_templates first.
+          No active template found – seed outreach_templates first.
         </div>
       )}
 
@@ -216,7 +216,7 @@ export function EmailsPanel({
               onClick={send}
               className="px-4 py-2.5 text-sm font-semibold rounded-xl text-white bg-red-600 hover:bg-red-700 transition disabled:opacity-40"
             >
-              {sending ? 'Sending…' : `Confirm — send to ${selectedEligible.length}`}
+              {sending ? 'Sending…' : `Confirm – send to ${selectedEligible.length}`}
             </button>
             <button
               type="button"

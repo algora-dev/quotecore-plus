@@ -14,7 +14,7 @@ const num = (v: number): string => v.toFixed(2).replace(/\.?0+$/, '');
 /** Stored values are canonical metric; show them in the draft's measurement system. */
 const measurementValue = (value: unknown, type: string, system: string): string => {
   const n = typeof value === 'number' && Number.isFinite(value) ? value : null;
-  if (n === null) return String(value ?? '—');
+  if (n === null) return String(value ?? '–');
   const area = AREA_TYPES.has(type), linear = LINEAR_TYPES.has(type), volume = type === 'volume_3d';
   if (!area && !linear && !volume) return String(n);
   if (system === 'metric') return `${num(n)} ${area ? 'm²' : volume ? 'm³' : 'm'}`;
@@ -66,15 +66,15 @@ function componentText(c: Row, system: string, currency: string): string {
 export function draftReviewDiff(before: PlannedDraft, after: PlannedDraft): ChangeRow[] {
   const changes: ChangeRow[] = [];
   // A first proposal (nothing saved yet) is a creation summary, not a diff:
-  // show each value once instead of "— → value" / "Not present → value" noise.
+  // show each value once instead of "– → value" / "Not present → value" noise.
   const creating = !before.children.areas.length && !before.children.components.length && Object.keys(before.params).length === 0;
   const system: MeasurementSystem = normalizeMeasurementSystem(after.params.measurementSystem as MeasurementSystem | null | undefined);
   const blank = (value: string): string => creating ? '' : value;
   for (const [key,label] of [['customerName','Customer'],['jobName','Job'],['siteAddress','Site address']] as const) {
     if (before.params[key] !== after.params[key]) {
-      const render = (v: unknown) => String(v ?? '—');
+      const render = (v: unknown) => String(v ?? '–');
       const prior = render(before.params[key]), next = render(after.params[key]);
-      if (creating && (next === '—' || next === '')) continue; // nothing to show for an unset field on creation
+      if (creating && (next === '–' || next === '')) continue; // nothing to show for an unset field on creation
       changes.push({label,before:creating?'':prior,after:next});
     }
   }

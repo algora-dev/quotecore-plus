@@ -108,7 +108,7 @@ export function OnboardingNudges({
         open={nudge === 'pricing'}
         size="md"
         title="Need a hand with your pricing?"
-        description="We noticed you haven't added a pricing component yet — it's the most important first step in QuoteCore+."
+        description="We noticed you haven't added a pricing component yet – it's the most important first step in QuoteCore+."
         onRequestClose={closeNudge}
         footer={
           <>
@@ -118,7 +118,7 @@ export function OnboardingNudges({
         }
       >
         <p className="text-sm text-slate-700">
-          Your prices are what turn measurements into quotes — without them you&apos;ll only ever
+          Your prices are what turn measurements into quotes – without them you&apos;ll only ever
           see quantities. Add your first component now, or if you&apos;d rather we handle it,
           we&apos;ll set it all up for you.
         </p>
@@ -128,7 +128,7 @@ export function OnboardingNudges({
         open={nudge === 'quote'}
         size="md"
         title="Ready for your first quote?"
-        description="Your pricing is in — the next step is creating your first job."
+        description="Your pricing is in – the next step is creating your first job."
         onRequestClose={closeNudge}
         footer={
           <>
@@ -138,7 +138,7 @@ export function OnboardingNudges({
         }
       >
         <p className="text-sm text-slate-700">
-          Measure a roof, upload a plan, or start blank — every path ends in a real job you can
+          Measure a roof, upload a plan, or start blank – every path ends in a real job you can
           price and send. Or grab us and we&apos;ll walk you through it.
         </p>
       </QcDialog>

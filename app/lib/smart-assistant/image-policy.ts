@@ -1,5 +1,5 @@
 /**
- * Smart Assistant photo input — shared policy + pure helpers.
+ * Smart Assistant photo input – shared policy + pure helpers.
  * Client- and server-safe: no server-only imports (used by V2ChatClient).
  *
  * Flow (owner 2026-10-31): attach photo in chat → compress client-side →

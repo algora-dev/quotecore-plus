@@ -37,12 +37,12 @@ const EVENT_LABELS: Record<string, string> = {
 const CHAPTER_ORDER = ['pricing', 'takeoff', 'customer-quote', 'smart-assistant', 'complete'];
 
 function fmtDate(value: string | null) {
-  if (!value) return '—';
+  if (!value) return '–';
   return new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function fmtDateTime(value: string | null) {
-  if (!value) return '—';
+  if (!value) return '–';
   return new Date(value).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
@@ -107,7 +107,7 @@ export function DemoUsageSection({ userId }: { userId: string }) {
             </div>
             <div className="rounded-xl border border-slate-200 p-3">
               <p className="text-xs text-slate-500">Furthest stage</p>
-              <p className="text-sm font-semibold text-slate-900 mt-1">{CHAPTER_LABELS[furthestChapter(data.sessions) ?? ''] ?? '—'}</p>
+              <p className="text-sm font-semibold text-slate-900 mt-1">{CHAPTER_LABELS[furthestChapter(data.sessions) ?? ''] ?? '–'}</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-3">
               <p className="text-xs text-slate-500">Sessions</p>

@@ -10,7 +10,7 @@ import type { QuoteComponentRow, QuoteRoofAreaRow } from '@/app/lib/types';
  * Whole-job → area movers (owner 2026-11-16): multi-select unassigned
  * components and assign them to a work area in ONE batch. Two surfaces share
  * this panel: inside a work area (fixed target) and on the Whole job view
- * (area picker). Moving only reassigns the component — measurements, rates
+ * (area picker). Moving only reassigns the component – measurements, rates
  * and entries ride along untouched.
  */
 export function WholeJobMovePanel({
@@ -69,7 +69,7 @@ export function WholeJobMovePanel({
       <div>
         <span className="qb-guided-kicker">Whole job</span>
         <strong>{count === 1 ? '1 component is not in a work area yet' : `${count} components are not in a work area yet`}</strong>
-        <p>Tick the {count === 1 ? 'one' : 'ones'} that belong {pickerMode ? 'in a work area' : `in ${fixedTargetLabel}`} and move {count === 1 ? 'it' : 'them'} across — measurements move with {count === 1 ? 'it' : 'them'}.</p>
+        <p>Tick the {count === 1 ? 'one' : 'ones'} that belong {pickerMode ? 'in a work area' : `in ${fixedTargetLabel}`} and move {count === 1 ? 'it' : 'them'} across – measurements move with {count === 1 ? 'it' : 'them'}.</p>
       </div>
       <QcButton size="sm" variant="ghost" disabled={working} onClick={() => setChecked(allSelected ? new Set() : new Set(components.map(c => c.id)))}>
         {allSelected ? 'Clear all' : 'Select all'}

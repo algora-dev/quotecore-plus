@@ -370,7 +370,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
             <QcButton onClick={handleSamplePlan} disabled={busy || sampleLoading} data-copilot="quote-sample-plan">
               {sampleLoading ? 'Loading sample…' : `Use a sample ${activeSamplePlan.label} plan`}
             </QcButton>
-            <span className="qce-help">Loads straight into the canvas — calibrate it with the marked dimension.</span>
+            <span className="qce-help">Loads straight into the canvas – calibrate it with the marked dimension.</span>
           </div>}
           {sampleError && <p className="qce-error" role="alert">{sampleError}</p>}
           <p className="qce-help" style={{ marginTop: 12 }}>PDFs open the existing page picker. There is no satellite lookup on this screen.</p>
@@ -417,7 +417,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
           <p id={`${id}-next`} className="qce-help" role="status">{progress || (uploading ? 'Preparing your plan…' : helper)}</p>
           {!createdRecord && !creationUncertain && (entryMode === 'manual' && measurementsImportEnabled ? (
             /* Owner 2026-11-16: the two manual-mode entry actions become large
-               side-by-side dark cards with their TLDR visible — no hover tooltips. */
+               side-by-side dark cards with their TLDR visible – no hover tooltips. */
             <div className="qce-entry-cards" role="group" aria-label="How to add your measurements">
               <button type="submit" className="qce-entry-card" data-copilot="quote-create" onClick={() => { uploadAfterCreate.current = false; }}
                 disabled={uploading || requiredMissing || creating} aria-describedby={`${id}-next`}>
@@ -433,7 +433,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
                 <span className="qce-entry-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" /></svg></span>
                 <span className="qce-entry-card-copy">
                   <strong>Upload a file or image</strong>
-                  <p>A photo of handwritten notes, a PDF or a spreadsheet. We read the measurement and quantity lines and match them to your pricing library — you check everything before it is added.</p>
+                  <p>A photo of handwritten notes, a PDF or a spreadsheet. We read the measurement and quantity lines and match them to your pricing library – you check everything before it is added.</p>
                 </span>
                 <span className="qce-entry-card-arrow" aria-hidden="true">→</span>
               </button>

@@ -986,7 +986,7 @@ export async function addQuoteComponentsBulk(
 
 /**
  * Batch move (owner 2026-11-16): assign many quote_components to one work
- * area — or back to "Whole job" with a null target — in ONE round trip.
+ * area – or back to "Whole job" with a null target – in ONE round trip.
  * Powers the guided builder's whole-job → area movers. Measurements and
  * entries hang off the component itself, so they ride along untouched.
  */

@@ -17,10 +17,10 @@ import { trackEvent } from '@/lib/analytics';
 /**
  * Demo-first welcome flow (owner 2026-11-13), shown over the demo launcher:
  *
- *  1. Welcome — founder video on top (muted autoplay + controls so browsers
+ *  1. Welcome – founder video on top (muted autoplay + controls so browsers
  *     allow it), then two CTAs: Continue to the demo, or Get in touch with us
  *     (Done For You page, new tab).
- *  2. Tips — right after continuing: finish at least the first three tasks
+ *  2. Tips – right after continuing: finish at least the first three tasks
  *     (the pricing chapter), and when switching to your own workspace, add
  *     your pricing first.
  *
@@ -66,7 +66,7 @@ export function DemoWelcomeModal({ initialStep }: { initialStep: 'welcome' | 'ti
         open={step === 'welcome'}
         size="md"
         title="Welcome to QuoteCore+"
-        description="A quick word from Shaun, our founder — what this does and what to do next."
+        description="A quick word from Shaun, our founder – what this does and what to do next."
         onRequestClose={continueToDemo}
         footer={
           <>
@@ -97,7 +97,7 @@ export function DemoWelcomeModal({ initialStep }: { initialStep: 'welcome' | 'ti
             />
           )}
           <p className="text-xs text-slate-500">
-            You can open your own workspace from inside the demo at any time — the toggle is top
+            You can open your own workspace from inside the demo at any time – the toggle is top
             right. And if you&apos;d rather we set everything up for you, that&apos;s exactly what
             Get in touch is for.
           </p>
@@ -108,18 +108,18 @@ export function DemoWelcomeModal({ initialStep }: { initialStep: 'welcome' | 'ti
         open={step === 'tips'}
         size="md"
         title="Start with the first three tasks"
-        description="The demo opens with Build your pricing — three short tasks."
+        description="The demo opens with Build your pricing – three short tasks."
         onRequestClose={closeTips}
-        footer={<QcButton variant="primary" onClick={closeTips}>Got it — start the demo</QcButton>}
+        footer={<QcButton variant="primary" onClick={closeTips}>Got it – start the demo</QcButton>}
       >
         <div className="space-y-3 text-sm text-slate-700">
           <p>
-            Finish at least those three before exploring the rest — they&apos;re the fastest way to
+            Finish at least those three before exploring the rest – they&apos;re the fastest way to
             see how QuoteCore+ fits together. Take your time with everything else.
           </p>
           <p>
             When you switch to your own workspace, add your pricing first. It&apos;s the one thing
-            that turns measurements into real prices — without it you&apos;ll only ever see
+            that turns measurements into real prices – without it you&apos;ll only ever see
             quantities.
           </p>
           <figure className="space-y-1.5">
@@ -129,7 +129,7 @@ export function DemoWelcomeModal({ initialStep }: { initialStep: 'welcome' | 'ti
               className="w-full rounded-xl border border-slate-200"
             />
             <figcaption className="text-xs text-slate-500">
-              Switch to your own workspace anytime — it&apos;s this toggle, top right.
+              Switch to your own workspace anytime – it&apos;s this toggle, top right.
             </figcaption>
           </figure>
         </div>

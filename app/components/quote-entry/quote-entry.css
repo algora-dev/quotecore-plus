@@ -172,7 +172,7 @@
 @media (max-width: 1024px) { .qce-paths { grid-template-columns: 1fr; } }
 
 /* Owner 2026-11-16 round 3: dark-theme start cards following the pricing-setup
-   design standard (.ps-option family) — premium dark gradient, orange accents,
+   design standard (.ps-option family) – premium dark gradient, orange accents,
    rotated hairline decoration, recommended-style selected state. */
 .qce-path{min-height:200px;padding:25px 24px;background:linear-gradient(140deg,#1f2b3a 0%,#121923 100%);border:1px solid #344253;color:#f6f8fb;position:relative;overflow:hidden;transition:border-color .16s,box-shadow .16s,transform .16s}
 .qce-path::after{content:'';pointer-events:none;position:absolute;right:-30px;bottom:-55px;width:190px;height:100px;border:1px solid rgba(239,244,250,.12);transform:rotate(-25deg);border-radius:18px}

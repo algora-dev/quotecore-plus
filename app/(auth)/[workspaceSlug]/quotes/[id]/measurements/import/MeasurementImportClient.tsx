@@ -47,7 +47,7 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
   const selected = pending.filter(l => l.status === 'selected');
   const importedCount = (current?.lines ?? []).filter(l => l.status === 'imported').length;
 
-  // Owner 2026-11-16: the added-to-quote confirmation is transient — show it, then clear it on its own.
+  // Owner 2026-11-16: the added-to-quote confirmation is transient – show it, then clear it on its own.
   useEffect(() => {
     if (!addedNotice) return;
     const t = setTimeout(() => setAddedNotice(''), 5000);
@@ -139,7 +139,7 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
     setDrafts(d => { const n = { ...d }; delete n[key]; return n; });
   }
 
-  /** Owner 2026-11-16: the user can ALWAYS continue — selected lines are added,
+  /** Owner 2026-11-16: the user can ALWAYS continue – selected lines are added,
    * anything failing or skipped is simply left out and stays in the import. */
   async function confirm() {
     if (!current) return;
@@ -169,7 +169,7 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to delete this import.'); } finally { setBusy(false); }
   }
 
-  /** Owner 2026-11-16: extracted item with no library match — create the
+  /** Owner 2026-11-16: extracted item with no library match – create the
    *  component on the spot (same modal as the quote builder), then assign it
    *  to the line that asked for it. */
   function handleComponentCreated(comp: ComponentLibraryRow) {
@@ -208,8 +208,8 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
         <div className="mi-capture-controls">
           <label htmlFor="mi-library">Pricing library to apply</label>
           <QcSelect id="mi-library" value={libraryId} onChange={e => setLibraryId(e.target.value)}>
-            {collections.length === 0 && <option value="">No libraries yet — add components in Pricing first</option>}
-            {collections.map(c => <option key={c.id} value={c.id}>{c.name}{c.isBootstrap ? ' (default)' : ''}{c.count === 0 ? ' — empty' : ''}</option>)}
+            {collections.length === 0 && <option value="">No libraries yet – add components in Pricing first</option>}
+            {collections.map(c => <option key={c.id} value={c.id}>{c.name}{c.isBootstrap ? ' (default)' : ''}{c.count === 0 ? ' – empty' : ''}</option>)}
           </QcSelect>
           <QcButton variant="primary" pending={busy} disabled={busy || !file || !libraryId} onClick={extract}>
             {busy && <span className="mi-spin animate-spin" aria-hidden="true" />}
@@ -243,13 +243,13 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
         <div className="mi-segmented" role="group" aria-label="Measurement basis for this import">
           <button type="button" aria-pressed={session.default_basis === 'plan'} data-qc-tip="Plan measurements are a top-down view. Pitch calculation is added when the component uses pitch."
             onClick={() => switchBasis('plan')}>Plan (top-down)</button>
-          <button type="button" aria-pressed={session.default_basis === 'actual'} data-qc-tip="Actual is the final measurement as taken on the surface — the finished length or area. No pitch is added."
+          <button type="button" aria-pressed={session.default_basis === 'actual'} data-qc-tip="Actual is the final measurement as taken on the surface – the finished length or area. No pitch is added."
             onClick={() => switchBasis('actual')}>Actual (final)</button>
         </div>
         <div className="mi-library-row">
           <label htmlFor="mi-library-review">Library</label>
           <QcSelect id="mi-library-review" value={libraryId} onChange={e => setLibraryId(e.target.value)}>
-            {collections.map(c => <option key={c.id} value={c.id}>{c.name}{c.isBootstrap ? ' (default)' : ''}{c.count === 0 ? ' — empty' : ''}</option>)}
+            {collections.map(c => <option key={c.id} value={c.id}>{c.name}{c.isBootstrap ? ' (default)' : ''}{c.count === 0 ? ' – empty' : ''}</option>)}
           </QcSelect>
           <QcButton size="sm" variant="ghost" disabled={busy || libraryId === session.library_id} onClick={rematch}>Re-match lines</QcButton>
         </div>
@@ -316,7 +316,7 @@ function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry
   const canCombine = !!component && LINEAL_FAMILY.has(component.measurement_type) && data.entries.length >= 2;
   const tone = data.matchedComponentId && (data.matchConfidence === 'high' || data.matchConfidence === 'medium' || data.matchOrigin === 'user') ? 'pa-in-found' : 'pa-in-missing';
   // Owner 2026-11-16: preview the line exactly like a quote-builder component
-  // card — numbered entries with waste-adjusted values, quantity total and
+  // card – numbered entries with waste-adjusted values, quantity total and
   // item+labour cost from the matched component's rules.
   const unitFactor = data.kind === 'lineal' ? toCanonicalLength(1, data.unit)
     : data.kind === 'area' ? toCanonicalArea(1, data.unit) : data.kind === 'quantity' ? 1 : null;
@@ -362,7 +362,7 @@ function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry
   }
   if (line.status === 'skipped') {
     return <div className="mi-line mi-line-skipped"><span className="mi-skip-mark" aria-hidden="true">–</span>
-      <div className="mi-line-main"><strong>{data.label}</strong><span>skipped — not added to the quote</span></div>
+      <div className="mi-line-main"><strong>{data.label}</strong><span>skipped – not added to the quote</span></div>
       <QcButton size="sm" variant="ghost" onClick={() => onToggle(line, 'candidate')}>Restore</QcButton></div>;
   }
   return (
@@ -404,7 +404,7 @@ function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry
           <div className="mi-component-picker">
             <QcSelect className={tone} value={data.matchedComponentId ?? ''} aria-label="Component"
               onChange={e => onSave(line, { matchedComponentId: e.target.value || null })}>
-              <option value="">— choose a component —</option>
+              <option value="">– choose a component –</option>
               {components.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </QcSelect>
             <QcButton size="sm" variant="ghost" onClick={() => onCreateComponent(line)}>+ New component</QcButton>

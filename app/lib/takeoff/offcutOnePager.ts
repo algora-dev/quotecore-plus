@@ -73,7 +73,7 @@ export async function buildOffcutOnePagerPdf(
 
   pdf.setFontSize(14);
   pdf.setTextColor(17, 24, 39);
-  pdf.text(`Offcut plan — ${opts.jobLabel}`.slice(0, 58), M + 63, M + 5.5);
+  pdf.text(`Offcut plan – ${opts.jobLabel}`.slice(0, 58), M + 63, M + 5.5);
   pdf.setFontSize(9);
   pdf.setTextColor(100, 116, 139);
   pdf.text(
@@ -108,7 +108,7 @@ export async function buildOffcutOnePagerPdf(
         ['Purchased lineal', `${f.purchasedLinealM.toFixed(2)} lm`],
         ['Supplied (cover)', `${f.suppliedCoverAreaM2.toFixed(2)} m²`],
         ['Supplied (profile)', `${f.suppliedProfileAreaM2.toFixed(2)} m²`],
-        ['Supply above net roof', f.coverUpliftPercent == null ? '—' : `+${f.coverUpliftPercent.toFixed(1)}%`],
+        ['Supply above net roof', f.coverUpliftPercent == null ? '–' : `+${f.coverUpliftPercent.toFixed(1)}%`],
         ['New sheets / reused runs', `${f.newSheetCount} / ${f.reusedPositions}`],
       ]
     : [['Figures', 'unavailable']];
@@ -138,7 +138,7 @@ export async function buildOffcutOnePagerPdf(
   pdf.setFontSize(7.5);
   pdf.setTextColor(148, 163, 184);
   pdf.text(
-    'Draft geometry quantities from the offcut cutting plan — not a verified quote or order. No spares, damage allowance or supplier minimums included.',
+    'Draft geometry quantities from the offcut cutting plan – not a verified quote or order. No spares, damage allowance or supplier minimums included.',
     M,
     H - 7,
   );

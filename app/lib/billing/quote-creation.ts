@@ -165,7 +165,7 @@ export async function createQuoteAtomic(
   // Verify the host account/mode without using a cached quota precheck.
   if (await customUsageMeteringApplies(companyId)) await loadCustomUsage(companyId);
 
-  // Free Workspace (owner 2026-11-03): max 10 quotes in existence AT ONCE —
+  // Free Workspace (owner 2026-11-03): max 10 quotes in existence AT ONCE –
   // deleting a quote frees a slot. Paid builds create unlimited (sentinel
   // allowance in the ledger) and legacy keeps the installed gateway below.
   if ((await resolveBillingType(companyId)).kind === 'custom_admin_granted') {

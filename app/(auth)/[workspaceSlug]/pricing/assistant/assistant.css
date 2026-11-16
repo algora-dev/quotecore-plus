@@ -14,7 +14,7 @@
 .pa-advanced{grid-column:1/-1;border:1px solid var(--qc-border-divider);padding:14px;border-radius:12px}.pa-advanced summary{cursor:pointer;font-weight:650;font-size:13px}.pa-advanced .qc-field{margin-top:12px}.pa-advanced .pa-check{margin-top:12px}
 
 .pa-delete-import{display:flex;justify-content:flex-end;margin-bottom:10px}.pa-delete-import>div{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.pa-delete-import>div span{font-size:12px;color:var(--qc-text-secondary)}
-/* Pricing Setup Assistant — Phase 7/v2 design tokens, touch-friendly mobile controls. */
+/* Pricing Setup Assistant – Phase 7/v2 design tokens, touch-friendly mobile controls. */
 .pa-entry-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:24px 0 20px}
 .pa-entry-card{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-height:145px;text-align:left;padding:20px;border:1px solid #344253;border-radius:var(--qc-radius-card);color:#f7f9fc;background:linear-gradient(130deg,#1b2737 0%,#121923 100%);cursor:pointer;transition:border-color .16s,box-shadow .16s,transform .16s}
 .pa-entry-card strong{font-size:17px;font-weight:700}.pa-entry-card span:last-child{font-size:13px;line-height:1.55;color:#c4cfdb}

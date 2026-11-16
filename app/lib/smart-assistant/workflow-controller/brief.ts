@@ -48,7 +48,7 @@ export function createWorkingBrief(input: Record<string, unknown>, context: Reco
   const customerName = input.customer_name == null ? '' : text(input.customer_name, 200, 'Customer');
   // A job title is a label, not a separate identity decision. Owner 2026-11-01:
   // default the label to the CUSTOMER name (e.g. 'Alex Smith'), never the site
-  // address — the address already has its own field and documents must not show
+  // address – the address already has its own field and documents must not show
   // it twice. Prefer a supplied title; fall back to address only when no
   // customer name exists either.
   const jobName = input.job_name == null ? (customerName || siteAddress || '').slice(0, 200) : text(input.job_name, 200, 'Job');

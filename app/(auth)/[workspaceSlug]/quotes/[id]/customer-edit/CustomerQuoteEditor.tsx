@@ -61,7 +61,7 @@ interface Props {
   /** Which include flag drives totals here. Customer-edit uses 'quote'; labor sheet passes 'labor'. */
   taxAudience?: 'quote' | 'labor';
   /** Free Workspace watermark (owner 2026-11-03) - rendered on the customer-facing preview. */
-  /** Practice quote snapshot — cannot become sendable by later component verification. */
+  /** Practice quote snapshot – cannot become sendable by later component verification. */
   practicePricing?: boolean;
   showWatermark?: boolean;
 }

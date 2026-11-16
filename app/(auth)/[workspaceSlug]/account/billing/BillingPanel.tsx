@@ -134,7 +134,7 @@ export interface BillingPanelProps {
     storagePendingBytes: number;
   };
   /** Free Workspace (owner 2026-11-04): the FreeWorkspaceCard on the page is
-   *  the plan surface — suppress the paid usage panel and both plan cards
+   *  the plan surface – suppress the paid usage panel and both plan cards
    *  entirely (no client-side flash). */
   freeWorkspace?: boolean;
 }

@@ -9671,7 +9671,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                   )}
                   {/* P4-AI-COST-01 resolved 2026-10-12: the affordability guard now
                       uses the canonical pointCost.ts contract (simple=2/medium+=10)
-                      via getAiScanPointCost — matches the cost hints above and the
+                      via getAiScanPointCost – matches the cost hints above and the
                       server-side deduction exactly. */}
                   {/* Quality selector + scan button: hidden when blocked */}
                   {!aiPoints?.isBlocked && (
