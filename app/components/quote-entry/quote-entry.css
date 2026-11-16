@@ -181,7 +181,8 @@
 .qce-path[aria-pressed='true']{border-color:var(--qc-color-orange-core,#ff641f);background:linear-gradient(140deg,#3a281a 0%,#241a12 48%,#121923 100%);box-shadow:0 0 0 1px rgba(255,100,31,.25),0 10px 30px rgba(255,100,31,.10)}
 .qce-path[aria-pressed='true']::after{border-color:rgba(255,190,140,.18)}
 .qce-path:disabled{cursor:not-allowed;opacity:.55;background:linear-gradient(140deg,#232c38 0%,#161d27 100%)}
-.qce-path-icon{background:rgba(255,107,53,.14);border:1px solid rgba(255,150,90,.4);color:#ffb27d}
+.qce-path-icon{background:none;border:0;color:var(--qc-color-orange-core,#ff641f)}
+.qce-path-icon svg{width:30px;height:30px}
 .qce-path-copy strong{color:#fff;letter-spacing:-.01em}
 .qce-path-copy>span{color:#c6d0dc}
 .qce-path-copy small{color:#ffb27d;font-weight:700}
