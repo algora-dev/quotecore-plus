@@ -14,7 +14,9 @@ import {
   addQuoteComponent, updateComponentSettings, addComponentEntry, combineLinealEntries,
 } from '@/app/(auth)/[workspaceSlug]/quotes/actions';
 
-const uuid = (s: string) => /^[\da-f]{8}-[\da-f]{4}-[1-8][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i.test(s);
+// Accept ANY well-formed UUID: seeded fixture data (e.g. a1e00000-… test libraries) uses
+// non-versioned UUIDs that the strict v1-8 pattern rejects (bug found by owner 2026-11-16).
+const uuid = (s: string) => /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(s);
 
 /** Full component rows needed to create quote components at confirm time. */
 type LibraryComponentFull = MatchComponent & {

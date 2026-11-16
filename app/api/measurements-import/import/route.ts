@@ -4,7 +4,7 @@ import { extractMeasurementLines } from '@/app/lib/measurements-import/extract.s
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 const MAX_BYTES = 8 * 1024 * 1024;
-const uuid = (s: string) => /^[\da-f]{8}-[\da-f]{4}-[1-8][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i.test(s);
+const uuid = (s: string) => /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(s);
 function typeOfFile(name: string, bytes: Buffer): 'csv' | 'xlsx' | 'pdf' | 'image' | 'text' | null {
   const ext = name.split('.').pop()?.toLowerCase();
   if (ext === 'pdf' && bytes.subarray(0, 5).toString() === '%PDF-') return 'pdf';
