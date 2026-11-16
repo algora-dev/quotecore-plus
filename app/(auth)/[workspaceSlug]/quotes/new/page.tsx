@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import '@/app/components/ui/v2/qc-tooltip.css';
 import '@/app/components/quote-entry/quote-entry.css';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { QuoteDetailsForm } from './QuoteDetailsForm';

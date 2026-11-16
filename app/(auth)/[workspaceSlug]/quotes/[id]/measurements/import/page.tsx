@@ -5,6 +5,7 @@ import { listMeasurementImportsForQuote } from '@/app/lib/measurements-import/st
 import { loadImportReview } from './actions';
 import { MeasurementImportClient } from './MeasurementImportClient';
 import '@/app/(auth)/[workspaceSlug]/pricing/assistant/assistant.css';
+import '@/app/components/ui/v2/qc-tooltip.css';
 import './measurement-import.css';
 
 export default async function MeasurementImportPage({

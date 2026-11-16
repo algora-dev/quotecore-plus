@@ -24,3 +24,10 @@
 .ps-back{display:inline-flex;align-items:center;gap:6px;margin-bottom:26px;font-size:13px;color:var(--qc-text-link);text-decoration:none}.ps-back:hover{text-decoration:underline}.ps-back svg{width:16px;height:16px}
 @media(max-width:740px){.ps-grid{grid-template-columns:1fr}.ps-option{min-height:195px;padding:22px 18px}}
 @media(prefers-reduced-motion:reduce){.ps-option{transition:none}.ps-option:hover{transform:none}}
+
+/* Owner 2026-11-16: manual-entry card body text now matches the other cards
+   (the wrapper Link made it miss .ps-option>p), and the manual path gets a
+   bright-orange heading to differentiate it from the assistant card. */
+.ps-option-main>p{font-size:13.5px;color:#c6d0dc;line-height:1.65;margin:0;max-width:430px}
+.ps-option .ps-option-main h2{color:#ffa763}
+.ps-option .ps-option-main .ps-option-link{color:#ffa763}

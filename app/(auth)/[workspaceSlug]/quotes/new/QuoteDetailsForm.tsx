@@ -416,15 +416,15 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
         <div className="qce-footer-end">
           <p id={`${id}-next`} className="qce-help" role="status">{progress || (uploading ? 'Preparing your plan…' : helper)}</p>
           {!createdRecord && !creationUncertain && <>
-            <QcButton type="submit" variant="primary" size="lg" data-copilot="quote-create"
+            <QcButton type="submit" variant="primary" size="lg" data-copilot="quote-create" className="qc-tip-above"
               onClick={() => { uploadAfterCreate.current = false; }}
               pending={creating} disabled={uploading || requiredMissing || !entryMode || (entryMode === 'digital' && !pendingPlan)} aria-describedby={`${id}-next`}
-              data-tip="Type your measurements and quantities straight into the quote builder: create work areas, add components, enter the numbers. Everything stays editable.">
+              data-qc-tip="Type your measurements and quantities straight into the quote builder: create work areas, add components, enter the numbers. Everything stays editable.">
               {creating ? 'Starting…' : entryMode === 'digital' ? 'Start measuring →' : entryMode === 'blank' ? 'Open line editor →' : 'Enter measurements & quantities →'}
             </QcButton>
-            {entryMode === 'manual' && measurementsImportEnabled && <QcButton type="submit" size="lg" disabled={uploading || requiredMissing || creating}
+            {entryMode === 'manual' && measurementsImportEnabled && <QcButton type="submit" size="lg" className="qc-tip-above" disabled={uploading || requiredMissing || creating}
               onClick={() => { uploadAfterCreate.current = true; }}
-              data-tip="Upload a photo of handwritten notes, a PDF, a spreadsheet or paste text. We read the measurement and quantity lines, match them to your pricing library, and you check everything before anything is added to the quote.">
+              data-qc-tip="Upload a photo of handwritten notes, a PDF, a spreadsheet or paste text. We read the measurement and quantity lines, match them to your pricing library, and you check everything before anything is added to the quote.">
               {creating ? 'Starting…' : 'Upload a file or photo →'}
             </QcButton>}
           </>}

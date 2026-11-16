@@ -212,9 +212,9 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
 
       <div className="mi-master">
         <div className="mi-segmented" role="group" aria-label="Measurement basis for this import">
-          <button type="button" aria-pressed={session.default_basis === 'plan'} data-tip="Plan measurements are a top-down view. Pitch calculation is added when the component uses pitch."
+          <button type="button" aria-pressed={session.default_basis === 'plan'} data-qc-tip="Plan measurements are a top-down view. Pitch calculation is added when the component uses pitch."
             onClick={() => switchBasis('plan')}>Plan (top-down)</button>
-          <button type="button" aria-pressed={session.default_basis === 'actual'} data-tip="Actual is the final measurement as taken on the surface — the finished length or area. No pitch is added."
+          <button type="button" aria-pressed={session.default_basis === 'actual'} data-qc-tip="Actual is the final measurement as taken on the surface — the finished length or area. No pitch is added."
             onClick={() => switchBasis('actual')}>Actual (final)</button>
         </div>
         <div className="mi-library-row">
