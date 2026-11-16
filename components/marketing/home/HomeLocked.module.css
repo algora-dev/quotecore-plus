@@ -136,6 +136,9 @@
 .dfy-card>div span{display:block;margin-top:2px;color:#aeb7c4;font-size:12px;line-height:1.5}
 .dfy-tag{flex:none;margin-left:auto;padding:5px 10px;border:1px solid rgba(231,233,239,.18);border-radius:999px;background:rgba(255,255,255,.03);color:#dbe1e7;font-size:10px;font-weight:650;letter-spacing:.05em;white-space:nowrap;align-self:center}
 .dfy-tag-both{border-color:rgba(255,138,61,.5);background:rgba(255,107,53,.12);color:#ffb36b}
+.dfy-actions .btn-glass{color:#fff;background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+@media(hover:hover){.dfy-actions .btn-glass:hover:not(:disabled){color:#fff;background:rgba(255,255,255,.12);border-color:rgba(255,154,92,.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 4px 16px rgba(255,107,53,.14)}}
+.dfy-actions .btn-glass:active:not(:disabled){color:#fff;background:rgba(255,255,255,.17)}
 
 
 /* v8 final founder/header cleanup */
