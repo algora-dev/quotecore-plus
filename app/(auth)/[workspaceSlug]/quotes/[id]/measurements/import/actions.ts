@@ -173,6 +173,7 @@ export async function confirmMeasurementImport(importId: string): Promise<
 
     let imported = 0;
     const failures: string[] = [];
+    const importedIds = new Set<string>();
     for (const line of targets) {
       const data = line.line_data;
       const label = data.label || 'Line';
@@ -224,9 +225,19 @@ export async function confirmMeasurementImport(importId: string): Promise<
           .eq('id', line.id).eq('import_id', importId).eq('user_id', profile.id);
         if (lineError) { failures.push(`${label}: added to the quote but the import status was not saved. Re-confirm to reconcile.`); continue; }
         imported++;
+        importedIds.add(line.id);
       } catch (error) {
         failures.push(`${label}: ${error instanceof Error ? error.message : 'could not be added.'}`);
       }
+    }
+    // Owner 2026-11-16: lines that failed this round go back to unselected so
+    // the review shows them unticked (matching the failure list) and the user
+    // can fix, skip, or simply continue to the quote.
+    const resetIds = targets.filter(l => !importedIds.has(l.id)).map(l => l.id);
+    if (resetIds.length) {
+      await admin.from('quote_measurement_import_lines')
+        .update({ status: 'candidate', updated_at: new Date().toISOString() })
+        .in('id', resetIds).eq('import_id', importId).eq('user_id', profile.id).eq('company_id', profile.company_id);
     }
     revalidatePath(`/[workspaceSlug]/quotes/${session.quote_id}`, 'page');
     revalidatePath(`/[workspaceSlug]/quotes/${session.quote_id}/measurements/import`, 'page');

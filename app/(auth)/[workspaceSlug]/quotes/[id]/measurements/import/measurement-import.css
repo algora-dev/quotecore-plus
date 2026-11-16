@@ -44,3 +44,21 @@
   .mi-line{padding:12px}
 }
 @media(prefers-reduced-motion:reduce){.mi-segmented button{transition:none}}
+
+/* Review round 2 (owner 2026-11-16): spinner, toolbar, banner placement + spacing,
+   row-click selection, rounded segmented ends, imported/skip badges. */
+.mi-spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(25,27,32,.28);border-top-color:#191B20;border-radius:50%;margin-right:9px;vertical-align:-2px}
+.mi-extract-hint{font-size:12.5px;color:var(--qc-text-secondary);margin:0}
+.mi-toolbar{display:flex;align-items:center;gap:16px;margin:2px 0 12px;flex-wrap:wrap}
+.mi-toolbar .pa-text-link{font-weight:700}
+.mi-added-notice{margin:0;padding:9px 14px;font-size:12.5px}
+.mi-failures{margin:16px 0 0}
+.mi-lines{margin-bottom:4px}
+.mi-segmented button:first-child{border-radius:12px 0 0 12px}
+.mi-segmented button:last-child{border-radius:0 12px 12px 0}
+.mi-line--selectable{cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.mi-line--selectable:hover{border-color:var(--qc-color-orange-vivid,#ff8a3d)}
+.mi-line--selected{border-color:var(--qc-color-orange-core,#ff641f);box-shadow:0 0 0 2px var(--qc-color-orange-wash,#fff4eb)}
+.mi-added-check,.mi-skip-mark{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:22px;height:22px;border-radius:999px;font-weight:750;font-size:13px;margin-top:4px}
+.mi-added-check{color:var(--qc-color-success-ink);background:var(--qc-color-success-bg)}
+.mi-skip-mark{color:var(--qc-text-secondary);background:var(--qc-bg-subtle)}

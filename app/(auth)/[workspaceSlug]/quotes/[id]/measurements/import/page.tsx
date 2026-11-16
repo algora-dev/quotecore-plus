@@ -24,6 +24,14 @@ export default async function MeasurementImportPage({
   const { data: collections } = await supabase.from('component_collections')
     .select('id,name,is_bootstrap').eq('company_id', profile.company_id)
     .order('is_bootstrap', { ascending: false }).order('name');
+  // Component counts per library so the capture page can default to the first
+  // library that actually has components and mark empty ones (owner 2026-11-16).
+  const { data: libCountRows } = await supabase.from('component_library')
+    .select('collection_id').eq('company_id', profile.company_id);
+  const libCounts = new Map<string, number>();
+  for (const row of (libCountRows ?? []) as Array<{ collection_id: string | null }>) {
+    if (row.collection_id) libCounts.set(row.collection_id, (libCounts.get(row.collection_id) ?? 0) + 1);
+  }
   let activeImports: Awaited<ReturnType<typeof listMeasurementImportsForQuote>> = [];
   try { activeImports = await listMeasurementImportsForQuote(quoteId); } catch { /* fresh quote */ }
   const wanted = (await searchParams).import;
@@ -36,7 +44,7 @@ export default async function MeasurementImportPage({
         workspaceSlug={workspaceSlug}
         quoteId={quoteId}
         quoteLabel={quote?.customer_name || quote?.job_name || 'this quote'}
-        collections={(collections ?? []).map(c => ({ id: c.id, name: c.name, isBootstrap: c.is_bootstrap }))}
+        collections={(collections ?? []).map(c => ({ id: c.id, name: c.name, isBootstrap: c.is_bootstrap, count: libCounts.get(c.id) ?? 0 }))}
         initialCurrent={current}
         activeImports={activeImports.map(s => ({ id: s.id, sourceName: s.source_name, remaining: s.remaining }))}
       />
