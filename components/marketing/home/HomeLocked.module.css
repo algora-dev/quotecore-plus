@@ -137,6 +137,7 @@
 .dfy-tag{flex:none;margin:0;padding:5px 10px;border:1px solid rgba(231,233,239,.18);border-radius:999px;background:rgba(255,255,255,.03);color:#dbe1e7;font-size:10px;font-weight:650;letter-spacing:.05em;white-space:nowrap}
 .dfy-tag-both{border-color:rgba(255,138,61,.5);background:rgba(255,107,53,.12);color:#ffb36b}
 .dfy-card .dfy-title-row{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:0}
+.dfy-actions .dfy-qs{border-color:rgba(255,255,255,.22)}
 
 
 /* v8 final founder/header cleanup */
