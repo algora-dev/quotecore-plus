@@ -824,6 +824,12 @@ export function QuoteBuilder({
             <p>{phaseHelp[phase]}</p>
           </header>}
 
+      {process.env.NEXT_PUBLIC_MEASUREMENT_IMPORT_ENABLED === 'true' && workspaceMode === 'guided' && (phase === 'areas' || phase === 'components') && (
+        <div className="mi-builder-entry">
+          <Link href={`/${workspaceSlug}/quotes/${quote.id}/measurements/import`}>Upload a file or photo to import measurements</Link>
+          <span>Photo, PDF, spreadsheet or typed – we read the lines, match them to your library, you confirm.</span>
+        </div>
+      )}
       {workspaceMode === 'guided' && (phase === 'areas' || phase === 'components') && (
         <GuidedQuoteSetup
           quote={quote}

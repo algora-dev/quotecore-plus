@@ -1,0 +1,46 @@
+/* Measurements import — Phase 7/v2 tokens (see DESIGN_SYSTEM.md authority).
+   Reuses pa-* classes from the pricing assistant; mi-* covers the segmented
+   basis slider, hover tooltips and line cards. */
+.mi-page{padding:0 4px 40px}
+.mi-capture-controls{display:grid;gap:10px;justify-items:start;margin-top:4px}
+.mi-capture-controls label{font-weight:600;font-size:13px}
+.mi-capture-controls .qc-select{min-width:min(360px,100%);min-height:44px}
+.mi-master{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin:6px 0 4px}
+.mi-segmented{display:inline-flex;border:1px solid var(--qc-border-divider);border-radius:var(--qc-radius-control,12px);overflow:visible;position:relative;background:var(--qc-bg-surface)}
+.mi-segmented button{appearance:none;border:0;background:transparent;color:var(--qc-text-body);font:inherit;font-size:13px;font-weight:600;padding:10px 16px;cursor:pointer;position:relative}
+.mi-segmented button+button{border-left:1px solid var(--qc-border-divider)}
+.mi-segmented button[aria-pressed="true"]{background:linear-gradient(135deg,#FF641F 0%,#FF8A3D 55%,#FFB36B 100%);color:#191B20}
+.mi-segmented button:focus-visible{outline:2px solid var(--qc-focus-ring);outline-offset:2px}
+.mi-library-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.mi-library-row label{font-size:12.5px;font-weight:600;color:var(--qc-text-secondary)}
+.mi-library-row .qc-select{min-height:40px;min-width:200px}
+.mi-master-help{font-size:12.5px;color:var(--qc-text-secondary);margin:2px 0 14px}
+/* Hover tooltips (owner 11-16): master slider + info affordances. */
+[data-tip]{position:relative}
+[data-tip]:hover::after,[data-tip]:focus-visible::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 8px);z-index:30;width:min(340px,86vw);background:#121923;color:#f7f9fc;font-size:12.5px;font-weight:400;line-height:1.5;padding:10px 12px;border-radius:10px;border:1px solid #344253;box-shadow:0 8px 22px rgba(0,0,0,.35);white-space:normal;text-align:left;pointer-events:none}
+.mi-lines{display:grid;gap:10px;max-height:620px;overflow-y:auto;margin-top:6px;padding-right:2px}
+.mi-line{display:flex;align-items:flex-start;gap:13px;border:1px solid var(--qc-border-divider);border-radius:12px;padding:14px;background:var(--qc-bg-surface)}
+.mi-line>input[type="checkbox"]{accent-color:var(--qc-color-orange-core);min-width:19px;height:19px;margin-top:6px}
+.mi-line-imported,.mi-line-skipped{align-items:center;opacity:.75}
+.mi-line-imported>input,.mi-line-skipped>input{margin-top:0}
+.mi-line-main{display:grid;gap:10px;min-width:0;flex:1}
+.mi-line-head{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.mi-line-head .qc-input{min-height:40px;font-weight:600}
+.mi-unit{max-width:90px;text-align:center}
+.mi-kind{font-size:11px;font-weight:650;color:var(--qc-color-orange-ink);border:1px solid var(--qc-border-divider);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.mi-entries{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mi-entry{display:inline-flex;align-items:center;gap:6px}
+.mi-entry .qc-input{min-height:38px;max-width:120px;text-align:right}
+.mi-entry-unit{font-size:12px;color:var(--qc-text-secondary);min-width:18px}
+.mi-combine{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--qc-text-secondary);white-space:nowrap}
+.mi-combine input{accent-color:var(--qc-color-orange-core);width:16px;height:16px}
+.mi-line-controls{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) auto;gap:9px;align-items:center}
+.mi-line-controls .qc-select{min-height:40px}
+.mi-warnings{font-size:12.5px;color:var(--qc-color-orange-ink,#b45309);margin:0}
+@media(max-width:760px){
+  .mi-line-controls{grid-template-columns:1fr}
+  .mi-master{flex-direction:column;align-items:stretch}
+  .mi-library-row .qc-select{flex:1}
+  .mi-line{padding:12px}
+}
+@media(prefers-reduced-motion:reduce){.mi-segmented button{transition:none}}

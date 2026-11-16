@@ -139,8 +139,11 @@ function renderPercent(value:string,attrs:string,percentStyles:Set<number>):stri
  if(!Number.isFinite(n))return value;
  return `${Math.round(n*100*10000)/10000}%`;
 }
-/** Read up to 12 XLSX worksheets, including shared strings, without executing workbook formulas. */
-export async function xlsxToRows(bytes:Buffer):Promise<ExtractedLine[]>{
+/** Read up to 12 XLSX worksheets as string matrices, including shared
+ * strings and percent-style rendering, without executing workbook formulas.
+ * Exposed so non-pricing consumers (measurements import) can reuse the exact
+ * same battle-tested, namespace-prefix-tolerant sheet walking. */
+export async function xlsxToMatrices(bytes:Buffer):Promise<Array<{name:string;matrix:string[][]}>>{
  const zip=await JSZip.loadAsync(bytes,{checkCRC32:true});
  const files=Object.values(zip.files).filter(f=>!f.dir);
  if(files.length>400)throw Error('Workbook contains too many embedded files.');
@@ -154,27 +157,35 @@ export async function xlsxToRows(bytes:Buffer):Promise<ExtractedLine[]>{
  const percentStyles=await readPercentStyles(zip);
  const sheets=files.filter(f=>/^xl\/worksheets\/[^\/]+\.xml$/i.test(f.name)&&!/\.rels$/i.test(f.name)).sort((a,b)=>Number(a.name.match(/(\d+)\.xml$/i)?.[1]??1e9)-Number(b.name.match(/(\d+)\.xml$/i)?.[1]??1e9));
  if(!sheets.length)throw Error('No worksheet found in this workbook.');
- const results:ExtractedLine[]=[];
+ const out:Array<{name:string;matrix:string[][]}>=[];
  for(const sheet of sheets.slice(0,12)){
- if(results.length>=100)break;
- const xml=await sheet.async('string');
- const matrix:string[][]=[];
- for(const row of xml.matchAll(/<(?:\w+:)?row\b[^>]*>([\s\S]*?)<\/(?:\w+:)?row>/g)){
-  if(matrix.length>103)break;
-  const values:string[]=[];
-  for(const cell of row[1].matchAll(/<(?:\w+:)?c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/(?:\w+:)?c>)/g)){
-   const ref=/\br="([A-Z]+)\d+"/.exec(cell[1]);if(!ref)continue;
-   let col=0;for(const char of ref[1])col=col*26+char.charCodeAt(0)-64;
-   if(col>100)continue;
-   const body=cell[2]??'';const type=/\bt="([^"]+)"/.exec(cell[1])?.[1];
-   const value=/<(?:\w+:)?v>([\s\S]*?)<\/(?:\w+:)?v>/.exec(body)?.[1]??'';
-   const inline=[...body.matchAll(/<(?:\w+:)?t(?:\s[^>]*)?>([\s\S]*?)<\/(?:\w+:)?t>/g)].map(m=>decode(m[1])).join('');
-   const rendered=type==='s'?shared[Number(value)]??'':type==='inlineStr'?inline:decode(value);
-   values[col-1]=renderPercent(rendered,cell[1],percentStyles);
+  const xml=await sheet.async('string');
+  const matrix:string[][]=[];
+  for(const row of xml.matchAll(/<(?:\w+:)?row\b[^>]*>([\s\S]*?)<\/(?:\w+:)?row>/g)){
+   if(matrix.length>103)break;
+   const values:string[]=[];
+   for(const cell of row[1].matchAll(/<(?:\w+:)?c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/(?:\w+:)?c>)/g)){
+    const ref=/\br="([A-Z]+)\d+"/.exec(cell[1]);if(!ref)continue;
+    let col=0;for(const char of ref[1])col=col*26+char.charCodeAt(0)-64;
+    if(col>100)continue;
+    const body=cell[2]??'';const type=/\bt="([^"]+)"/.exec(cell[1])?.[1];
+    const value=/<(?:\w+:)?v>([\s\S]*?)<\/(?:\w+:)?v>/.exec(body)?.[1]??'';
+    const inline=[...body.matchAll(/<(?:\w+:)?t(?:\s[^>]*)?>([\s\S]*?)<\/(?:\w+:)?t>/g)].map(m=>decode(m[1])).join('');
+    const rendered=type==='s'?shared[Number(value)]??'':type==='inlineStr'?inline:decode(value);
+    values[col-1]=renderPercent(rendered,cell[1],percentStyles);
+   }
+   matrix.push(values.map(x=>x??''));
   }
-  matrix.push(values.map(x=>x??''));
+  out.push({name:sheet.name,matrix});
  }
- results.push(...rowsFromMatrix(matrix).slice(0,100-results.length).map(item=>({...item,excerpt:`${sheet.name}: ${item.excerpt??item.name}`})));
+ return out;
+}
+/** Read up to 12 XLSX worksheets, including shared strings, without executing workbook formulas. */
+export async function xlsxToRows(bytes:Buffer):Promise<ExtractedLine[]>{
+ const results:ExtractedLine[]=[];
+ for(const {name,matrix} of await xlsxToMatrices(bytes)){
+  if(results.length>=100)break;
+  results.push(...rowsFromMatrix(matrix).slice(0,100-results.length).map(item=>({...item,excerpt:`${name}: ${item.excerpt??item.name}`})));
  }
  return results;
 }

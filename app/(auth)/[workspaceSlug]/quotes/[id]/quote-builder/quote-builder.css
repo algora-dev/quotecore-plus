@@ -461,3 +461,8 @@ main:has(> [data-qc-ui='v2'][data-qc-page='quote-builder'][data-qc-workspace-mod
 }
 
 .qb-library-error { color: var(--qc-color-danger); }
+
+/* Measurements import entry (flag-gated) - shown on guided areas/components phases. */
+.mi-builder-entry{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin:0 0 14px;font-size:13px;color:var(--qc-text-secondary)}
+.mi-builder-entry a{font-weight:650;color:var(--qc-text-link);text-decoration:none}
+.mi-builder-entry a:hover{text-decoration:underline}

@@ -28,6 +28,7 @@ interface PendingPlan {
 export interface QuoteDetailsFormProps {
   workspaceSlug: string; templates: Template[]; templatesLoadError?: boolean; companyId: string;
   defaultMeasurementSystem: MeasurementChoice; digitalTakeoffAvailable: boolean;
+  measurementsImportEnabled?: boolean;
   monthlyQuoteAtCap: boolean; monthlyQuoteUsed: number; monthlyQuoteLimit: number;
   effectivePlanCode: string; defaultTrade?: string;
   componentCollections?: Array<{ id: string; name: string; is_bootstrap: boolean }>;
@@ -53,7 +54,7 @@ const isBillingMessage = (message: string) => /quote_limit_reached|feature_gated
  * Acquisition is separate from future assistance. No new persisted fields.
  */
 export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError = false, companyId,
-  defaultMeasurementSystem, digitalTakeoffAvailable, monthlyQuoteAtCap, monthlyQuoteUsed,
+  defaultMeasurementSystem, digitalTakeoffAvailable, measurementsImportEnabled = false, monthlyQuoteAtCap, monthlyQuoteUsed,
   monthlyQuoteLimit, effectivePlanCode, defaultTrade = 'roofing', componentCollections = [],
   isOverStorage, context = 'quote', onCancel, onPendingChange }: QuoteDetailsFormProps) {
   const router = useRouter();
@@ -101,6 +102,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
   const errorRef = useRef<HTMLDivElement>(null);
   const submitLock = useRef(false);
   const uploadLock = useRef(false);
+  const uploadAfterCreate = useRef(false);
   // Same-tick double click and post-create attachment failure cannot create a
   // second quote. This guard is local only; server atomic quota checks remain.
   const createdRef = useRef<{ id: string; entryMode: QuoteEntryMode } | null>(null);
@@ -235,6 +237,12 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
         await saveFileMetadata({ companyId, quoteId: record.id, fileType: 'plan',
           fileName: pendingPlan.fileName, fileSize: pendingPlan.fileSize,
           mimeType: pendingPlan.mimeType, storagePath: finalPath });
+      }
+      if (uploadAfterCreate.current && entryMode === 'manual') {
+        setProgress('Opening measurements import…');
+        router.push(`/${workspaceSlug}/quotes/${record.id}/measurements/import`);
+        navigating = true;
+        return;
       }
       setProgress(entryMode === 'digital' ? 'Opening Digital Takeoff…' : 'Opening your workspace…');
       router.push(quoteJourneyDestination({ workspaceSlug, quoteId: record.id, entryMode }));
@@ -407,10 +415,19 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
               onClick={e => { if (busy) e.preventDefault(); }}>← Quotes</Link>}
         <div className="qce-footer-end">
           <p id={`${id}-next`} className="qce-help" role="status">{progress || (uploading ? 'Preparing your plan…' : helper)}</p>
-          {!createdRecord && !creationUncertain && <QcButton type="submit" variant="primary" size="lg" data-copilot="quote-create"
-            pending={creating} disabled={uploading || requiredMissing || !entryMode || (entryMode === 'digital' && !pendingPlan)} aria-describedby={`${id}-next`}>
-            {creating ? 'Starting…' : entryMode === 'digital' ? 'Start measuring →' : entryMode === 'blank' ? 'Open line editor →' : 'Enter measurements →'}
-          </QcButton>}
+          {!createdRecord && !creationUncertain && <>
+            <QcButton type="submit" variant="primary" size="lg" data-copilot="quote-create"
+              onClick={() => { uploadAfterCreate.current = false; }}
+              pending={creating} disabled={uploading || requiredMissing || !entryMode || (entryMode === 'digital' && !pendingPlan)} aria-describedby={`${id}-next`}
+              data-tip="Type your measurements and quantities straight into the quote builder: create work areas, add components, enter the numbers. Everything stays editable.">
+              {creating ? 'Starting…' : entryMode === 'digital' ? 'Start measuring →' : entryMode === 'blank' ? 'Open line editor →' : 'Enter measurements & quantities →'}
+            </QcButton>
+            {entryMode === 'manual' && measurementsImportEnabled && <QcButton type="submit" size="lg" disabled={uploading || requiredMissing || creating}
+              onClick={() => { uploadAfterCreate.current = true; }}
+              data-tip="Upload a photo of handwritten notes, a PDF, a spreadsheet or paste text. We read the measurement and quantity lines, match them to your pricing library, and you check everything before anything is added to the quote.">
+              {creating ? 'Starting…' : 'Upload a file or photo →'}
+            </QcButton>}
+          </>}
         </div>
       </div>}
       {!entryMode && onCancel && <QcButton onClick={onCancel}>Cancel</QcButton>}

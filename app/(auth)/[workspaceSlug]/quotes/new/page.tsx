@@ -57,6 +57,7 @@ export default async function NewQuotePage({
           companyId={profile.company_id}
           defaultMeasurementSystem={defaultMeasurementSystem}
           digitalTakeoffAvailable={ent.features.digital_takeoff}
+          measurementsImportEnabled={process.env.NEXT_PUBLIC_MEASUREMENT_IMPORT_ENABLED === 'true'}
           monthlyQuoteAtCap={monthlyQuoteAtCap}
           monthlyQuoteUsed={ent.monthlyQuoteUsed}
           monthlyQuoteLimit={ent.monthlyQuoteLimit}
