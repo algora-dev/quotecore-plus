@@ -415,19 +415,36 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
               onClick={e => { if (busy) e.preventDefault(); }}>← Quotes</Link>}
         <div className="qce-footer-end">
           <p id={`${id}-next`} className="qce-help" role="status">{progress || (uploading ? 'Preparing your plan…' : helper)}</p>
-          {!createdRecord && !creationUncertain && <>
-            <QcButton type="submit" variant="primary" size="lg" data-copilot="quote-create" className="qc-tip-above"
+          {!createdRecord && !creationUncertain && (entryMode === 'manual' && measurementsImportEnabled ? (
+            /* Owner 2026-11-16: the two manual-mode entry actions become large
+               side-by-side dark cards with their TLDR visible — no hover tooltips. */
+            <div className="qce-entry-cards" role="group" aria-label="How to add your measurements">
+              <button type="submit" className="qce-entry-card" data-copilot="quote-create" onClick={() => { uploadAfterCreate.current = false; }}
+                disabled={uploading || requiredMissing || creating} aria-describedby={`${id}-next`}>
+                <span className="qce-entry-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M4.75 20.25h14.5" /></svg></span>
+                <span className="qce-entry-card-copy">
+                  <strong>{creating ? 'Starting…' : 'Enter measurements & quantities'}</strong>
+                  <p>Type your numbers straight into the quote builder: create work areas, add components, then enter the measurements you already have. Everything stays editable.</p>
+                </span>
+                <span className="qce-entry-card-arrow" aria-hidden="true">→</span>
+              </button>
+              <button type="submit" className="qce-entry-card" onClick={() => { uploadAfterCreate.current = true; }}
+                disabled={uploading || requiredMissing || creating}>
+                <span className="qce-entry-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" /></svg></span>
+                <span className="qce-entry-card-copy">
+                  <strong>Upload a file or image</strong>
+                  <p>A photo of handwritten notes, a PDF or a spreadsheet. We read the measurement and quantity lines and match them to your pricing library — you check everything before it is added.</p>
+                </span>
+                <span className="qce-entry-card-arrow" aria-hidden="true">→</span>
+              </button>
+            </div>
+          ) : (
+            <QcButton type="submit" variant="primary" size="lg" data-copilot="quote-create"
               onClick={() => { uploadAfterCreate.current = false; }}
-              pending={creating} disabled={uploading || requiredMissing || !entryMode || (entryMode === 'digital' && !pendingPlan)} aria-describedby={`${id}-next`}
-              data-qc-tip="Type your measurements and quantities straight into the quote builder: create work areas, add components, enter the numbers. Everything stays editable.">
+              pending={creating} disabled={uploading || requiredMissing || !entryMode || (entryMode === 'digital' && !pendingPlan)} aria-describedby={`${id}-next`}>
               {creating ? 'Starting…' : entryMode === 'digital' ? 'Start measuring →' : entryMode === 'blank' ? 'Open line editor →' : 'Enter measurements & quantities →'}
             </QcButton>
-            {entryMode === 'manual' && measurementsImportEnabled && <QcButton type="submit" size="lg" className="qc-tip-above" disabled={uploading || requiredMissing || creating}
-              onClick={() => { uploadAfterCreate.current = true; }}
-              data-qc-tip="Upload a photo of handwritten notes, a PDF, a spreadsheet or paste text. We read the measurement and quantity lines, match them to your pricing library, and you check everything before anything is added to the quote.">
-              {creating ? 'Starting…' : 'Upload a file or photo →'}
-            </QcButton>}
-          </>}
+          ))}
         </div>
       </div>}
       {!entryMode && onCancel && <QcButton onClick={onCancel}>Cancel</QcButton>}

@@ -7,6 +7,18 @@ import { familyOf, type MeasurementFamily } from './domain';
 
 export type MatchComponent = {
   id: string; name: string; sku?: string | null; measurement_type: string; notes?: string | null;
+  /** Display-only fields (owner 2026-11-16): the review page previews waste-adjusted
+   *  values and item+labour cost exactly like the quote builder. Absent on the
+   *  slim rows used by pure matching tests. */
+  default_material_rate?: number | null;
+  default_labour_rate?: number | null;
+  default_waste_type?: string | null;
+  default_waste_percent?: number | null;
+  default_waste_fixed?: number | null;
+  waste_unit?: string | null;
+  pricing_strategy?: string | null;
+  pack_price?: number | null;
+  pack_size?: number | null;
 };
 export type MatchConfidence = 'high' | 'medium' | 'low' | 'none';
 export type MatchResult = {

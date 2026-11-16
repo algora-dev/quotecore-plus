@@ -30,7 +30,7 @@ export async function reserveExtractCall() {
 
 export async function fetchLibraryComponents(admin: SupabaseClient, companyId: string, libraryId: string): Promise<MatchComponent[]> {
   const { data, error } = await admin.from('component_library')
-    .select('id,name,sku,measurement_type')
+    .select('id,name,sku,measurement_type,notes,default_material_rate,default_labour_rate,default_waste_type,default_waste_percent,default_waste_fixed,waste_unit,pricing_strategy,pack_price,pack_size')
     .eq('company_id', companyId)
     .eq('collection_id', libraryId)
     .order('name')

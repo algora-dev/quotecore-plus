@@ -59,3 +59,27 @@
 .mi-added-check,.mi-skip-mark{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:22px;height:22px;border-radius:999px;font-weight:750;font-size:13px;margin-top:4px}
 .mi-added-check{color:var(--qc-color-success-ink);background:var(--qc-color-success-bg)}
 .mi-skip-mark{color:var(--qc-text-secondary);background:var(--qc-bg-subtle)}
+
+/* Review round 3 (owner 2026-11-16): quote-builder-style display — numbered
+   entry rows with waste-adjusted values, quantity + item&labour figures,
+   inline create-component picker. Appended last; grep below if overriding. */
+.mi-entries{display:grid;gap:6px;align-items:stretch}
+.mi-entry{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mi-entry .qc-input{min-height:38px;max-width:130px;text-align:right}
+.mi-entry-number{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:24px;border-radius:8px;background:var(--qc-bg-subtle);color:var(--qc-text-secondary);font-size:12px;font-weight:700}
+.mi-entry-detail{font-size:12.5px;color:var(--qc-text-secondary)}
+.mi-entry-tools{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:2px}
+.mi-entry-tools .pa-text-link{font-weight:600}
+.mi-figure{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px;white-space:nowrap}
+.mi-figure + .mi-figure{margin-left:0;padding-left:14px}
+.mi-mini-label{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--qc-text-secondary)}
+.mi-figure strong{font-size:13.5px;color:var(--qc-text-body)}
+.mi-type-meta{font-size:12.5px;color:var(--qc-text-secondary)}
+.mi-component-picker{display:flex;gap:7px;align-items:center;min-width:0}
+.mi-component-picker .qc-select{flex:1;min-width:0}
+.mi-component-picker .qc-button{white-space:nowrap}
+@media(max-width:760px){
+  .mi-figure{margin-left:0;align-items:flex-start}
+  .mi-figure + .mi-figure{padding-left:0}
+  .mi-component-picker{flex-wrap:wrap}
+}

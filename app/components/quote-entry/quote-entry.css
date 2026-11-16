@@ -194,3 +194,25 @@
 .qce-path-copy strong{font-size:18px}
 .qce-path-copy>span{font-size:14px}
 .qce-path-copy small{font-size:12.5px}
+
+/* Owner 2026-11-16: the two manual-mode entry actions become large
+   side-by-side dark cards with their TLDR visible (no hover tooltips).
+   Appended last; grep below if overriding. */
+.qce-entry-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;width:100%;max-width:880px}
+.qce-entry-card{position:relative;overflow:hidden;display:flex;gap:14px;align-items:flex-start;text-align:left;cursor:pointer;font:inherit;
+  border:1px solid rgba(255,255,255,.09);border-radius:var(--qc-radius-card,16px);
+  background:linear-gradient(135deg,#1f2b3a 0%,#121923 100%);color:#e8edf4;padding:18px 16px;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.qce-entry-card::after{content:'';position:absolute;top:-30%;right:-12%;width:44%;height:170%;transform:rotate(18deg);
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,0));pointer-events:none}
+.qce-entry-card:hover:not(:disabled){transform:translateY(-2px);border-color:rgba(255,138,61,.5);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.qce-entry-card:focus-visible{outline:2px solid var(--qc-focus-ring);outline-offset:2px}
+.qce-entry-card:disabled{opacity:.55;cursor:not-allowed}
+.qce-entry-card-icon{flex:0 0 auto;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--qc-color-orange-core,#ff641f)}
+.qce-entry-card-icon svg{width:22px;height:22px}
+.qce-entry-card-copy{min-width:0}
+.qce-entry-card-copy strong{display:block;color:#fff;font-size:15px;margin-bottom:6px}
+.qce-entry-card-copy p{margin:0;max-width:none;text-align:left;font-size:12.5px;line-height:1.55;color:#aeb9c6}
+.qce-entry-card-arrow{position:absolute;top:14px;right:14px;color:var(--qc-color-orange-core,#ff641f);font-weight:700}
+@media(max-width:760px){.qce-entry-cards{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.qce-entry-card{transition:none}.qce-entry-card:hover:not(:disabled){transform:none}}

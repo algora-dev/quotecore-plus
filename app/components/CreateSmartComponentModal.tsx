@@ -166,6 +166,10 @@ interface Props {
   defaultComponentType: 'main' | 'extra';
   /** Company component collections for the library picker. */
   collections: { id: string; name: string; is_bootstrap: boolean }[];
+  /** Optional starting library for the picker (owner 2026-11-16): the
+   *  measurements-import review pre-selects the library being matched against,
+   *  so a quick-created component lands where the user expects it. */
+  defaultCollectionId?: string;
   onCreated: (comp: ComponentLibraryRow) => void;
   onClose: () => void;
 }
@@ -180,6 +184,7 @@ export function CreateSmartComponentModal({
   defaultTrade,
   defaultComponentType,
   collections,
+  defaultCollectionId,
   onCreated,
   onClose,
 }: Props) {
@@ -228,7 +233,8 @@ export function CreateSmartComponentModal({
   const [selectedFlashingId, setSelectedFlashingId] = useState('');
   const [flashings, setFlashings] = useState<FlashingLibraryRow[]>([]);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
-    collections.find(c => c.is_bootstrap)?.id ?? collections[0]?.id ?? ''
+    (defaultCollectionId && collections.some(c => c.id === defaultCollectionId) ? defaultCollectionId : undefined)
+      ?? collections.find(c => c.is_bootstrap)?.id ?? collections[0]?.id ?? ''
   );
 
   // Load flashings on mount (same pattern as component-list.tsx)

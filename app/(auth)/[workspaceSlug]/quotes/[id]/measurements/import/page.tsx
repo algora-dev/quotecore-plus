@@ -21,7 +21,10 @@ export default async function MeasurementImportPage({
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
   await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
-  const { data: quote } = await supabase.from('quotes').select('customer_name, job_name').eq('id', quoteId).maybeSingle() as unknown as { data: { customer_name: string | null; job_name: string | null } | null };
+  const { data: quote } = await supabase.from('quotes').select('customer_name, job_name, measurement_system, currency').eq('id', quoteId).maybeSingle() as unknown as { data: { customer_name: string | null; job_name: string | null; measurement_system: string | null; currency: string | null } | null };
+  const { data: company } = await supabase.from('companies')
+    .select('default_currency, default_measurement_system, default_trade')
+    .eq('id', profile.company_id).maybeSingle() as unknown as { data: { default_currency: string | null; default_measurement_system: string | null; default_trade: string | null } | null };
   const { data: collections } = await supabase.from('component_collections')
     .select('id,name,is_bootstrap').eq('company_id', profile.company_id)
     .order('is_bootstrap', { ascending: false }).order('name');
@@ -46,6 +49,9 @@ export default async function MeasurementImportPage({
         quoteId={quoteId}
         quoteLabel={quote?.customer_name || quote?.job_name || 'this quote'}
         collections={(collections ?? []).map(c => ({ id: c.id, name: c.name, isBootstrap: c.is_bootstrap, count: libCounts.get(c.id) ?? 0 }))}
+        measurementSystem={(quote?.measurement_system ?? company?.default_measurement_system ?? 'metric') as 'metric' | 'imperial_ft' | 'imperial_rs'}
+        currency={quote?.currency ?? company?.default_currency ?? 'USD'}
+        defaultTrade={company?.default_trade || 'roofing'}
         initialCurrent={current}
         activeImports={activeImports.map(s => ({ id: s.id, sourceName: s.source_name, remaining: s.remaining }))}
       />

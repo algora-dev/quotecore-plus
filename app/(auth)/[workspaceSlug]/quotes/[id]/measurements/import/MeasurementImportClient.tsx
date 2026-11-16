@@ -5,7 +5,11 @@ import Link from 'next/link';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
 import { QcInput, QcSelect } from '@/app/components/ui/v2/QcField';
 import { FileUploader } from '@/app/components/FileUploader';
+import { CreateSmartComponentModal } from '@/app/components/CreateSmartComponentModal';
+import { measurementTypeLabel, type ComponentLibraryRow, type MeasurementSystem } from '@/app/lib/types';
+import { formatCurrency } from '@/app/lib/currency/currencies';
 import type { MeasurementImportLineRow, MeasurementImportRow } from '@/app/lib/measurements-import/domain';
+import { toCanonicalLength, toCanonicalArea } from '@/app/lib/measurements-import/domain';
 import type { MatchComponent } from '@/app/lib/measurements-import/auto-match';
 import {
   loadImportReview, updateMeasurementLine, setMeasurementLineStatus,
@@ -19,9 +23,10 @@ type ActiveImport = { id: string; sourceName: string; remaining: number };
 const KIND_LABEL: Record<string, string> = { area: 'Area', lineal: 'Length', quantity: 'Count' };
 const LINEAL_FAMILY = new Set(['lineal', 'linear', 'multi_lineal', 'curved_line', 'quantity_by_spacing']);
 
-export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, collections, initialCurrent, activeImports }: {
+export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, collections, initialCurrent, activeImports, measurementSystem, currency, defaultTrade }: {
   workspaceSlug: string; quoteId: string; quoteLabel: string; collections: Collection[];
   initialCurrent: Review | null; activeImports: ActiveImport[];
+  measurementSystem: string; currency: string; defaultTrade: string;
 }) {
   const router = useRouter();
   const [current, setCurrent] = useState<Review | null>(initialCurrent);
@@ -35,6 +40,7 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
   const [failures, setFailures] = useState<string[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [creatingFor, setCreatingFor] = useState<MeasurementImportLineRow | null>(null);
 
   const quoteHref = `/${workspaceSlug}/quotes/${quoteId}`;
   const pending = (current?.lines ?? []).filter(l => l.status !== 'imported' && l.status !== 'skipped');
@@ -163,6 +169,29 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to delete this import.'); } finally { setBusy(false); }
   }
 
+  /** Owner 2026-11-16: extracted item with no library match — create the
+   *  component on the spot (same modal as the quote builder), then assign it
+   *  to the line that asked for it. */
+  function handleComponentCreated(comp: ComponentLibraryRow) {
+    const forLine = creatingFor;
+    if (current) {
+      const extras = comp as ComponentLibraryRow & { waste_unit?: string | null; pricing_strategy?: string | null; pack_price?: number | null; pack_size?: number | null };
+      const matchComp: MatchComponent = {
+        id: comp.id, name: comp.name, sku: comp.sku ?? null, measurement_type: comp.measurement_type,
+        default_material_rate: comp.default_material_rate, default_labour_rate: comp.default_labour_rate,
+        default_waste_type: comp.default_waste_type, default_waste_percent: comp.default_waste_percent,
+        default_waste_fixed: comp.default_waste_fixed, waste_unit: extras.waste_unit ?? null,
+        pricing_strategy: extras.pricing_strategy ?? null, pack_price: extras.pack_price ?? null, pack_size: extras.pack_size ?? null,
+      };
+      setCurrent(cur => cur ? { ...cur, components: [...cur.components.filter(c => c.id !== comp.id), matchComp] } : cur);
+    }
+    setCreatingFor(null);
+    if (forLine) {
+      void saveLine(forLine, { matchedComponentId: comp.id });
+      setNotice(`\u201c${comp.name}\u201d created in your library and matched to \u201c${forLine.line_data.label}\u201d.`);
+    }
+  }
+
   if (!current) {
     return (
       <section className="pa-panel pa-capture" aria-labelledby="mi-title">
@@ -239,7 +268,8 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
 
       <div className="mi-lines">
         {lines.map(line => <LineRow key={line.id} line={line} components={components} masterBasis={session.default_basis}
-          drafts={drafts} onDraft={setEntry} onCommitEntry={commitEntry} onField={setField} onCommitField={commitField} onSave={saveLine} onToggle={toggleStatus} />)}
+          drafts={drafts} onDraft={setEntry} onCommitEntry={commitEntry} onField={setField} onCommitField={commitField} onSave={saveLine} onToggle={toggleStatus}
+          currency={currency} measurementSystem={measurementSystem} onCreateComponent={setCreatingFor} />)}
       </div>
 
       {failures.length > 0 && <div className="pa-alert mi-failures" role="alert"><strong>Some lines need attention:</strong>{'\n'}{failures.slice(0, 8).join('\n')}</div>}
@@ -254,11 +284,22 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
           {busy ? 'Adding…' : selected.length > 0 ? `Add ${selected.length} line${selected.length === 1 ? '' : 's'} to quote →` : 'Continue to quote →'}
         </QcButton>
       </div>
+
+      {creatingFor && <CreateSmartComponentModal
+        appearance="v2"
+        measurementSystem={measurementSystem as MeasurementSystem}
+        defaultTrade={defaultTrade}
+        defaultComponentType="main"
+        collections={collections.map(c => ({ id: c.id, name: c.name, is_bootstrap: c.isBootstrap }))}
+        defaultCollectionId={libraryId || undefined}
+        onCreated={handleComponentCreated}
+        onClose={() => setCreatingFor(null)}
+      />}
     </section>
   );
 }
 
-function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry, onField, onCommitField, onSave, onToggle }: {
+function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry, onField, onCommitField, onSave, onToggle, currency, measurementSystem, onCreateComponent }: {
   line: MeasurementImportLineRow; components: MatchComponent[]; masterBasis: 'plan' | 'actual';
   drafts: Record<string, string>;
   onDraft: (line: MeasurementImportLineRow, index: number, raw: string) => void;
@@ -267,11 +308,47 @@ function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry
   onCommitField: (line: MeasurementImportLineRow, field: 'label' | 'unit') => Promise<void>;
   onSave: (line: MeasurementImportLineRow, patch: Partial<MeasurementImportLineRow['line_data']>) => Promise<void>;
   onToggle: (line: MeasurementImportLineRow, status: 'selected' | 'skipped' | 'candidate') => Promise<void>;
+  currency: string; measurementSystem: string;
+  onCreateComponent: (line: MeasurementImportLineRow) => void;
 }) {
   const data = line.line_data;
   const component = components.find(c => c.id === data.matchedComponentId);
   const canCombine = !!component && LINEAL_FAMILY.has(component.measurement_type) && data.entries.length >= 2;
   const tone = data.matchedComponentId && (data.matchConfidence === 'high' || data.matchConfidence === 'medium' || data.matchOrigin === 'user') ? 'pa-in-found' : 'pa-in-missing';
+  // Owner 2026-11-16: preview the line exactly like a quote-builder component
+  // card — numbered entries with waste-adjusted values, quantity total and
+  // item+labour cost from the matched component's rules.
+  const unitFactor = data.kind === 'lineal' ? toCanonicalLength(1, data.unit)
+    : data.kind === 'area' ? toCanonicalArea(1, data.unit) : data.kind === 'quantity' ? 1 : null;
+  const wasteType = component?.default_waste_type ?? 'none';
+  const wastePct = Number(component?.default_waste_percent ?? 0) || 0;
+  const wasteFixed = Number(component?.default_waste_fixed ?? 0) || 0;
+  const perEntryWaste = wasteType === 'percent' ? wastePct / 100
+    : wasteType === 'fixed_per_segment' && unitFactor ? wasteFixed / unitFactor : 0;
+  const hasWaste = wasteType === 'none' ? false : wasteType === 'fixed' ? wasteFixed > 0 : perEntryWaste > 0;
+  const adjusted = (v: number) => wasteType === 'percent' ? v * (1 + perEntryWaste)
+    : wasteType === 'fixed_per_segment' ? v + perEntryWaste : v;
+  const sumRaw = data.entries.reduce((s, e) => s + e.value, 0);
+  const sumAdj = data.entries.reduce((s, e) => s + adjusted(e.value), 0)
+    + (wasteType === 'fixed' && unitFactor ? wasteFixed / unitFactor : 0);
+  const totalDisplay = `${sumAdj.toFixed(2)}${data.unit ? ` ${data.unit}` : ''}`;
+  const totalChanged = hasWaste && Math.abs(sumAdj - sumRaw) > 1e-6;
+  let costDisplay: string | null = null;
+  if (component && unitFactor) {
+    const totalCanon = sumAdj * unitFactor;
+    const mat = Number(component.default_material_rate ?? 0) || 0;
+    const lab = Number(component.default_labour_rate ?? 0) || 0;
+    const strategy = component.pricing_strategy ?? 'per_unit';
+    const packPrice = Number(component.pack_price ?? 0) || 0;
+    const packSize = Number(component.pack_size ?? 0) || 0;
+    if (strategy.startsWith('per_pack') && packPrice > 0 && packSize > 0) {
+      costDisplay = formatCurrency(Math.ceil(totalCanon / packSize) * packPrice, currency);
+    } else if (mat + lab > 0) {
+      costDisplay = formatCurrency(totalCanon * (mat + lab), currency);
+    }
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const typeMeta = component ? `${measurementTypeLabel(component.measurement_type as any, measurementSystem as any)} · ${data.entries.length} ${data.entries.length === 1 ? 'entry' : 'entries'}` : null;
   // Owner 2026-11-16: clicking anywhere on a line selects it; interactive
   // controls keep their own handling.
   function rowClick(e: React.MouseEvent<HTMLDivElement>) {
@@ -301,26 +378,37 @@ function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry
             onChange={e => onField(line, 'unit', e.target.value)}
             onBlur={() => onCommitField(line, 'unit')} />
           {data.kind && <span className="mi-kind">{KIND_LABEL[data.kind] ?? data.kind}</span>}
+          {component && <span className="mi-figure"><span className="mi-mini-label">Quantity</span><strong>{totalDisplay}</strong></span>}
+          {component && costDisplay && <span className="mi-figure"><span className="mi-mini-label">Item + labour</span><strong>{costDisplay}</strong></span>}
         </div>
+        {typeMeta && <span className="mi-type-meta">{typeMeta}{totalChanged ? ' · incl waste' : ''}</span>}
         <div className="mi-entries">
           {data.entries.map((entry, i) => <span key={i} className="mi-entry">
+            <span className="mi-entry-number" aria-hidden="true">#{i + 1}</span>
             <QcInput className={tone} inputMode="decimal" aria-label={`Entry ${i + 1}`}
               value={drafts[`${line.id}:${i}`] ?? String(entry.value)}
               onChange={e => onDraft(line, i, e.target.value)}
               onBlur={() => onCommitEntry(line, i)} />
             <span className="mi-entry-unit">{data.unit || '–'}</span>
+            {hasWaste && Math.abs(adjusted(entry.value) - entry.value) > 1e-6
+              && <span className="mi-entry-detail">→ {adjusted(entry.value).toFixed(2)} – incl waste</span>}
             {data.entries.length > 1 && <button type="button" className="pa-text-link" aria-label={`Remove entry ${i + 1}`}
               onClick={() => onSave(line, { entries: data.entries.filter((_, j) => j !== i) })}>×</button>}
           </span>)}
-          <button type="button" className="pa-text-link" onClick={() => onSave(line, { entries: [...data.entries, { value: data.entries[data.entries.length - 1]?.value ?? 1 }] })}>+ entry</button>
-          {canCombine && <label className="mi-combine"><input type="checkbox" checked={data.combineEntries} onChange={e => onSave(line, { combineEntries: e.target.checked })} />combine into one</label>}
+          <div className="mi-entry-tools">
+            <button type="button" className="pa-text-link" onClick={() => onSave(line, { entries: [...data.entries, { value: data.entries[data.entries.length - 1]?.value ?? 1 }] })}>+ entry</button>
+            {canCombine && <label className="mi-combine"><input type="checkbox" checked={data.combineEntries} onChange={e => onSave(line, { combineEntries: e.target.checked })} />Combine into total length + waste</label>}
+          </div>
         </div>
         <div className="mi-line-controls">
-          <QcSelect className={tone} value={data.matchedComponentId ?? ''} aria-label="Component"
-            onChange={e => onSave(line, { matchedComponentId: e.target.value || null })}>
-            <option value="">— choose a component —</option>
-            {components.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </QcSelect>
+          <div className="mi-component-picker">
+            <QcSelect className={tone} value={data.matchedComponentId ?? ''} aria-label="Component"
+              onChange={e => onSave(line, { matchedComponentId: e.target.value || null })}>
+              <option value="">— choose a component —</option>
+              {components.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </QcSelect>
+            <QcButton size="sm" variant="ghost" onClick={() => onCreateComponent(line)}>+ New component</QcButton>
+          </div>
           <QcSelect value={data.basisOverride ?? ''} aria-label="Measurement basis"
             onChange={e => onSave(line, { basisOverride: (e.target.value || null) as 'plan' | 'actual' | null })}>
             <option value="">Basis: follow master ({masterBasis === 'plan' ? 'Plan' : 'Actual'})</option>
