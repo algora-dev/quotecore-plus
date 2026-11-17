@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { searchUsers, type SearchUserRow } from './actions';
+import { searchUsers, setCompanyTestFlag, type SearchUserRow } from './actions';
 
 // Owner 2026-10-12: the list loads every user on open (newest first) - no
 // "Show all" click needed. Search filters; the footer pages through results.
@@ -109,20 +109,24 @@ function CompBadge({ until }: { until: string }) {
   );
 }
 
+type UsersView = 'app' | 'test' | 'all';
+
 export function UsersPanel() {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState<SearchUserRow[]>([]);
   const [loading, startSearch] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [flagError, setFlagError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
+  const [view, setView] = useState<UsersView>('app');
 
-  function runPage(targetPage: number, query: string) {
+  function runPage(targetPage: number, query: string, v: UsersView) {
     setError(null);
     startSearch(async () => {
-      const res = await searchUsers(query, PAGE_SIZE, targetPage * PAGE_SIZE);
+      const res = await searchUsers(query, PAGE_SIZE, targetPage * PAGE_SIZE, v);
       if (res.ok) {
         setUsers(res.users);
         setTotal(res.total);
@@ -135,19 +139,60 @@ export function UsersPanel() {
   }
 
   // Load page 1 immediately - the admin sees every user (newest first) the
-  // moment the Users page opens (owner 2026-10-12).
+  // moment the Users page opens (owner 2026-10-12). App users (real signups)
+  // is the default view (owner 2026-11-17); test accounts live behind the
+  // Test users tab.
   useEffect(() => {
-    runPage(0, '');
+    runPage(0, '', 'app');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function onSearch(e: React.FormEvent) {
     e.preventDefault();
-    runPage(0, search);
+    runPage(0, search, view);
+  }
+
+  function onViewChange(v: UsersView) {
+    setView(v);
+    runPage(0, search, v);
+  }
+
+  // Move a tenant between App users and Test users without leaving the list.
+  // stopPropagation: the row click opens the profile - the toggle must not.
+  function onToggleTest(u: SearchUserRow, e: React.MouseEvent) {
+    e.stopPropagation();
+    setFlagError(null);
+    startSearch(async () => {
+      const res = await setCompanyTestFlag(u.companyId, !u.isTestAccount);
+      if (res.ok) {
+        runPage(page, search, view);
+      } else {
+        setFlagError(res.error);
+      }
+    });
   }
 
   return (
     <div className="space-y-4">
+      {/* App users / Test users / All tabs (owner 2026-11-17) */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {([['app', 'App users'], ['test', 'Test users'], ['all', 'All']] as const).map(([v, label]) => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => onViewChange(v)}
+            className={
+              v === view
+                ? 'px-4 py-1.5 rounded-full text-xs font-semibold bg-black text-white transition'
+                : 'px-4 py-1.5 rounded-full text-xs font-medium border border-slate-300 text-slate-600 hover:bg-slate-50 transition'
+            }
+          >
+            {label}
+          </button>
+        ))}
+        <span className="text-xs text-slate-400 ml-1">{view === 'app' ? 'Real signups only' : view === 'test' ? 'Internal test accounts' : 'Everything except demo'}</span>
+      </div>
+
       {/* Search bar */}
       <form onSubmit={onSearch} className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-sm">
@@ -174,6 +219,12 @@ export function UsersPanel() {
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
+        </div>
+      )}
+
+      {flagError && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+          Couldn\u2019t move that account: {flagError}
         </div>
       )}
 
@@ -208,7 +259,14 @@ export function UsersPanel() {
                 >
                   <td className="px-4 py-3 font-medium text-slate-900">{u.email}</td>
                   <td className="px-4 py-3 text-slate-600">{u.fullName ?? <span className="text-slate-400">-</span>}</td>
-                  <td className="px-4 py-3 text-slate-700">{u.companyName}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {u.companyName}
+                    {u.isTestAccount && (
+                      <span className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide bg-slate-200 text-slate-600">
+                        TEST
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       <PlanBadge code={u.planCode} status={u.subscriptionStatus} hasSub={!!u.stripeSubscriptionId} billingModel={u.billingModel} free={u.freeWorkspace} />
@@ -239,9 +297,19 @@ export function UsersPanel() {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <svg className="w-4 h-4 text-slate-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => onToggleTest(u, e)}
+                        title={u.isTestAccount ? 'Move this account back to App users' : 'Move this account to Test users'}
+                        className="px-3 py-1 rounded-full border border-slate-300 text-xs font-medium text-slate-600 hover:bg-slate-100 transition"
+                      >
+                        {u.isTestAccount ? '\u2192 App' : '\u2192 Test'}
+                      </button>
+                      <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -259,7 +327,7 @@ export function UsersPanel() {
                 {page > 0 && (
                   <button
                     type="button"
-                    onClick={() => runPage(page - 1, search)}
+                    onClick={() => runPage(page - 1, search, view)}
                     disabled={loading}
                     className="px-3 py-1 rounded-full border border-slate-300 text-xs font-medium hover:bg-slate-50 disabled:opacity-50"
                   >
@@ -269,7 +337,7 @@ export function UsersPanel() {
                 {page * PAGE_SIZE + users.length < total && (
                   <button
                     type="button"
-                    onClick={() => runPage(page + 1, search)}
+                    onClick={() => runPage(page + 1, search, view)}
                     disabled={loading}
                     className="px-3 py-1 rounded-full border border-slate-300 text-xs font-medium hover:bg-slate-50 disabled:opacity-50"
                   >

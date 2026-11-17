@@ -59,6 +59,8 @@ export interface SearchUserRow {
   lastActiveAt: string | null;
   /** Last NEW sign-in only (magic link / OAuth). Can be weeks behind usage. */
   lastSignInAt: string | null;
+  /** Owner 2026-11-17: internal test/QA account (hidden from the App users view). */
+  isTestAccount: boolean;
 }
 
 export type SearchResult =
@@ -138,11 +140,30 @@ async function freeWorkspaceCompanyIds(
  * Server-side paginated search for admin user management.
  * Searches by email, then company name, then user full_name (ilike).
  */
-export async function searchUsers(query: string, limit: number = 20, offset: number = 0): Promise<SearchResult> {
+export async function searchUsers(
+  query: string,
+  limit: number = 20,
+  offset: number = 0,
+  view: 'app' | 'test' | 'all' = 'app',
+): Promise<SearchResult> {
   await requireAdmin();
   const admin = createAdminClient();
 
   const q = (query ?? '').trim();
+
+  // Owner 2026-11-17 App/Test split: 'app' (default) = real signups only
+  // (is_test_account=false, which is the column default for every new
+  // signup); 'test' = internal accounts; 'all' = everything.
+  let testIds: string[] = [];
+  if (view !== 'all') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: testCos } = await (admin as any).from('companies').select('id').eq('is_test_account', true).limit(2000);
+    testIds = ((testCos ?? []) as { id: string }[]).map((c) => c.id);
+  }
+  if (view === 'test' && testIds.length === 0) {
+    return { ok: true, users: [], total: 0 };
+  }
+  const notTestFilter = view === 'app' && testIds.length ? testIds.join(',') : null;
 
   // Owner 2026-10-17: demo visitors are managed under the admin Demo tab;
   // every Users path excludes fictional plan_code='demo' tenants.
@@ -159,6 +180,8 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
       .from('users')
       .select('id', { count: 'exact', head: true });
     if (notDemoFilter) countQuery = countQuery.not('company_id', 'in', `(${notDemoFilter})`);
+    if (notTestFilter) countQuery = countQuery.not('company_id', 'in', `(${notTestFilter})`);
+    if (view === 'test') countQuery = countQuery.in('company_id', testIds);
     const { count: total, error: countErr } = await countQuery;
     if (countErr) return { ok: false, error: countErr.message };
 
@@ -168,6 +191,8 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
     if (notDemoFilter) pageQuery = pageQuery.not('company_id', 'in', `(${notDemoFilter})`);
+    if (notTestFilter) pageQuery = pageQuery.not('company_id', 'in', `(${notTestFilter})`);
+    if (view === 'test') pageQuery = pageQuery.in('company_id', testIds);
     const { data: pageUsers, error: uErr } = await pageQuery;
     if (uErr) return { ok: false, error: uErr.message };
 
@@ -178,7 +203,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: cos, error: cErr } = await (admin as any)
         .from('companies')
-        .select('id, name, plan_code, billing_model, subscription_status, admin_paused, stripe_subscription_id, comp_until')
+        .select('id, name, plan_code, billing_model, subscription_status, admin_paused, stripe_subscription_id, comp_until, is_test_account')
         .in('id', companyIds);
       if (cErr) return { ok: false, error: cErr.message };
       for (const c of cos ?? []) companiesById[c.id] = c;
@@ -208,6 +233,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
         adminPaused: co?.admin_paused ?? false,
         lastActiveAt: activeMap.get(u.id)?.lastActiveAt ?? null,
         lastSignInAt: activeMap.get(u.id)?.lastSignInAt ?? null,
+        isTestAccount: (co as { is_test_account?: boolean } | undefined)?.is_test_account === true,
       };
     });
     return { ok: true, users, total: total ?? users.length };
@@ -221,6 +247,8 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
     .order('email', { ascending: true })
     .limit(limit);
   if (notDemoFilter) emailQuery = emailQuery.not('company_id', 'in', `(${notDemoFilter})`);
+  if (notTestFilter) emailQuery = emailQuery.not('company_id', 'in', `(${notTestFilter})`);
+  if (view === 'test') emailQuery = emailQuery.in('company_id', testIds);
   const { data: emailMatches, error: emailErr } = await emailQuery;
   if (emailErr) return { ok: false, error: emailErr.message };
 
@@ -231,7 +259,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: cos } = await (admin as any)
       .from('companies')
-      .select('id, name, plan_code, billing_model, subscription_status, admin_paused, stripe_subscription_id, comp_until')
+      .select('id, name, plan_code, billing_model, subscription_status, admin_paused, stripe_subscription_id, comp_until, is_test_account')
       .in('id', emailCompanyIds);
     for (const c of cos ?? []) {
       companiesById[c.id] = c;
@@ -262,6 +290,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
       adminPaused: co?.admin_paused ?? false,
       lastActiveAt: emailActiveMap.get(u.id)?.lastActiveAt ?? null,
       lastSignInAt: emailActiveMap.get(u.id)?.lastSignInAt ?? null,
+      isTestAccount: (co as { is_test_account?: boolean } | undefined)?.is_test_account === true,
     };
   });
 
@@ -270,11 +299,12 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let coQuery = (admin as any)
       .from('companies')
-      .select('id, name, plan_code, billing_model, subscription_status, admin_paused, stripe_subscription_id, comp_until')
+      .select('id, name, plan_code, billing_model, subscription_status, admin_paused, stripe_subscription_id, comp_until, is_test_account')
       .ilike('name', `%${q}%`)
       .limit(limit);
     // Demo companies never surface in user search (owner 2026-10-17).
     coQuery = coQuery.or('plan_code.neq.demo,plan_code.is.null');
+    if (view !== 'all') coQuery = coQuery.eq('is_test_account', view === 'test');
     const { data: coMatches } = await coQuery;
 
     const existingCompanyIds = new Set(Object.keys(companiesById));
@@ -310,6 +340,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
             adminPaused: c.admin_paused,
             lastActiveAt: coActiveMap.get(u.id)?.lastActiveAt ?? null,
             lastSignInAt: coActiveMap.get(u.id)?.lastSignInAt ?? null,
+            isTestAccount: (c as { is_test_account?: boolean }).is_test_account === true,
           });
         }
       }
@@ -317,6 +348,29 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
   }
 
   return { ok: true, users: users.slice(0, limit), total: users.length };
+}
+
+/**
+ * Owner 2026-11-17: flip a company between App users and Test users.
+ * One click from the Users panel; the flag hides the whole tenant from the
+ * App users view (default) so internal accounts never pollute the real-user
+ * list (email sends, activity reads).
+ */
+export async function setCompanyTestFlag(
+  companyId: string,
+  isTest: boolean,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin();
+  if (!companyId) return { ok: false, error: 'Missing company id.' };
+  const admin = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin as any)
+    .from('companies')
+    .update({ is_test_account: isTest })
+    .eq('id', companyId);
+  if (error) return { ok: false, error: error.message };
+  console.log(`[admin/users] test-flag ${companyId} -> ${isTest}`);
+  return { ok: true };
 }
 
 export interface AccountMatch {
