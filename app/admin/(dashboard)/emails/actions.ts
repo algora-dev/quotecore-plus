@@ -15,7 +15,9 @@ import { renderOutreachVars, buildOutreachUnsubscribeUrl } from '@/app/lib/email
  * per-recipient unsubscribe link.
  */
 
-const DEFAULT_OUTREACH_TEMPLATE = 'stuck_welcome_help';
+// Owner 2026-11-17: current campaign is the "a lot has changed / free workspace
+// + demo + setup packages" re-engagement email (test send first to RS Roofing).
+const DEFAULT_OUTREACH_TEMPLATE = 'whats_new_nov';
 
 export interface OutreachRecipient {
   companyId: string;
