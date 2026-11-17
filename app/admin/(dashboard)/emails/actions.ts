@@ -17,6 +17,12 @@ import { renderOutreachVars, buildOutreachUnsubscribeUrl } from '@/app/lib/email
 
 // Owner 2026-11-17: current campaign is the "a lot has changed / free workspace
 // + demo + setup packages" re-engagement email (test send first to RS Roofing).
+// Owner 2026-11-17 (Gmail Primary test): outreach sends come from a person,
+// not the brand mailbox — person-named senders land in Gmail Primary far more
+// often than branded bulk-looking ones. Replies still flow to the monitored
+// inbox via sendEmail's default replyTo (info@quote-core.com).
+const OUTREACH_FROM = 'Shaun at QuoteCore+ <shaun@quote-core.com>';
+
 const DEFAULT_OUTREACH_TEMPLATE = 'whats_new_nov';
 
 export interface OutreachRecipient {
@@ -222,6 +228,7 @@ export async function sendOutreachEmails(
       to: recipient.ownerEmail,
       subject: template.subject,
       html,
+      from: OUTREACH_FROM,
       tags: [{ name: 'campaign', value: templateKey }],
     });
 
