@@ -220,7 +220,11 @@ export function UsersPanel() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span
-                        title={activityTier(u.lastActiveAt) === 'never' ? 'Never signed in' : `Last active: ${u.lastActiveAt}`}
+                        title={
+                          activityTier(u.lastActiveAt) === 'never'
+                            ? 'Never signed in'
+                            : `Last active: ${u.lastActiveAt}${u.lastSignInAt ? ` · Last sign-in (new login): ${u.lastSignInAt}` : ''}`
+                        }
                         className="inline-flex items-center gap-1.5"
                       >
                         <span className={`w-2 h-2 rounded-full shrink-0 ${DOT_TIER[activityTier(u.lastActiveAt)]}`} />

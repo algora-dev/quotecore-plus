@@ -55,41 +55,58 @@ export interface SearchUserRow {
   subscriptionStatus: string | null;
   compUntil: string | null;
   adminPaused: boolean;
+  /** Real last usage = max(last sign-in, last token refresh) via admin RPC. */
   lastActiveAt: string | null;
+  /** Last NEW sign-in only (magic link / OAuth). Can be weeks behind usage. */
+  lastSignInAt: string | null;
 }
 
 export type SearchResult =
   | { ok: true; users: SearchUserRow[]; total: number }
   | { ok: false; error: string };
 
+/** Real activity per user from the admin_user_last_active RPC. */
+interface LastActiveEntry {
+  lastSignInAt: string | null;
+  lastActiveAt: string | null;
+}
+
 /**
- * Fetch last_sign_in_at for a set of user ids from auth.users via the
- * service-role admin API. Returns a map of user id -> ISO timestamp (null if
- * the user never signed in / auth row missing).
+ * Real last-active + last sign-in for a set of user ids, via the
+ * admin_user_last_active SECURITY DEFINER RPC (migration 20261117130000).
+ *
+ * Why not auth.users.last_sign_in_at alone: Supabase only updates it when a
+ * user completes a NEW sign-in. Returning users keep a live session whose
+ * token silently refreshes (auth.sessions.updated_at bumps on refresh) without
+ * ever touching last_sign_in_at, so active users showed stale dates while
+ * analytics (Clarity) recorded them browsing (owner 2026-11-17, Aldridge case).
+ *
+ * lastActiveAt = max(last sign-in, last session refresh) = real last usage.
  */
 async function fetchLastActiveMap(
   admin: ReturnType<typeof createAdminClient>,
   userIds: string[],
-): Promise<Map<string, string | null>> {
-  const map = new Map<string, string | null>();
+): Promise<Map<string, LastActiveEntry>> {
+  const map = new Map<string, LastActiveEntry>();
   if (userIds.length === 0) return map;
 
-  const wanted = new Set(userIds);
-  let page = 1;
-  const perPage = 200;
-  // Walk pages until we have every id or run out of auth users (safety cap).
-  for (let i = 0; i < 20; i++) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
-    if (error || !data) break;
-    for (const au of data.users) {
-      if (wanted.has(au.id)) {
-        map.set(au.id, au.last_sign_in_at ?? au.created_at ?? null);
-      }
+  const { data, error } = await (admin as unknown as {
+    rpc: (fn: string, args: Record<string, unknown>) => Promise<{
+      data: Array<{ user_id: string; last_sign_in_at: string | null; last_active_at: string | null }> | null;
+      error: { message: string } | null;
+    }>;
+  }).rpc('admin_user_last_active', { p_user_ids: userIds });
+  if (!error && data) {
+    for (const row of data) {
+      map.set(row.user_id, {
+        lastSignInAt: row.last_sign_in_at ?? null,
+        lastActiveAt: row.last_active_at ?? row.last_sign_in_at ?? null,
+      });
     }
-    if (map.size === wanted.size || data.users.length < perPage) break;
-    page += 1;
+  } else if (error) {
+    console.error(`[admin/users] admin_user_last_active rpc failed: ${error.message}`);
   }
-  for (const id of userIds) if (!map.has(id)) map.set(id, null);
+  for (const id of userIds) if (!map.has(id)) map.set(id, { lastSignInAt: null, lastActiveAt: null });
   return map;
 }
 
@@ -189,7 +206,8 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
         stripeSubscriptionId: co?.stripe_subscription_id ?? null,
         compUntil: co?.comp_until ?? null,
         adminPaused: co?.admin_paused ?? false,
-        lastActiveAt: activeMap.get(u.id) ?? null,
+        lastActiveAt: activeMap.get(u.id)?.lastActiveAt ?? null,
+        lastSignInAt: activeMap.get(u.id)?.lastSignInAt ?? null,
       };
     });
     return { ok: true, users, total: total ?? users.length };
@@ -242,7 +260,8 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
       stripeSubscriptionId: co?.stripe_subscription_id ?? null,
       compUntil: co?.comp_until ?? null,
       adminPaused: co?.admin_paused ?? false,
-      lastActiveAt: emailActiveMap.get(u.id) ?? null,
+      lastActiveAt: emailActiveMap.get(u.id)?.lastActiveAt ?? null,
+      lastSignInAt: emailActiveMap.get(u.id)?.lastSignInAt ?? null,
     };
   });
 
@@ -289,7 +308,8 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
             stripeSubscriptionId: c.stripe_subscription_id ?? null,
             compUntil: (c as { comp_until?: string | null }).comp_until ?? null,
             adminPaused: c.admin_paused,
-            lastActiveAt: coActiveMap.get(u.id) ?? null,
+            lastActiveAt: coActiveMap.get(u.id)?.lastActiveAt ?? null,
+            lastSignInAt: coActiveMap.get(u.id)?.lastSignInAt ?? null,
           });
         }
       }
@@ -697,7 +717,7 @@ export async function getPaymentAttention(limit: number = 50): Promise<PaymentAt
     const relevant = ledger.filter(e => e.company_id === companyId && Date.parse(e.created_at) >= failureMs);
     const billable = relevant.filter(e => e.state === 'consumed');
     const latestLedgerMs = relevant.reduce((v, e) => Math.max(v, Date.parse(e.created_at)), Number.NEGATIVE_INFINITY);
-    const latestSignIn = companyUsers.map(u => activeMap.get(u.id)).filter((v): v is string => !!v)
+    const latestSignIn = companyUsers.map(u => activeMap.get(u.id)?.lastSignInAt).filter((v): v is string => !!v)
       .sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null;
     return {
       attentionId: String(raw.id), companyId, companyName: String(co.name ?? 'Unknown company'),
