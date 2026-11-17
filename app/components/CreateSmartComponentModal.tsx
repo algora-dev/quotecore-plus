@@ -12,6 +12,8 @@
  */
 
 import { useState, useEffect, type ReactNode } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { QcDialog } from '@/app/components/ui/v2/QcDialog';
 import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { createComponent } from '@/app/(auth)/[workspaceSlug]/components/actions';
@@ -160,6 +162,10 @@ function TypeSpecificFields(props: {
 interface Props {
   /** Optional presentation only; data, field names and validation stay unchanged. */
   appearance?: 'v2';
+  /** Context-specific copy (owner 2026-11-16): the measurements-import review
+   *  saves to the library and matches the line, not the quote itself. */
+  submitLabel?: string;
+  subtitle?: string;
   measurementSystem: MeasurementSystem;
   defaultTrade: string;
   /** Default type pre-selects Main or Extra depending on which phase triggered the modal. */
@@ -180,6 +186,8 @@ interface Props {
 
 export function CreateSmartComponentModal({
   appearance,
+  submitLabel,
+  subtitle,
   measurementSystem,
   defaultTrade,
   defaultComponentType,
@@ -189,6 +197,9 @@ export function CreateSmartComponentModal({
   onClose,
 }: Props) {
   const { notify, feedback, feedbackOpen } = useQcFeedback();
+  // Workspace slug from the URL powers the billing link on the plan-cap banner.
+  const pathname = usePathname() ?? '';
+  const workspaceHref = `/${pathname.split('/').filter(Boolean)[0] ?? ''}`;
   // ------- trade-aware labels (mirrors component-list.tsx) -------
   const tradeLabels = getTradeLabels(defaultTrade);
   const pitchVisible = tradeLabels.pitchRequired || !!tradeLabels.pitchOptional;
@@ -217,6 +228,7 @@ export function CreateSmartComponentModal({
 
   // ------- form state -------
   const [saving, setSaving] = useState(false);
+  const [quotaError, setQuotaError] = useState<string | null>(null);
   const [formMeasurementType, setFormMeasurementType] = useState<MeasurementType>('area');
   const [formWasteType, setFormWasteType] = useState<WasteType>('none');
   const [formPitchEnabled, setFormPitchEnabled] = useState(false);
@@ -280,6 +292,7 @@ export function CreateSmartComponentModal({
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
+    setQuotaError(null);
 
     if (formPricingStrategy === 'per_pack_coverage') {
       if (!formPackPrice || !formPackSize || !formPackCoverageM2) {
@@ -340,12 +353,15 @@ export function CreateSmartComponentModal({
     try {
       const result = await createComponent(fullInput);
       if (!result.ok) {
-        await notify(result.code === 'internal_error' ? result.message : 'Could not create Smart Component™.');
+        // Owner 2026-11-16: plan-cap rejections render an inline upgrade banner.
+        // All error feedback is fire-and-forget so `saving` can never stick on.
+        if (result.code === 'quota_reached') { setQuotaError(result.message); setSaving(false); return; }
+        void notify(result.code === 'internal_error' ? result.message : 'Could not create Smart Component™.');
         return;
       }
       onCreated(result.data);
     } catch (err) {
-      await notify(err instanceof Error ? err.message : 'Failed to create Smart Component™');
+      void notify(err instanceof Error ? err.message : 'Failed to create Smart Component™');
     } finally {
       setSaving(false);
     }
@@ -362,7 +378,7 @@ export function CreateSmartComponentModal({
               <h2 id="create-component-modal-title" className="text-lg font-semibold text-slate-900">
                 New Smart Component™
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">Saved to your library and added to this quote.</p>
+              <p className="text-xs text-slate-500 mt-0.5">{subtitle ?? 'Saved to your library and added to this quote.'}</p>
             </div>
             <button
               type="button"
@@ -685,6 +701,15 @@ export function CreateSmartComponentModal({
               </div>
             )}
 
+            {/* Plan-cap banner (owner 2026-11-16): real server message + billing link;
+                replaces the old endless-Saving hang at the component limit. */}
+            {quotaError && (
+              <div role="alert" style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, background: '#FFF4EB', border: '1px solid #FFD9BD' }}>
+                <p className="text-xs text-slate-700" style={{ margin: 0 }}>{quotaError}</p>
+                <Link href={`${workspaceHref}/account?tab=billing`} className="text-xs font-semibold" style={{ color: '#BD4A1A' }}>View plans →</Link>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex gap-3 pt-2 border-t border-slate-100">
               <button
@@ -694,7 +719,7 @@ export function CreateSmartComponentModal({
                 data-qc-variant={appearance === 'v2' ? 'primary' : undefined}
                 className={appearance === 'v2' ? 'qc-button' : 'px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition-all disabled:opacity-50'}
               >
-                {saving ? 'Saving...' : 'Save & Add to Quote'}
+                {saving ? 'Saving...' : submitLabel ?? 'Save & Add to Quote'}
               </button>
               <button
                 type="button"

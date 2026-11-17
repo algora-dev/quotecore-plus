@@ -23,10 +23,11 @@ type ActiveImport = { id: string; sourceName: string; remaining: number };
 const KIND_LABEL: Record<string, string> = { area: 'Area', lineal: 'Length', quantity: 'Count' };
 const LINEAL_FAMILY = new Set(['lineal', 'linear', 'multi_lineal', 'curved_line', 'quantity_by_spacing']);
 
-export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, collections, initialCurrent, activeImports, measurementSystem, currency, defaultTrade }: {
+export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, collections, initialCurrent, activeImports, measurementSystem, currency, defaultTrade, componentCap }: {
   workspaceSlug: string; quoteId: string; quoteLabel: string; collections: Collection[];
   initialCurrent: Review | null; activeImports: ActiveImport[];
   measurementSystem: string; currency: string; defaultTrade: string;
+  componentCap?: { atCap: boolean; used: number; limit: number };
 }) {
   const router = useRouter();
   const [current, setCurrent] = useState<Review | null>(initialCurrent);
@@ -258,6 +259,11 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
 
       <div className="pa-legend"><span><i className="pa-swatch pa-swatch-found" />Confident match</span><span><i className="pa-swatch pa-swatch-missing" />Needs your input</span></div>
 
+      {componentCap?.atCap && <div className="pa-alert mi-cap-banner" role="alert">
+        <span>Your plan's component limit is reached ({componentCap.used}/{componentCap.limit}). Existing components can still be matched; creating new ones needs an upgrade.</span>
+        <Link href={`/${workspaceSlug}/account?tab=billing`}>View plans →</Link>
+      </div>}
+
       <div className="mi-toolbar">
         <button type="button" className="pa-text-link" onClick={() => pending.forEach(l => toggleStatus(l, l.status === 'selected' ? 'candidate' : 'selected'))}>
           {pending.length > 0 && selected.length === pending.length ? 'Clear selection' : 'Select all'}
@@ -269,7 +275,7 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
       <div className="mi-lines">
         {lines.map(line => <LineRow key={line.id} line={line} components={components} masterBasis={session.default_basis}
           drafts={drafts} onDraft={setEntry} onCommitEntry={commitEntry} onField={setField} onCommitField={commitField} onSave={saveLine} onToggle={toggleStatus}
-          currency={currency} measurementSystem={measurementSystem} onCreateComponent={setCreatingFor} />)}
+          currency={currency} measurementSystem={measurementSystem} onCreateComponent={setCreatingFor} disableCreate={componentCap?.atCap ?? false} />)}
       </div>
 
       {failures.length > 0 && <div className="pa-alert mi-failures" role="alert"><strong>Some lines need attention:</strong>{'\n'}{failures.slice(0, 8).join('\n')}</div>}
@@ -292,6 +298,8 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
         defaultComponentType="main"
         collections={collections.map(c => ({ id: c.id, name: c.name, is_bootstrap: c.isBootstrap }))}
         defaultCollectionId={libraryId || undefined}
+        submitLabel="Save & match to line"
+        subtitle="Saved to your library and matched to this line."
         onCreated={handleComponentCreated}
         onClose={() => setCreatingFor(null)}
       />}
@@ -299,7 +307,7 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
   );
 }
 
-function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry, onField, onCommitField, onSave, onToggle, currency, measurementSystem, onCreateComponent }: {
+function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry, onField, onCommitField, onSave, onToggle, currency, measurementSystem, onCreateComponent, disableCreate }: {
   line: MeasurementImportLineRow; components: MatchComponent[]; masterBasis: 'plan' | 'actual';
   drafts: Record<string, string>;
   onDraft: (line: MeasurementImportLineRow, index: number, raw: string) => void;
@@ -310,6 +318,7 @@ function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry
   onToggle: (line: MeasurementImportLineRow, status: 'selected' | 'skipped' | 'candidate') => Promise<void>;
   currency: string; measurementSystem: string;
   onCreateComponent: (line: MeasurementImportLineRow) => void;
+  disableCreate?: boolean;
 }) {
   const data = line.line_data;
   const component = components.find(c => c.id === data.matchedComponentId);
@@ -407,7 +416,9 @@ function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry
               <option value="">– choose a component –</option>
               {components.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </QcSelect>
-            <QcButton size="sm" variant="ghost" onClick={() => onCreateComponent(line)}>+ New component</QcButton>
+            <QcButton size="sm" variant="ghost" disabled={disableCreate}
+              data-qc-tip={disableCreate ? 'Plan limit reached. Upgrade from Account → Billing & Pricing to add more components.' : undefined}
+              onClick={() => onCreateComponent(line)}>+ New component</QcButton>
           </div>
           <QcSelect value={data.basisOverride ?? ''} aria-label="Measurement basis"
             onChange={e => onSave(line, { basisOverride: (e.target.value || null) as 'plan' | 'actual' | null })}>

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { verifyQuoteOwnership } from '@/app/lib/auth/ownership';
 import { listMeasurementImportsForQuote } from '@/app/lib/measurements-import/storage.server';
+import { getPricingComponentCapacity } from '@/app/lib/pricing-setup/starter-libraries.server';
 import { loadImportReview } from './actions';
 import { MeasurementImportClient } from './MeasurementImportClient';
 import '@/app/(auth)/[workspaceSlug]/pricing/assistant/assistant.css';
@@ -38,6 +39,17 @@ export default async function MeasurementImportPage({
   }
   let activeImports: Awaited<ReturnType<typeof listMeasurementImportsForQuote>> = [];
   try { activeImports = await listMeasurementImportsForQuote(quoteId); } catch { /* fresh quote */ }
+  // Owner 2026-11-16 (cap fix): the review's "+ New component" entry is disabled
+  // once the plan's component limit is reached, with an upgrade path in the banner.
+  let componentCap = { atCap: false as boolean, used: 0, limit: 0 };
+  try {
+    const capacity = await getPricingComponentCapacity();
+    componentCap = {
+      atCap: capacity.reliable && capacity.limit != null && capacity.limit > 0 && (capacity.used ?? 0) >= capacity.limit,
+      used: capacity.used ?? 0,
+      limit: capacity.limit ?? 0,
+    };
+  } catch { /* resolution failure must not block the review */ }
   const wanted = (await searchParams).import;
   let current: Awaited<ReturnType<typeof loadImportReview>> | null = null;
   if (wanted) { try { current = await loadImportReview(wanted); } catch { current = null; } }
@@ -52,6 +64,7 @@ export default async function MeasurementImportPage({
         measurementSystem={(quote?.measurement_system ?? company?.default_measurement_system ?? 'metric') as 'metric' | 'imperial_ft' | 'imperial_rs'}
         currency={quote?.currency ?? company?.default_currency ?? 'USD'}
         defaultTrade={company?.default_trade || 'roofing'}
+        componentCap={componentCap}
         initialCurrent={current}
         activeImports={activeImports.map(s => ({ id: s.id, sourceName: s.source_name, remaining: s.remaining }))}
       />

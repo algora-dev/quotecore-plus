@@ -666,7 +666,8 @@ export function ComponentList({
     try {
       const result = await createComponent(inputWithGenericTrades);
       if (!result.ok) {
-        setFormError(result.code === 'internal_error' ? result.message : 'Could not create component.');
+        // Owner 2026-11-16: plan-cap rejections show the real upgrade message.
+        setFormError(result.code === 'internal_error' || result.code === 'quota_reached' ? result.message : 'Could not create component.');
         return;
       }
       setComponents((prev) => [...prev, result.data]);
@@ -1064,7 +1065,8 @@ export function ComponentList({
     try {
       const result = await createComponent(inputWithGenericTrades);
       if (!result.ok) {
-        setGuidedSaveError(result.code === 'internal_error' ? result.message : 'Could not create component.');
+        // Owner 2026-11-16: plan-cap rejections show the real upgrade message.
+        setGuidedSaveError(result.code === 'internal_error' || result.code === 'quota_reached' ? result.message : 'Could not create component.');
         return;
       }
       setComponents((prev) => [...prev, result.data]);
