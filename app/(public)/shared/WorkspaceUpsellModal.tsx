@@ -35,6 +35,14 @@ export const WORKSPACE_FEATURES = [
   'Upload photos or files and AI extracts the measurements, quantities and pricing',
 ];
 
+/** One shared blurb covers all three free document generators (owner 2026-11-18). */
+export const DOC_GENERATORS_BLURB = 'In your Free Workspace you get access to more features, like quotes, invoices and material orders you can save, edit and send from one place - and see when customers open, accept or decline them.';
+export const DOC_UPSELL_CONFIG: Record<'quote' | 'invoice' | 'order', { slug: string; eyebrow: string; signupHref: string }> = {
+  quote: { slug: 'free-quote-generator', eyebrow: 'Your quote is ready', signupHref: '/signup?ref=free-quote-generator' },
+  invoice: { slug: 'free-invoice-generator', eyebrow: 'Your invoice is ready', signupHref: '/signup?ref=free-invoice-generator' },
+  order: { slug: 'free-purchase-order-generator', eyebrow: 'Your purchase order is ready', signupHref: '/signup?ref=free-purchase-order-generator' },
+};
+
 interface WorkspaceUpsellModalProps {
   /** Dismissal key suffix + analytics tag, e.g. "free-roof-takeoff" */
   slug: string;
