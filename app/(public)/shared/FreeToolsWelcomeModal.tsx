@@ -32,12 +32,17 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
     : refSlug === 'free-invoice-generator' ? 'invoice'
     : 'document';
 
-  // Takeoff tools (owner 2026-11-18): no draft handoff - the welcome pitch
-  // leads with AI Scan Assist, the in-app upgrade of the tool they used.
-  const takeoffLabel = refSlug === 'free-roof-takeoff' ? 'roofing'
-    : refSlug === 'free-flooring-takeoff' ? 'flooring'
-    : refSlug === 'free-cladding-takeoff' ? 'wall & cladding'
-    : null;
+  // Free-tool arrivals (owner 2026-11-18): no draft handoff - the welcome
+  // pitch leads with the in-workspace upgrade of the tool they just used.
+  const TOOL_WELCOME: Record<string, { subtitle: string; lead: string }> = {
+    'free-roof-takeoff': { subtitle: 'Your roofing takeoff tool, upgraded - plus everything else, free', lead: 'The same takeoff tool with AI Scan Assist - it draws the plan for you' },
+    'free-flooring-takeoff': { subtitle: 'Your flooring takeoff tool, upgraded - plus everything else, free', lead: 'The same takeoff tool with AI Scan Assist - it draws the plan for you' },
+    'free-cladding-takeoff': { subtitle: 'Your wall & cladding takeoff tool, upgraded - plus everything else, free', lead: 'The same takeoff tool with AI Scan Assist - it draws the plan for you' },
+    'measurement-to-quote-tool': { subtitle: 'Your measurement to quote tool, upgraded - plus everything else, free', lead: 'AI reads your uploaded plans and photos, extracting measurements and pricing' },
+    'free-roofing-takeoff-builder': { subtitle: 'Your roof estimate tool, upgraded - plus everything else, free', lead: 'The same takeoff tool with AI Scan Assist - it draws the plan for you' },
+    'free-roof-pricing-calculator': { subtitle: 'Your roof pricing tool, upgraded - plus everything else, free', lead: 'The same takeoff tool with AI Scan Assist - it draws the plan for you' },
+  };
+  const toolWelcome = TOOL_WELCOME[refSlug] ?? null;
 
   useEffect(() => {
     // Only show if coming from a free tool
@@ -58,8 +63,8 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
 
   if (!visible) return null;
 
-  const features = takeoffLabel ? [
-    'The same takeoff tool with AI Scan Assist - it draws the plan for you',
+  const features = toolWelcome ? [
+    toolWelcome.lead,
     'Save your pricing once, reused on every measurement',
     'Create and send quotes, invoices and material orders',
     'See when a client opens your quote',
@@ -84,14 +89,14 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
           </div>
           <h2 className="text-xl font-semibold text-slate-900">Create your account</h2>
           <p className="text-sm text-slate-500 mt-1">
-            {takeoffLabel
-              ? `Your ${takeoffLabel} takeoff tool, upgraded - plus everything else, free`
+            {toolWelcome
+              ? toolWelcome.subtitle
               : `Your ${docLabel} is saved and ready for you`}
           </p>
         </div>
 
         {/* Output reassurance (document tools with a saved draft) */}
-        {hasDraft && !takeoffLabel && (
+        {hasDraft && !toolWelcome && (
           <div className="mb-5 rounded-xl bg-orange-50/60 border border-orange-100 p-4">
             <div className="flex items-start gap-3">
               <svg className="w-5 h-5 text-[#BD4A1A] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

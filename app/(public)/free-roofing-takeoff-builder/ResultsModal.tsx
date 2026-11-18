@@ -4,6 +4,7 @@ import { useEffect, useState, lazy } from 'react';
 import type { ComponentSection, RoofComponentDef } from './types';
 import { COMPONENT_DEFS, computeMaterialCost, computeLabourCost, computeKnownPriceCost } from './calc';
 import { ComponentSymbol, componentLabel } from './helpers';
+import { WorkspaceUpsellModal, WORKSPACE_FEATURES } from '../shared/WorkspaceUpsellModal';
 
 const SupplierEnquiryModal = lazy(() => import('./SupplierEnquiryModal').then(m => ({ default: m.SupplierEnquiryModal })));
 
@@ -25,6 +26,9 @@ interface ResultsModalProps {
 export function ResultsModal({ sections, totals, getComponentById, grandTotal, unitSystem, allKeys, onClose, supplier, resultToken, resultUrl, currency, includeLabour = true }: ResultsModalProps) {
   const [showEnquiry, setShowEnquiry] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  // Free-workspace upsell (owner 2026-11-18): the pricing-calculator page and
+  // the takeoff-builder pages share this modal; ref matches the host page.
+  const upsellSlug = typeof window !== 'undefined' && window.location.pathname.startsWith('/free-roof-pricing-calculator') ? 'free-roof-pricing-calculator' : 'free-roofing-takeoff-builder';
   const cur = currency === 'NZD' ? 'NZ$' : currency === 'USD' ? '$' : currency === 'AUD' ? 'A$' : currency === 'GBP' ? '\u00a3' : '$';
   const hasPricing = grandTotal > 0;
   const lenUnit = unitSystem === 'metric' ? 'm' : 'ft';
@@ -278,13 +282,13 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                   <button
                     onClick={() => {
                       setShowActions(false);
-                      const win = window.open('/signup?ref=free-roofing-takeoff-builder', '_blank', 'noopener,noreferrer');
+                      const win = window.open(`/signup?ref=${upsellSlug}`, '_blank', 'noopener,noreferrer');
                       if (win) { onClose(); }
                     }}
                     className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-slate-700 hover:bg-orange-50/40 transition text-left"
                   >
-                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1" /></svg>
-                    Open QuoteCore+
+                    <svg className="w-4 h-4 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                    Create my Free Workspace
                   </button>
                 </div>
               </>
@@ -307,6 +311,15 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
             onClose={() => setShowEnquiry(false)}
           />
         )}
+
+        <WorkspaceUpsellModal
+          slug={upsellSlug}
+          eyebrow="Your roof estimate is ready"
+          headline="Same tool. More power. Free."
+          blurb="In your Free Workspace you get access to more features, like AI Scan Assist: the faster way to draw your roof outline and internal components."
+          features={WORKSPACE_FEATURES}
+          signupHref={`/signup?ref=${upsellSlug}`}
+        />
       </div>
 
       <style jsx global>{`

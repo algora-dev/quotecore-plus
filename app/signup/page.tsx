@@ -67,6 +67,9 @@ function SignupForm() {
     : refSlug === 'free-roof-takeoff' ? 'Roofing Takeoff'
     : refSlug === 'free-flooring-takeoff' ? 'Flooring Takeoff'
     : refSlug === 'free-cladding-takeoff' ? 'Cladding Takeoff'
+    : refSlug === 'measurement-to-quote-tool' ? 'Measurement to Quote Tool'
+    : refSlug === 'free-roofing-takeoff-builder' ? 'Roof Takeoff Builder'
+    : refSlug === 'free-roof-pricing-calculator' ? 'Roof Pricing Calculator'
     : refSlug ? 'Free Tool' : null;
 
   return (
