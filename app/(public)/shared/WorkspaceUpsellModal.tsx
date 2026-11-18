@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { MarketingButton } from '@/components/marketing/MarketingButton';
 import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
 
 /**
@@ -8,21 +9,31 @@ import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
  *
  * Strategy (owner 2026-11-18): when a user creates any output in a free
  * tool, show ONE call to action - create a Free Workspace. No draft
- * handoff, no save-to-app complexity. The blurb ties the in-app
- * equivalent of the tool they just used to a headline feature (e.g. AI
- * Scan Assist for the takeoff tools), then lists the wider workspace
- * benefits.
+ * handoff, no save-to-app complexity. The blurb ties the in-workspace
+ * equivalent of the tool they just used to a headline feature, then lists
+ * the wider workspace benefits.
  *
- * Design: v2 dark theme (owner 2026-11-18 round 2) - dark card with the
- * orange radial glow (matches the takeoff "Your next step" card), orange
- * gradient primary CTA with dark ink text (qc-tokens gradient), generous
- * spacing.
+ * Design (owner 2026-11-18 rounds 2+3): v2 dark card (orange radial glow),
+ * and the CTA is the standard marketing primary button (MarketingButton,
+ * same as the header "Create free workspace") which opens /signup in a
+ * NEW TAB so the user stays on their output.
  *
  * UX pattern (matches PostGenerationModal / CalcResultPopup):
  * - ~2s delay after the output renders so the user reads their result first
  * - once per browser session per tool (sessionStorage dismissal)
  * - result-first eyebrow, minimal words, single primary CTA
+ * - `trigger` prop gates mounting tools that only produce an output later
+ *   (e.g. document generators fire it on generation).
  */
+
+/** Standard free-workspace benefit bullets (owner-approved 2026-11-18). */
+export const WORKSPACE_FEATURES = [
+  'Save your pricing to reuse on all your jobs',
+  'Turn measurements into quotes in a few clicks',
+  'Create quotes, invoices and material orders',
+  'See when customers open, accept or decline your quote, so you follow up on time',
+  'Upload photos or files and AI extracts the measurements, quantities and pricing',
+];
 
 interface WorkspaceUpsellModalProps {
   /** Dismissal key suffix + analytics tag, e.g. "free-roof-takeoff" */
@@ -33,10 +44,12 @@ interface WorkspaceUpsellModalProps {
   headline: string;
   /** Tool-specific blurb: the in-workspace equivalent of the tool just used */
   blurb: string;
-  /** Shared workspace benefits, 4-5 short bullets */
-  features: string[];
+  /** Shared workspace benefits, 4-5 short bullets (defaults to WORKSPACE_FEATURES) */
+  features?: string[];
   /** Signup URL with ref tag */
   signupHref: string;
+  /** Show only when true (default true; doc generators pass a generated flag) */
+  trigger?: boolean;
   /** Optional tool-code override for usage analytics */
   toolCode?: string;
 }
@@ -46,8 +59,9 @@ export function WorkspaceUpsellModal({
   eyebrow,
   headline,
   blurb,
-  features,
+  features = WORKSPACE_FEATURES,
   signupHref,
+  trigger = true,
   toolCode,
 }: WorkspaceUpsellModalProps) {
   const [visible, setVisible] = useState(false);
@@ -60,6 +74,7 @@ export function WorkspaceUpsellModal({
   }, [storageKey, slug, toolCode]);
 
   useEffect(() => {
+    if (!trigger) return;
     try {
       if (sessionStorage.getItem(storageKey)) return;
     } catch {}
@@ -68,14 +83,9 @@ export function WorkspaceUpsellModal({
       trackFreeToolEvent('ws_upsell_shown', { slug }, toolCode);
     }, 2000);
     return () => clearTimeout(timer);
-  }, [storageKey, slug, toolCode]);
+  }, [trigger, storageKey, slug, toolCode]);
 
   if (!visible) return null;
-
-  const goSignup = () => {
-    trackFreeToolEvent('ws_upsell_click', { slug }, toolCode);
-    window.location.href = signupHref;
-  };
 
   return (
     <div
@@ -113,13 +123,19 @@ export function WorkspaceUpsellModal({
           ))}
         </ul>
 
-        <button
-          type="button"
-          onClick={goSignup}
-          className="ws-upsell-cta mt-7 w-full text-center px-6 py-3.5 text-[15px] font-semibold rounded-xl text-[#191B20] transition-all"
-        >
-          Create my Free Workspace
-        </button>
+        <div className="mt-7">
+          <MarketingButton
+            href={signupHref}
+            variant="primary"
+            size="large"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full"
+            onClick={() => trackFreeToolEvent('ws_upsell_click', { slug }, toolCode)}
+          >
+            Create my Free Workspace
+          </MarketingButton>
+        </div>
         <p className="mt-3 text-center text-xs text-[#a8b0bc]">Free · No card · No trial clock</p>
 
         <button
@@ -134,17 +150,6 @@ export function WorkspaceUpsellModal({
       <style jsx>{`
         .ws-upsell-card {
           background-image: radial-gradient(ellipse at 95% 0%, #ff66001f, transparent 70%);
-        }
-        .ws-upsell-cta {
-          background: linear-gradient(135deg, #FF641F 0%, #FF8A3D 55%, #FFB36B 100%);
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
-        }
-        .ws-upsell-cta:hover {
-          background: linear-gradient(135deg, #FF6B35 0%, #FF923D 55%, #FFBC7A 100%);
-          box-shadow: 0 0 24px rgba(255, 138, 61, 0.35);
-        }
-        .ws-upsell-cta:active {
-          background: linear-gradient(135deg, #F95F1D 0%, #FF8033 55%, #FFA85C 100%);
         }
         @keyframes wsUpsellFadeIn {
           from { opacity: 0; transform: translateY(16px); }

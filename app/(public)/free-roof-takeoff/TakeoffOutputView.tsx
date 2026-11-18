@@ -7,7 +7,9 @@ import type {TakeoffCurrency} from './takeoff-examples';
 import {Button,ActionLink,Dialog,Icon} from './TakeoffUI';
 import {printTakeoffReport} from './takeoff-print';
 import s from './TakeoffExperience.module.css';
-import {WorkspaceUpsellModal} from '../shared/WorkspaceUpsellModal';
+import {WorkspaceUpsellModal,WORKSPACE_FEATURES} from '../shared/WorkspaceUpsellModal';
+import {MarketingButton} from '@/components/marketing/MarketingButton';
+import {trackFreeToolEvent} from '../lib/trackFreeToolEvent';
 export type {TakeoffTrade} from './takeoff-report-model';
 export interface TakeoffOutputExtras {planDataUrl:string;elapsedMs:number;}
 const number=(n:number)=>n.toLocaleString(undefined,{maximumFractionDigits:2,minimumFractionDigits:0});
@@ -17,7 +19,6 @@ const WS_UPSELL:Record<TakeoffTrade,{slug:string;eyebrow:string;headline:string;
  flooring:{slug:'free-flooring-takeoff',eyebrow:'Your flooring takeoff is ready',headline:'Same tool. More power. Free.',blurb:'In your Free Workspace you get access to more features, like AI Scan Assist: the faster way to draw your floor areas and internal components.',signupHref:'/signup?ref=free-flooring-takeoff'},
  cladding:{slug:'free-cladding-takeoff',eyebrow:'Your wall and cladding takeoff is ready',headline:'Same tool. More power. Free.',blurb:'In your Free Workspace you get access to more features, like AI Scan Assist: the faster way to draw your wall areas and internal components.',signupHref:'/signup?ref=free-cladding-takeoff'},
 };
-const WS_FEATURES=['Save your pricing to reuse on all your jobs','Turn measurements into quotes in a few clicks','Create quotes, invoices and material orders','See when customers open, accept or decline your quote, so you follow up on time','Upload photos or files and AI extracts the measurements, quantities and pricing'];
 export function TakeoffOutputView({payload,extras,unitSystem='metric',specs=[],trade='roofing',reportNote=null,currency='NZD',tutorial,onRestart,onBackToCanvas}:{
  payload:TakeoffFinishPayload;extras:TakeoffOutputExtras;unitSystem?:TakeoffUnitSystem;specs?:TakeoffComponentSpec[];trade?:TakeoffTrade;reportNote?:string|null;
  currency?:TakeoffCurrency;tutorial?:TakeoffTradeConfig['tutorial'];onRestart:()=>void;onBackToCanvas:()=>void;onOpenQuote?:(url:string)=>void;
@@ -57,12 +58,12 @@ export function TakeoffOutputView({payload,extras,unitSystem='metric',specs=[],t
     </div>
     <div className={s.outputFoot}><div className={s.outputActions}><Button onClick={print} disabled={!hasWork}><Icon name="download"/>Print / Save PDF</Button><Button onClick={download} disabled={!hasWork}>Download CSV</Button>{extras.planDataUrl&&<Button quiet onClick={()=>setShowPlan(true)}>View plan</Button>}</div></div>
    </div><aside className={s.resultSidebar}>
-    <div className={`${s.nextCard} ${s.dark}`}><p className={s.eyebrow}>Your next step</p><h3>Create your free workspace.</h3><p>Save your pricing and reuse it on every job. Create quotes, invoices and material orders, and see when customers open, accept or decline them. Plus AI features like Scan Assist.</p><ActionLink primary href={upsell.signupHref} data-analytics-action="free_workspace">Create my Free Workspace<Icon name="arrow"/></ActionLink><small>Free · No card · No trial clock</small><small><a href="/" data-analytics-action="learn_more" style={{textDecoration:'underline',textUnderlineOffset:3}}>Learn more about the app</a></small></div>
+    <div className={`${s.nextCard} ${s.dark}`}><p className={s.eyebrow}>Your next step</p><h3>Create your free workspace.</h3><p>Save your pricing and reuse it on every job. Create quotes, invoices and material orders, and see when customers open, accept or decline them. Plus AI features like Scan Assist.</p><MarketingButton href={upsell.signupHref} variant="primary" size="large" className="w-full" target="_blank" rel="noopener noreferrer" onClick={()=>trackFreeToolEvent('ws_nextcard_click',{slug:upsell.slug})}>Create my Free Workspace</MarketingButton><small>Free · No card · No trial clock</small><small><a href="/" data-analytics-action="learn_more" target="_blank" rel="noopener noreferrer" style={{textDecoration:'underline',textUnderlineOffset:3}}>Learn more about the app</a></small></div>
     {tutorial&&<div><ActionLink href={tutorial.href} target="_blank" rel="noopener noreferrer"><Icon name="play"/>Watch the workflow guide</ActionLink>{tutorial.olderLayout&&<p className={s.help}>The guide shows the earlier layout; the workflow is similar.</p>}</div>}
    </aside></div>
    <div className={s.outputFoot}><Button quiet onClick={()=>setConfirmNew(true)}><Icon name="plus"/>Start a new takeoff</Button><span>Session only. Download your results before closing this page.</span></div>
   </div>
-  <WorkspaceUpsellModal slug={upsell.slug} eyebrow={upsell.eyebrow} headline={upsell.headline} blurb={upsell.blurb} features={WS_FEATURES} signupHref={upsell.signupHref}/>
+  <WorkspaceUpsellModal slug={upsell.slug} eyebrow={upsell.eyebrow} headline={upsell.headline} blurb={upsell.blurb} features={WORKSPACE_FEATURES} signupHref={upsell.signupHref}/>
   {showPlan&&<Dialog title="Your source plan" description="Reference image only. Open the measurement workspace to view or edit drawings." onClose={()=>setShowPlan(false)}><img src={extras.planDataUrl} alt="The plan uploaded for this takeoff" style={{width:'100%',display:'block'}}/></Dialog>}
   {confirmNew&&<Dialog title="Start a new takeoff?" description="This clears the current measurement session. Download the report first if you need to keep it." onClose={()=>setConfirmNew(false)} footer={<><Button onClick={()=>setConfirmNew(false)}>Keep this takeoff</Button><Button primary onClick={onRestart}>Start new takeoff</Button></>}><p>Your current components stay available until you choose a different trade or close the page.</p></Dialog>}
  </div>;
