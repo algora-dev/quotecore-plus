@@ -32,6 +32,13 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
     : refSlug === 'free-invoice-generator' ? 'invoice'
     : 'document';
 
+  // Takeoff tools (owner 2026-11-18): no draft handoff - the welcome pitch
+  // leads with AI Scan Assist, the in-app upgrade of the tool they used.
+  const takeoffLabel = refSlug === 'free-roof-takeoff' ? 'roofing'
+    : refSlug === 'free-flooring-takeoff' ? 'flooring'
+    : refSlug === 'free-cladding-takeoff' ? 'wall & cladding'
+    : null;
+
   useEffect(() => {
     // Only show if coming from a free tool
     if (!refSlug || !refSlug.startsWith('free-')) return;
@@ -51,7 +58,13 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
 
   if (!visible) return null;
 
-  const features = [
+  const features = takeoffLabel ? [
+    'The same takeoff tool with AI Scan Assist - it draws the plan for you',
+    'Save your pricing once, reused on every measurement',
+    'Create and send quotes, invoices and material orders',
+    'See when a client opens your quote',
+    'Set up in about a minute - no card, no expiry',
+  ] : [
     'Create your Free Workspace in about a minute',
     'No card, no plan selection and no expiry',
     'Save, edit, and send your documents',
@@ -70,11 +83,15 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
             </svg>
           </div>
           <h2 className="text-xl font-semibold text-slate-900">Create your account</h2>
-          <p className="text-sm text-slate-500 mt-1">Your {docLabel} is saved and ready for you</p>
+          <p className="text-sm text-slate-500 mt-1">
+            {takeoffLabel
+              ? `Your ${takeoffLabel} takeoff tool, upgraded - plus everything else, free`
+              : `Your ${docLabel} is saved and ready for you`}
+          </p>
         </div>
 
-        {/* Document saved reassurance */}
-        {hasDraft && (
+        {/* Output reassurance (document tools with a saved draft) */}
+        {hasDraft && !takeoffLabel && (
           <div className="mb-5 rounded-xl bg-orange-50/60 border border-orange-100 p-4">
             <div className="flex items-start gap-3">
               <svg className="w-5 h-5 text-[#BD4A1A] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

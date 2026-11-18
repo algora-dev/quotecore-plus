@@ -64,6 +64,9 @@ function SignupForm() {
     : refSlug === 'free-invoice-generator' ? 'Invoice Generator'
     : refSlug === 'free-purchase-order-generator' ? 'Purchase Order Generator'
     : refSlug === 'free-order-generator' ? 'Purchase Order Generator'
+    : refSlug === 'free-roof-takeoff' ? 'Roofing Takeoff'
+    : refSlug === 'free-flooring-takeoff' ? 'Flooring Takeoff'
+    : refSlug === 'free-cladding-takeoff' ? 'Cladding Takeoff'
     : refSlug ? 'Free Tool' : null;
 
   return (

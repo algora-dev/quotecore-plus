@@ -7,15 +7,19 @@ import type {TakeoffCurrency} from './takeoff-examples';
 import {Button,ActionLink,Dialog,Icon} from './TakeoffUI';
 import {printTakeoffReport} from './takeoff-print';
 import s from './TakeoffExperience.module.css';
-import {workflowCallHref} from '@/lib/booking';
+import {WorkspaceUpsellModal} from '../shared/WorkspaceUpsellModal';
 export type {TakeoffTrade} from './takeoff-report-model';
 export interface TakeoffOutputExtras {planDataUrl:string;elapsedMs:number;}
 const number=(n:number)=>n.toLocaleString(undefined,{maximumFractionDigits:2,minimumFractionDigits:0});
 const money=(n:number,currency:string)=>new Intl.NumberFormat('en-NZ',{style:'currency',currency,currencyDisplay:'code'}).format(n);
-function Benefits(){return <div className={s.upsell} data-analytics-location="free_takeoff_result_app_bridge" data-analytics-surface="tool_result_bridge"><p className={s.eyebrow}>Keep the momentum</p><h3>Set it up once.<br/>Use it on every job.</h3><p>In a QuoteCore+ Free Workspace, your work doesn’t end with this session.</p>
-  <ul><li><Icon name="check"/>Save your component library and reuse your pricing.</li><li><Icon name="check"/>Keep takeoffs and documents together with your jobs.</li><li><Icon name="check"/>Create and send quotes, orders and invoices.</li></ul>
-  <ActionLink href={workflowCallHref} data-analytics-action="book_call"><Icon name="arrow"/>Book 25 minutes with Shaun</ActionLink>
-  <div className={s.upsellLinks}><a href="/signup" data-analytics-action="free_workspace">Create my Free Workspace</a></div>
+const WS_UPSELL:Record<TakeoffTrade,{slug:string;eyebrow:string;headline:string;blurb:string;signupHref:string}>={
+ roofing:{slug:'free-roof-takeoff',eyebrow:'Your roofing takeoff is ready',headline:'Same tool. More power. Free.',blurb:'In the app, this takeoff comes with AI Scan Assist: upload a plan and it draws the roof for you. Check it, adjust anything, then price it with your own rates.',signupHref:'/signup?ref=free-roof-takeoff'},
+ flooring:{slug:'free-flooring-takeoff',eyebrow:'Your flooring takeoff is ready',headline:'Same tool. More power. Free.',blurb:'In the app, this takeoff comes with AI Scan Assist: upload a plan and it draws the floor areas for you. Check it, adjust anything, then price it with your own rates.',signupHref:'/signup?ref=free-flooring-takeoff'},
+ cladding:{slug:'free-cladding-takeoff',eyebrow:'Your wall and cladding takeoff is ready',headline:'Same tool. More power. Free.',blurb:'In the app, this takeoff comes with AI Scan Assist: upload a plan and it draws the walls for you. Check it, adjust anything, then price it with your own rates.',signupHref:'/signup?ref=free-cladding-takeoff'},
+};
+const WS_FEATURES=['Your pricing saved once, applied to every measurement','Measurements turned into quotes in a few clicks','Quotes, invoices and material orders in one place','See when a client opens your quote, so you follow up on time','Works on mobile, tablet and desktop'];
+function Benefits({trade}:{trade:TakeoffTrade}){const u=WS_UPSELL[trade];return <div className={s.upsell} data-analytics-location="free_takeoff_result_app_bridge" data-analytics-surface="tool_result_bridge"><p className={s.eyebrow}>Even more in the app</p><h3>Same tool. More power. Free.</h3><p>A Free Workspace remembers your pricing, keeps every job in one place, and shows when clients open your quotes.</p>
+  <div className={s.upsellLinks}><a href={u.signupHref} data-analytics-action="free_workspace">Create my Free Workspace</a><a href="/" data-analytics-action="learn_more">Learn more about the app</a></div>
  </div>;}
 function TransferDialog({report,onClose,onOpenQuote,trade}:{report:ReportModel;onClose:()=>void;onOpenQuote?:(url:string)=>void;trade:TakeoffTrade}){
  const [priced,setPriced]=useState(!report.hasExamples&&report.hasPrices),[ack,setAck]=useState(false);
@@ -39,6 +43,7 @@ export function TakeoffOutputView({payload,extras,unitSystem='metric',specs=[],t
  currency?:TakeoffCurrency;tutorial?:TakeoffTradeConfig['tutorial'];onRestart:()=>void;onBackToCanvas:()=>void;onOpenQuote?:(url:string)=>void;
 }){
  const report=useMemo(()=>buildReport(payload,specs,unitSystem,trade,currency),[payload,specs,unitSystem,trade,currency]);
+ const upsell=WS_UPSELL[trade];
  const paper=useRef<HTMLDivElement>(null);const [transfer,setTransfer]=useState(false),[showPlan,setShowPlan]=useState(false),[notice,setNotice]=useState(''),[confirmNew,setConfirmNew]=useState(false);
  const hasWork=report.components.length>0||report.areas.length>0;
  const canTransfer=!report.issues.length&&(report.components.some(c=>c.quantity>0)||(!report.components.length&&report.areas.some(a=>a.surface>0)));
@@ -74,13 +79,14 @@ export function TakeoffOutputView({payload,extras,unitSystem='metric',specs=[],t
     <div className={s.outputFoot}><div className={s.outputActions}><Button onClick={print} disabled={!hasWork}><Icon name="download"/>Print / Save PDF</Button><Button onClick={download} disabled={!hasWork}>Download CSV</Button>{extras.planDataUrl&&<Button quiet onClick={()=>setShowPlan(true)}>View plan</Button>}</div></div>
    </div><aside className={s.resultSidebar}>
     <div className={`${s.nextCard} ${s.dark}`}><p className={s.eyebrow}>Your next step</p><h3>Make these measurements a quote.</h3><p>Carry your quantities into the free Quote Generator. Add customer details, check prices and create your document.</p><Button primary onClick={()=>setTransfer(true)} disabled={!canTransfer}>Create a free quote<Icon name="arrow"/></Button><small>No account needed to start. Your takeoff stays open in this tab.</small></div>
-    <Benefits/>
+    <Benefits trade={trade}/>
     {tutorial&&<div><ActionLink href={tutorial.href} target="_blank" rel="noopener noreferrer"><Icon name="play"/>Watch the workflow guide</ActionLink>{tutorial.olderLayout&&<p className={s.help}>The guide shows the earlier layout; the workflow is similar.</p>}</div>}
    </aside></div>
-   <div className={s.mobileUpsell} style={{marginTop:24}}><Benefits/></div>
+   <div className={s.mobileUpsell} style={{marginTop:24}}><Benefits trade={trade}/></div>
    <div className={s.outputFoot}><Button quiet onClick={()=>setConfirmNew(true)}><Icon name="plus"/>Start a new takeoff</Button><span>Session only. Download your results before closing this page.</span></div>
   </div>
   {transfer&&<TransferDialog report={report} trade={trade} onClose={()=>setTransfer(false)} onOpenQuote={onOpenQuote}/>}
+  <WorkspaceUpsellModal slug={upsell.slug} eyebrow={upsell.eyebrow} headline={upsell.headline} blurb={upsell.blurb} features={WS_FEATURES} signupHref={upsell.signupHref}/>
   {showPlan&&<Dialog title="Your source plan" description="Reference image only. Open the measurement workspace to view or edit drawings." onClose={()=>setShowPlan(false)}><img src={extras.planDataUrl} alt="The plan uploaded for this takeoff" style={{width:'100%',display:'block'}}/></Dialog>}
   {confirmNew&&<Dialog title="Start a new takeoff?" description="This clears the current measurement session. Download the report first if you need to keep it." onClose={()=>setConfirmNew(false)} footer={<><Button onClick={()=>setConfirmNew(false)}>Keep this takeoff</Button><Button primary onClick={onRestart}>Start new takeoff</Button></>}><p>Your current components stay available until you choose a different trade or close the page.</p></Dialog>}
  </div>;
