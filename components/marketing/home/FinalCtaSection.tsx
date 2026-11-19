@@ -18,7 +18,7 @@ export function FinalCtaSection({ config }: { config: Pick<HomepageConfig, 'book
           <span className={`${c.icon} ${c.demoIcon}`}><Icon name="spark" size={23} /></span>
           <h3>Create your Free Workspace.</h3>
           <p>Use QuoteCore+ on your own jobs, try the optional guided walkthrough and keep the workspace for as long as you want.</p>
-          <div className={c.actions}><FreeWorkspaceButton variant="primary" icon={<Icon name="arrow" size={17} />}>Create Free Workspace</FreeWorkspaceButton></div>
+          <div className={c.actions}><FreeWorkspaceButton variant="primary" icon={<Icon name="arrow" size={17} />}>See how it works</FreeWorkspaceButton></div>
         </article>
         <article className={c.path}>
           <span className={c.icon}><Icon name="people" size={23} /></span>

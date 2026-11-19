@@ -64,7 +64,7 @@ export default async function Page({ searchParams }: { searchParams?: Promise<{ 
         title={<>Already have measurements? Turn them into materials, labour and pricing.</>}
         lead="Enter areas, lengths or quantities from a site measure, plan takeoff, aerial report or spreadsheet. Reusable components apply your pricing rules, then you can review the result, build a customer quote or carry the workflow into QuoteCore+."
         primary={{ href: '#measurement-tool', label: 'Use the free tool' }}
-        secondary={{ href: '/signup', label: 'Create Free Workspace', freeWorkspace: true }}
+        secondary={{ href: '/free-trial', label: 'See how it works', freeWorkspace: true }}
         proof={['Free core workflow', 'No signup to start', 'Use measurements you already have']}
         visual={<ProductFrame src="/marketing/current-ux/quote-builder-components-measurements.webp" alt="QuoteCore+ Quote Builder with measurements and Smart Components" width={2048} height={1112} eager caption="A Free Workspace keeps measured quantities, reusable Smart Components and the priced job together. The free tool below lets you try the core measurement-to-pricing idea first." />}
       />
@@ -126,12 +126,12 @@ export default async function Page({ searchParams }: { searchParams?: Promise<{ 
           <SectionHeader eyebrow="Next step" title="Choose the next step that suits you" />
           <ConversionPaths items={[
             { title: 'Talk it through with Shaun', body: 'Tell Shaun how you currently measure, price and quote. He will help you work out where QuoteCore+ could make it faster or easier, and share his #1 tip for winning more quoted jobs.', href: workflowCallHref, label: 'Book 25 minutes with Shaun' },
-            { title: 'Explore it yourself', body: 'Create a real Free Workspace with no card or expiry. Use your own jobs, with the optional Guided Walkthrough there when you want it.', href: '/signup', label: 'Create my Free Workspace', freeWorkspace: true },
+            { title: 'Explore it yourself', body: 'Create a real Free Workspace with no card or expiry. Use your own jobs, with the optional Guided Walkthrough there when you want it.', href: '/free-trial', label: 'See how it works', freeWorkspace: true },
           ]} />
         </Container>
       </Section>
 
-      <FinalCta title="Already measured the job? Start from what you know." body="Use the free tool for the current task. When you want the setup saved for next time, create a Free Workspace or talk through your workflow with Shaun." primary={{ href: workflowCallHref, label: 'Book 25 minutes with Shaun' }} secondary={{ href: '/signup', label: 'Create my Free Workspace', freeWorkspace: true }} />
+      <FinalCta title="Already measured the job? Start from what you know." body="Use the free tool for the current task. When you want the setup saved for next time, create a Free Workspace or talk through your workflow with Shaun." primary={{ href: workflowCallHref, label: 'Book 25 minutes with Shaun' }} secondary={{ href: '/free-trial', label: 'See how it works', freeWorkspace: true }} />
       <div style={{ height: 72 }} />
     </PageScaffold>
   );

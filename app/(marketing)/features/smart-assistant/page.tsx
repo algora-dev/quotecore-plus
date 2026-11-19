@@ -79,7 +79,7 @@ export default function SmartAssistantPage() {
         title={<>Tell your estimating software what you want done.</>}
         lead="Smart Assistant gives QuoteCore+ a conversational interface. Use voice or text instead of learning where every screen, field and action lives. In V1 Beta it can draft or revise quotes, retrieve authorised account information and propose supported pricing changes, with the result left for you to review."
         primary={{ href: bookingHref, label: 'Book 25 minutes with Shaun' }}
-        secondary={{ href: '/signup', label: 'Create my free workspace', freeWorkspace: true }}
+        secondary={{ href: '/free-trial', label: 'See how it works', freeWorkspace: true }}
         proof={['Voice or text', 'Built for mobile and desktop', 'Review, edit or discard the result']}
         visual={<ProductFrame src="/marketing/current-ux/smart-assistant-workspace.webp" alt="QuoteCore+ Smart Assistant alongside the estimating workspace" width={1635} height={962} eager caption="Smart Assistant is a conversational controller for the QuoteCore+ workflow, not a separate generic chatbot or voice note tool." />}
       />
@@ -196,7 +196,7 @@ export default function SmartAssistantPage() {
         <Container>
           <SectionHeader eyebrow="Try the easier interface" title="Use Smart Assistant in your Free Workspace, or talk through your workflow with Shaun." lead="Start with the real app and see what conversational tasks are useful to you. If you want help finding the highest-value use cases, talk through the way you currently quote with Shaun." />
           <ConversionPaths items={[
-            { title: 'Create your Free Workspace', body: 'Try Smart Assistant alongside the normal QuoteCore+ workflow and use the optional Guided Walkthrough if you want a structured introduction first.', href: '/signup', label: 'Create my free workspace', freeWorkspace: true },
+            { title: 'Create your Free Workspace', body: 'Try Smart Assistant alongside the normal QuoteCore+ workflow and use the optional Guided Walkthrough if you want a structured introduction first.', href: '/free-trial', label: 'See how it works', freeWorkspace: true },
             { title: 'Talk it through with Shaun', body: 'Tell Shaun how you currently measure, price and quote, see where QuoteCore+ could remove work, and take away his #1 tip for winning more quoted jobs.', href: bookingHref, label: 'Book 25 minutes with Shaun' },
           ]} />
         </Container>
@@ -217,7 +217,7 @@ export default function SmartAssistantPage() {
         </Container>
       </Section>
 
-      <FinalCta title="Stop learning the clicks. Start with what you want done." body="Try Smart Assistant by voice or text, keep the result reviewable and use the normal QuoteCore+ interface whenever direct control is the better option." primary={{ href: bookingHref, label: 'Book 25 minutes with Shaun' }} secondary={{ href: '/signup', label: 'Create my free workspace', freeWorkspace: true }} />
+      <FinalCta title="Stop learning the clicks. Start with what you want done." body="Try Smart Assistant by voice or text, keep the result reviewable and use the normal QuoteCore+ interface whenever direct control is the better option." primary={{ href: bookingHref, label: 'Book 25 minutes with Shaun' }} secondary={{ href: '/free-trial', label: 'See how it works', freeWorkspace: true }} />
       <div style={{ height: 72 }} />
     </PageScaffold>
   );

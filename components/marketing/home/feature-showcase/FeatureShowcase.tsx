@@ -235,7 +235,7 @@ export function FeatureShowcase({ id = 'workflow', config = homepageConfig, init
                     
                   </div>
                   <div className={s.actions}>
-                    <FreeWorkspaceButton variant="primary" size="large" className={s.demo} icon={<ShowcaseIcon name="arrow" size={18} />}>Create Free Workspace</FreeWorkspaceButton>
+                    <FreeWorkspaceButton variant="primary" size="large" className={s.demo} icon={<ShowcaseIcon name="arrow" size={18} />}>See how it works</FreeWorkspaceButton>
                     <p>Try these features in your own account. Guided walkthrough included.</p>
                   </div>
                 </div>

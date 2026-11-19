@@ -66,7 +66,7 @@ export default function RoofScanAssistPage() {
         title={<>Scan a roof plan instead of tracing every line.</>}
         lead="Roof Scan Assist reads a calibrated roof plan, identifies the roof faces and supported roof lines, and builds the takeoff for you. On a clear, correctly calibrated plan, a typical simple-to-medium complexity roof commonly completes both scan stages in around 1-2 minutes, and simple roofs can be faster."
         primary={{ href: bookingHref, label: 'Book 25 minutes with Shaun' }}
-        secondary={{ href: '/signup', label: 'Create my free workspace', freeWorkspace: true }}
+        secondary={{ href: '/free-trial', label: 'See how it works', freeWorkspace: true }}
         proof={['Desktop and mobile', 'Fully editable result', 'Scan options for different roof complexity']}
         visual={<ProductFrame src="/marketing/current-ux/ai-scan-assist-completed-roof.webp" alt="Completed roof geometry produced by QuoteCore+ Roof Scan Assist" width={2048} height={1114} eager caption="A completed Roof Scan Assist result. The roof geometry stays editable in the same Digital Takeoff workspace before it is used for offcuts, pricing or quoting." />}
       />
@@ -184,7 +184,7 @@ export default function RoofScanAssistPage() {
         <Container>
           <SectionHeader eyebrow="Try it your way" title="Use Roof Scan Assist in your Free Workspace, or talk through your workflow with Shaun." lead="Start with the real app on your own jobs. If you want help deciding how AI-assisted takeoff fits your current measuring and quoting process, use the 25-minute call." />
           <ConversionPaths items={[
-            { title: 'Create your Free Workspace', body: 'Use Digital Takeoff and Roof Scan Assist inside the real QuoteCore+ workflow, with the optional Guided Walkthrough available when you want help learning the basics.', href: '/signup', label: 'Create my free workspace', freeWorkspace: true },
+            { title: 'Create your Free Workspace', body: 'Use Digital Takeoff and Roof Scan Assist inside the real QuoteCore+ workflow, with the optional Guided Walkthrough available when you want help learning the basics.', href: '/free-trial', label: 'See how it works', freeWorkspace: true },
             { title: 'Talk it through with Shaun', body: 'Tell Shaun how you currently measure and quote, see where QuoteCore+ could make the process faster or easier, and take away his #1 tip for winning more quoted jobs.', href: bookingHref, label: 'Book 25 minutes with Shaun' },
           ]} />
         </Container>
@@ -206,7 +206,7 @@ export default function RoofScanAssistPage() {
         </Container>
       </Section>
 
-      <FinalCta title="Let the scan do the tracing. You review what matters." body="Use Roof Scan Assist when the plan suits automation, keep every result editable and move the reviewed roof straight into the next estimating step." primary={{ href: bookingHref, label: 'Book 25 minutes with Shaun' }} secondary={{ href: '/signup', label: 'Create my free workspace', freeWorkspace: true }} />
+      <FinalCta title="Let the scan do the tracing. You review what matters." body="Use Roof Scan Assist when the plan suits automation, keep every result editable and move the reviewed roof straight into the next estimating step." primary={{ href: bookingHref, label: 'Book 25 minutes with Shaun' }} secondary={{ href: '/free-trial', label: 'See how it works', freeWorkspace: true }} />
       <div style={{ height: 72 }} />
     </PageScaffold>
   );

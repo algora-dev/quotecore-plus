@@ -27,7 +27,7 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
             <h1>Quote roofing jobs <span className={styles.gradient}>faster.</span><br />No matter how you <span className={styles.gradient}>currently work.</span></h1>
             <p className={c('hero-kicker')}>Start with a plan, a satellite image, your own measurements, or simply tell QuoteCore+ what you have.</p>
             <div className={c('hero-action')}>
-              <FreeWorkspaceButton className={c('btn','btn-primary')}>Create Free Workspace →</FreeWorkspaceButton>
+              <FreeWorkspaceButton className={c('btn','btn-primary')}>See how it works →</FreeWorkspaceButton>
               <Link href={bookingHref} target={bookingIsExternal ? '_blank' : undefined} rel={bookingIsExternal ? 'noopener noreferrer' : undefined} className={c('hero-call-link')}>Or book a free 25-minute call with Shaun ↗</Link>
             </div>
             <div className={c('hero-founder')}><img className={c('hero-founder-avatar')} src="/shaun-smiling.jpg" alt="Shaun, founder of QuoteCore+" /><div className={c('hero-founder-copy')}><div className={c('hero-founder-topline')}><strong>Shaun · Founder</strong><span>20+ years roofing &amp; construction</span></div><div className={c('hero-founder-line')}>Bring a job or tell me how you quote. I&apos;ll show you a faster way.</div></div></div>
@@ -52,7 +52,7 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
       </div></section>
 
       <section className={styles.workspace} id="workspace"><div className={c('wrap','workspace-grid')}>
-        <div><p className={styles.eyebrow}>Prefer to try it yourself?</p><h2>Create your free live workspace.</h2><p>Explore your real QuoteCore+ workspace, use the optional guided walkthrough when you want help, or start measuring, quoting and sending your own jobs straight away.</p><div className={c('workspace-mini')}><span>Real Free Workspace</span><span>Optional walkthrough</span><span>Your own jobs</span></div><FreeWorkspaceButton className={c('btn','btn-primary')}>Create my free workspace →</FreeWorkspaceButton></div>
+        <div><p className={styles.eyebrow}>Prefer to try it yourself?</p><h2>Create your free live workspace.</h2><p>Explore your real QuoteCore+ workspace, use the optional guided walkthrough when you want help, or start measuring, quoting and sending your own jobs straight away.</p><div className={c('workspace-mini')}><span>Real Free Workspace</span><span>Optional walkthrough</span><span>Your own jobs</span></div><FreeWorkspaceButton className={c('btn','btn-primary')}>See how it works →</FreeWorkspaceButton></div>
         <div className={c('app-shot')}><span className={c('shot-badge')}>Real working workspace</span><img src="/marketing/home/demo/demo-01-workspace.webp" alt="QuoteCore+ working workspace" /></div>
       </div></section>
 
@@ -67,7 +67,7 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
         <div className={c('dfy-cards')} aria-label="What our setup services include"><div className={c('dfy-card')}><span className={c('dfy-card-icon')}><Icon name="calculator" size={21} /></span><div><span className={c('dfy-title-row')}><b>Configured for you</b><span className={c('dfy-tag','dfy-tag-both')}>Quick Start + DFY</span></span><span>Your pricing and components set up for you. Done For You adds your full workflow.</span></div></div><div className={c('dfy-card')}><span className={c('dfy-card-icon')}><Icon name="roof" size={21} /></span><div><span className={c('dfy-title-row')}><b>Guided on your jobs</b><span className={c('dfy-tag')}>DFY only</span></span><span>A live or recorded walkthrough using your own pricing and jobs.</span></div></div><div className={c('dfy-card')}><img className={c('dfy-card-logo')} src="/marketing/home/qc-app-icon.png" alt="" width={38} height={38} loading="lazy" decoding="async" /><div><span className={c('dfy-title-row')}><b>3 months of QuoteCore+ included</b><span className={c('dfy-tag')}>DFY only</span></span><span>The plan your setup needs is part of the price.</span></div></div><div className={c('dfy-card')}><span className={c('dfy-card-icon')}><Icon name="people" size={21} /></span><div><span className={c('dfy-title-row')}><b>3 months of support</b><span className={c('dfy-tag')}>DFY only</span></span><span>Real ongoing support to ensure you quote faster and easier.</span></div></div></div>
       </div></div></section>
 
-      <WorkflowExplorer demoHref="/signup" config={config} />
+      <WorkflowExplorer demoHref="/free-trial" config={config} />
 
       <section className={styles.final}><div className={styles.wrap}><h2>Tell me how you measure, estimate or quote today.<br /><span className={styles.gradient}>I&apos;ll show you how to do it faster and easier.</span></h2><p>Bring a job if you have one. If you don&apos;t, just talk me through your process. We&apos;ll use the 25 minutes to find the quickest QuoteCore+ workflow for your business.</p><MarketingButton href={bookingHref} className={c('btn','btn-primary')}>Book my free 25-minute call →</MarketingButton><br /><span className={c('final-bonus')}>And I&apos;ll give you my #1 tip for winning more of the quotes you already sent.</span></div></section>
     </main>

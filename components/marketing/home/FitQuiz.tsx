@@ -289,7 +289,7 @@ export function FitQuizDialog({ open, onClose }: {
                       icon={<Icon name="arrow" size={16} />}
                       onClick={() => track('quiz_cta_click', { cta: 'free_workspace' })}
                     >
-                      Create my free workspace
+                      See how it works
                     </FreeWorkspaceButton>
                   </div>
                   <button type="button" className={`${s.fitRetake} ${n.quizRetake}`} onClick={retake}>Not quite you? Retake</button>

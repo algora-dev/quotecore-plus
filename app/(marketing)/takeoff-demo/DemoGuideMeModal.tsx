@@ -179,7 +179,7 @@ export function DemoLimitModal({ open, title, body, onClose }: { open: boolean; 
           <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
           <div className="mt-6 flex flex-col gap-2">
             <FreeWorkspaceButton variant="primary" size="large" className="w-full">
-              Create a Free Workspace
+              See how it works
             </FreeWorkspaceButton>
             <button
               onClick={onClose}

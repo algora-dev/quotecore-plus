@@ -17,7 +17,7 @@ export function DemoSection({ config }: { config: Pick<HomepageConfig, 'demoHref
           <h2 id="demo-title" className={s.sectionTitle}>Learn the workflow, then use your own workspace.</h2>
           <p className={s.bodyCopy}>Create your real Free Workspace first. When you want a structured introduction, open the optional Guided Walkthrough and step into a ready-made roofing business for the four core tasks.</p>
           <div className={s.demoCtas}>
-            <FreeWorkspaceButton variant="primary" size="large" className={s.button} icon={<Icon name="arrow" />}>Create Free Workspace</FreeWorkspaceButton>
+            <FreeWorkspaceButton variant="primary" size="large" className={s.button} icon={<Icon name="arrow" />}>See how it works</FreeWorkspaceButton>
             <DemoCallButton bookingHref={config.bookingHref} location="try-it" />
           </div>
           <div className={s.reassurance}>

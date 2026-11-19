@@ -147,7 +147,7 @@ export function PricingShowcase({ active, feature, demoHref, onEvent, onChapterC
           <ul className={s.benefits}>{story.benefit.split('|').map(point => <li key={point}><ShowcaseIcon name="check" size={15} /><span>{point}</span></li>)}</ul>
         </div>
         <div className={s.actions}>
-          <FreeWorkspaceButton variant="primary" size="large" className={s.demo} icon={<ShowcaseIcon name="arrow" size={18} />}>Create Free Workspace</FreeWorkspaceButton>
+          <FreeWorkspaceButton variant="primary" size="large" className={s.demo} icon={<ShowcaseIcon name="arrow" size={18} />}>See how it works</FreeWorkspaceButton>
           <p>Try Smart Components in your own account. Guided walkthrough included.</p>
         </div>
       </div>

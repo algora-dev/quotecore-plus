@@ -94,7 +94,7 @@ export default function NzLongRunRoofingEstimatingPage() {
         title={<>Long-run roofing estimating for hips, valleys and offcuts.</>}
         lead="Roof area alone does not tell you how much long-run roofing to buy. Here is why, and how to plan cut-to-length material properly before the price is fixed."
         primary={{ href: bookingHref, label: 'Book a free 20-minute call with Shaun' }}
-        secondary={{ href: '/signup', label: 'Create a free workspace' }}
+        secondary={{ href: '/free-trial', label: 'See how it works' }}
         proof={['Cut-to-length sheeting', 'Hips, valleys and angled cuts', 'Reusable offcut planning']}
       />
 
@@ -255,8 +255,8 @@ export default function NzLongRunRoofingEstimatingPage() {
               {
                 title: 'Create a free workspace',
                 body: 'Set up your workspace and start measuring, pricing and quoting in metric.',
-                href: '/signup',
-                label: 'Create a free workspace',
+                href: '/free-trial',
+                label: 'See how it works',
               },
             ]}
           />
@@ -285,7 +285,7 @@ export default function NzLongRunRoofingEstimatingPage() {
         title="Know the sheets before you fix the price."
         body="Plan the cuts and purchased lengths before the quote is sent, and the margin survives contact with the material order."
         primary={{ href: bookingHref, label: 'Book a free 20-minute call with Shaun' }}
-        secondary={{ href: '/signup', label: 'Create a free workspace' }}
+        secondary={{ href: '/free-trial', label: 'See how it works' }}
       />
       <div style={{ height: 72 }} />
     </PageScaffold>

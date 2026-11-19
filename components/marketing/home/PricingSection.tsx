@@ -20,7 +20,7 @@ export function PricingSection({ pricingHref = '/pricing' }: { pricingHref?: str
       <div className={p.content}>
         <p className={p.description}>Start with a Free Workspace. Learn which features actually help, then build your exact plan inside your account only if you need more features, capacity or usage.</p>
         <div className={p.actions}>
-          <FreeWorkspaceButton variant="primary" size="large" className={`${s.button} ${p.cta}`} icon={<Icon name="arrow" size={18} />}>Create Free Workspace</FreeWorkspaceButton>
+          <FreeWorkspaceButton variant="primary" size="large" className={`${s.button} ${p.cta}`} icon={<Icon name="arrow" size={18} />}>See how it works</FreeWorkspaceButton>
           <MarketingButton href={pricingHref} variant="glass" size="large" className={`${s.button} ${p.cta}`}>See how pricing works</MarketingButton>
         </div>
       </div>

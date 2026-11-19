@@ -287,7 +287,7 @@ export function DemoQuoteView({
               size="large"
               onClick={() => trackEvent('get_started_click', { source: 'takeoff-demo', stage: 'quote-view' })}
             >
-              Create my free workspace
+              See how it works
             </FreeWorkspaceButton>
             <button onClick={onRestart} className="min-h-11 rounded-xl border border-slate-300 px-5 py-3 text-sm font-medium hover:bg-slate-50">
               Restart sample
@@ -325,7 +325,7 @@ export function DemoQuoteView({
                 size="large"
                 onClick={() => trackEvent('get_started_click', { source: 'takeoff-demo', stage: 'end-modal' })}
               >
-                Create my free workspace
+                See how it works
               </FreeWorkspaceButton>
               <MarketingButton href={workflowCallHref} variant="glass" size="large">
                 Book 25 minutes with Shaun

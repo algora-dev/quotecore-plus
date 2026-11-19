@@ -14,7 +14,7 @@ type NavItem = { label: string; href: string; app?: boolean; newTab?: boolean };
 function buildNavItems(appHref: string, homepage: boolean): NavItem[] {
   return [
     { label: "Log in", href: appHref, app: true },
-    { label: "Create Free Workspace", href: "/signup", newTab: true },
+    { label: "See how it works", href: "/free-trial", newTab: true },
     { label: "Features", href: homepage ? "#workflow" : "/features" },
     { label: "Done For You", href: "/done-for-you-setup" },
     { label: "Pricing", href: homepage ? "#pricing" : "/pricing" },
@@ -107,7 +107,7 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "dark", 
                 ← {backLabel}
               </a>
             ) : null}
-            <FreeWorkspaceButton variant="primary" size="large" className={styles.workspaceCta}>Create free workspace</FreeWorkspaceButton>
+            <FreeWorkspaceButton variant="primary" size="large" className={styles.workspaceCta}>See how it works</FreeWorkspaceButton>
           </div>
 
           <button

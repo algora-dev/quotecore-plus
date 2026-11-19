@@ -762,7 +762,7 @@ export default function FastestRoofingEstimatingSoftwarePage() {
                   <strong>Same roofing library, different starting line:</strong> the 17-second test begins after takeoff is complete. The 2:27 benchmark starts earlier, from the unmeasured architectural plan.
                 </div>
                 <div style={{ marginTop: 24, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <FreeWorkspaceButton size="large">Try Smart Assistant in a Free Workspace</FreeWorkspaceButton>
+                  <FreeWorkspaceButton size="large">See how it works</FreeWorkspaceButton>
                   <a className={c('button', 'button-secondary')} href={BOOK}>Book 25 minutes with Shaun</a>
                 </div>
               </div>
@@ -1010,7 +1010,7 @@ export default function FastestRoofingEstimatingSoftwarePage() {
                   <p>Create a Free Workspace and use your own jobs, or tell Shaun how you currently measure, price and quote. He can help you work out where QuoteCore+ could save time and give you his #1 tip for winning more of the jobs you already quote.</p>
                 </div>
                 <div className={s['final-actions']}>
-                  <FreeWorkspaceButton size="large">Create my free workspace</FreeWorkspaceButton>
+                  <FreeWorkspaceButton size="large">See how it works</FreeWorkspaceButton>
                   <a className={c('button', 'button-light')} href={BOOK}>Book 25 minutes with Shaun</a>
                 </div>
               </div>

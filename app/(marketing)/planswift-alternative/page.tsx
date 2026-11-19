@@ -324,7 +324,7 @@ const pageData: CompetitorPageData = {
     "heading": "Try QuoteCore+ before choosing a paid plan",
     "body": "Create a Free Workspace and use QuoteCore+ on your own jobs before deciding whether you need a paid plan. Your workspace keeps saved setup, reusable pricing and connected jobs together.",
     "primaryHref": "/free-roofing-takeoff-builder",
-    "primaryLabel": "Create a Free Workspace",
+    "primaryLabel": "See how it works",
     "secondaryLinks": [
       {
         "label": "Free measurement-to-quote tool",
@@ -436,7 +436,7 @@ const pageData: CompetitorPageData = {
   "finalCta": {
     "heading": "Make the next measured job easier to quote",
     "body": "Work with your measurements and your pricing, from site or office. Start in a real Free Workspace, or talk through your current workflow with Shaun if you want help deciding what would actually make it faster.",
-    "ctaLabel": "Create a Free Workspace"
+    "ctaLabel": "See how it works"
   }
 };
 

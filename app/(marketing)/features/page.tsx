@@ -59,7 +59,7 @@ export default function FeaturesPage() {
         title={<>The complete estimating and quoting workflow, <strong>connected.</strong></>}
         lead="Take measurements, apply your own pricing rules, build the customer quote, send and track it, then carry accepted work into orders and invoices. Use the quick interactive tour or scroll through the workflow in detail below."
         primary={{ href: workflowCallHref, label: 'Book 25 minutes with Shaun' }}
-        secondary={{ href: '/signup', label: 'Create my free workspace', freeWorkspace: true }}
+        secondary={{ href: '/free-trial', label: 'See how it works', freeWorkspace: true }}
         proof={['Measure or enter quantities', 'Use your own pricing logic', 'Keep the job connected after the quote']}
         visual={<ProductFrame src="/marketing/current-ux/job-space-overview.webp" alt="Current QuoteCore+ Job Space overview with the connected job workflow" width={2048} height={1112} eager caption="Job Space keeps the job, pricing and document workflow together instead of splitting the work across disconnected tools." />}
       />
@@ -68,7 +68,7 @@ export default function FeaturesPage() {
         <Container>
           <SectionHeader eyebrow="Quick product tour" title="Prefer to click through? Explore the core workflow in a few minutes." lead="This is the same interactive feature showcase used on the homepage. Use the tabs and examples for the short version, then continue below for a detailed scroll-through of the workflow." />
         </Container>
-        <WorkflowExplorer demoHref="/signup" />
+        <WorkflowExplorer demoHref="/free-trial" />
       </Section>
 
       <Section>
@@ -183,7 +183,7 @@ export default function FeaturesPage() {
         <Container>
           <SectionHeader eyebrow="Choose your next step" title="Choose the next step that suits you" lead="Use the route that answers what you need to know next." />
           <ConversionPaths items={[
-            { title: 'Create your Free Workspace', body: 'Use QuoteCore+ on your own jobs, try every feature within the free allowances and use the optional Guided Walkthrough when you want a structured introduction.', href: '/signup', label: 'Create my free workspace', freeWorkspace: true },
+            { title: 'Create your Free Workspace', body: 'Use QuoteCore+ on your own jobs, try every feature within the free allowances and use the optional Guided Walkthrough when you want a structured introduction.', href: '/free-trial', label: 'See how it works', freeWorkspace: true },
             { title: 'Talk it through with Shaun', body: 'Tell Shaun how you currently work, see where QuoteCore+ could make measuring and quoting faster or easier, and take away his #1 tip for winning more quoted jobs.', href: workflowCallHref, label: 'Book 25 minutes with Shaun' },
           ]} />
         </Container>
@@ -201,7 +201,7 @@ export default function FeaturesPage() {
         </Container>
       </Section>
 
-      <FinalCta title="One workflow. Start at the part that matters to you." body="Create a Free Workspace and try the workflow on your own jobs, or talk it through with Shaun if you want help deciding where QuoteCore+ could save you the most time." primary={{ href: workflowCallHref, label: 'Book 25 minutes with Shaun' }} secondary={{ href: '/signup', label: 'Create my free workspace', freeWorkspace: true }} />
+      <FinalCta title="One workflow. Start at the part that matters to you." body="Create a Free Workspace and try the workflow on your own jobs, or talk it through with Shaun if you want help deciding where QuoteCore+ could save you the most time." primary={{ href: workflowCallHref, label: 'Book 25 minutes with Shaun' }} secondary={{ href: '/free-trial', label: 'See how it works', freeWorkspace: true }} />
       <div style={{ height: 72 }} />
     </PageScaffold>
   );

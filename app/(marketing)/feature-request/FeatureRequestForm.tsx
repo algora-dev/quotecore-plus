@@ -414,7 +414,7 @@ export function FeatureRequestForm() {
                 href="/free-trial"
                 className="flex w-full min-h-11 items-center justify-center rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 hover:border-white/25"
               >
-                Create a Free Workspace
+                See how it works
               </a>
               <a
                 href={workflowCallHref}

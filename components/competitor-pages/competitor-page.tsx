@@ -459,7 +459,7 @@ export default function CompetitorPage({
                 <li><span className="font-medium text-zinc-900">Exact plan later.</span> Build your paid configuration inside Billing only when you know what you need.</li>
               </ul>
               <div className="mt-6">
-                <TrackedCta slug={slug} location="pricing_quote_core" href="/signup" label={freeWorkspaceLabel} freeWorkspace />
+                <TrackedCta slug={slug} location="pricing_quote_core" href="/free-trial" label={freeWorkspaceLabel} freeWorkspace />
               </div>
             </div>
           </div>
@@ -705,7 +705,7 @@ export default function CompetitorPage({
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <TrackedCta slug={slug} location="hero" href={workflowCallHref} label={shaunCallLabel} />
-            <TrackedCta slug={slug} location="hero" href="/signup" label={freeWorkspaceLabel} variant="ghost" freeWorkspace />
+            <TrackedCta slug={slug} location="hero" href="/free-trial" label={freeWorkspaceLabel} variant="ghost" freeWorkspace />
           </div>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-zinc-500">{shaunCallPromiseShort}</p>
         </div>
@@ -724,7 +724,7 @@ export default function CompetitorPage({
         <p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-600">{data.finalCta.body}</p>
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <TrackedCta slug={slug} location="final_cta" href={workflowCallHref} label={shaunCallLabel} />
-          <TrackedCta slug={slug} location="final_cta" href="/signup" label={freeWorkspaceLabel} variant="ghost" freeWorkspace />
+          <TrackedCta slug={slug} location="final_cta" href="/free-trial" label={freeWorkspaceLabel} variant="ghost" freeWorkspace />
         </div>
         <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-zinc-500">{shaunCallPromiseShort}</p>
       </section>

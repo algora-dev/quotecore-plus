@@ -9,6 +9,7 @@ import {printTakeoffReport} from './takeoff-print';
 import s from './TakeoffExperience.module.css';
 import {WorkspaceUpsellModal,WORKSPACE_FEATURES} from '../shared/WorkspaceUpsellModal';
 import {MarketingButton} from '@/components/marketing/MarketingButton';
+import {toFreeTrialHref} from '@/lib/freeTrialCta';
 import {trackFreeToolEvent} from '../lib/trackFreeToolEvent';
 export type {TakeoffTrade} from './takeoff-report-model';
 export interface TakeoffOutputExtras {planDataUrl:string;elapsedMs:number;}
@@ -58,7 +59,7 @@ export function TakeoffOutputView({payload,extras,unitSystem='metric',specs=[],t
     </div>
     <div className={s.outputFoot}><div className={s.outputActions}><Button onClick={print} disabled={!hasWork}><Icon name="download"/>Print / Save PDF</Button><Button onClick={download} disabled={!hasWork}>Download CSV</Button>{extras.planDataUrl&&<Button quiet onClick={()=>setShowPlan(true)}>View plan</Button>}</div></div>
    </div><aside className={s.resultSidebar}>
-    <div className={`${s.nextCard} ${s.dark}`}><p className={s.eyebrow}>Your next step</p><h3>Create your free workspace.</h3><p>Save your pricing and reuse it on every job. Create quotes, invoices and material orders, and see when customers open, accept or decline them. Plus AI features like Scan Assist.</p><MarketingButton href={upsell.signupHref} variant="primary" size="large" className="w-full" target="_blank" rel="noopener noreferrer" onClick={()=>trackFreeToolEvent('ws_nextcard_click',{slug:upsell.slug})}>Create my Free Workspace</MarketingButton><small>Free · No card · No trial clock</small><small><a href="/" data-analytics-action="learn_more" target="_blank" rel="noopener noreferrer" style={{textDecoration:'underline',textUnderlineOffset:3}}>Learn more about the app</a></small></div>
+    <div className={`${s.nextCard} ${s.dark}`}><p className={s.eyebrow}>Your next step</p><h3>Create your free workspace.</h3><p>Save your pricing and reuse it on every job. Create quotes, invoices and material orders, and see when customers open, accept or decline them. Plus AI features like Scan Assist.</p><MarketingButton href={toFreeTrialHref(upsell.signupHref)} variant="primary" size="large" className="w-full" target="_blank" rel="noopener noreferrer" onClick={()=>trackFreeToolEvent('ws_nextcard_click',{slug:upsell.slug})}>See how it works</MarketingButton><small>Free · No card · No trial clock</small><small><a href="/" data-analytics-action="learn_more" target="_blank" rel="noopener noreferrer" style={{textDecoration:'underline',textUnderlineOffset:3}}>Learn more about the app</a></small></div>
     {tutorial&&<div><ActionLink href={tutorial.href} target="_blank" rel="noopener noreferrer"><Icon name="play"/>Watch the workflow guide</ActionLink>{tutorial.olderLayout&&<p className={s.help}>The guide shows the earlier layout; the workflow is similar.</p>}</div>}
    </aside></div>
    <div className={s.outputFoot}><Button quiet onClick={()=>setConfirmNew(true)}><Icon name="plus"/>Start a new takeoff</Button><span>Session only. Download your results before closing this page.</span></div>

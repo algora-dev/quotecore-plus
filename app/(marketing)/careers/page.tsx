@@ -78,7 +78,7 @@ const pathCards = [
       "Send them into a real Free Workspace. There is no card or expiry, and the optional Guided Walkthrough is there if they want a structured introduction before using their own jobs.",
     next: "They can keep using the free version while it is enough, then create a paid plan inside Billing only when they need more features, capacity or usage.",
     href: QC.freeWorkspace,
-    cta: "Create a Free Workspace",
+    cta: "See how it works",
   },
 ];
 
@@ -116,7 +116,7 @@ const resourceGroups = [
     title: "They want to learn it themselves",
     body: "Start with the Free Workspace, then use the tutorial library and in-app guidance when they want more detail.",
     links: [
-      ["Create a Free Workspace", QC.freeWorkspace],
+      ["See how it works", QC.freeWorkspace],
       ["Tutorials", QC.tutorials],
       ["Q in-app assistant docs", QC.qDocs],
     ],

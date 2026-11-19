@@ -35,8 +35,8 @@ const quickQuestions = [
 ];
 
 const startCTA = {
-  label: "Create my Free Workspace",
-  href: "/signup",
+  label: "See how it works",
+  href: "/free-trial",
 };
 
 const callCTA = {

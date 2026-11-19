@@ -1,5 +1,5 @@
 /** Shared public conversion copy. Keep these phrases consistent across marketing surfaces. */
-export const freeWorkspaceLabel = "Create my free workspace";
+export const freeWorkspaceLabel = "See how it works";
 export const shaunCallLabel = "Book a free 25-minute call with Shaun";
 export const shaunCallLabelShort = "Book 25 minutes with Shaun";
 export const shaunCallPromise =

@@ -282,13 +282,13 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                   <button
                     onClick={() => {
                       setShowActions(false);
-                      const win = window.open(`/signup?ref=${upsellSlug}`, '_blank', 'noopener,noreferrer');
+                      const win = window.open(`/free-trial?ref=${upsellSlug}`, '_blank', 'noopener,noreferrer');
                       if (win) { onClose(); }
                     }}
                     className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-slate-700 hover:bg-orange-50/40 transition text-left"
                   >
                     <svg className="w-4 h-4 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-                    Create my Free Workspace
+                    See how it works
                   </button>
                 </div>
               </>

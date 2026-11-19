@@ -109,7 +109,7 @@ export default function TakeoffDemoPage() {
           <div className="mt-4">
             <YouTubeLite videoId="pqIfx-rOcmo" title="Create a Quote from Start to Finish with QuoteCore+" showTitle rounded />
           </div>
-            <div className="mt-6"><TrialCTA label="Create my free workspace" /></div>
+            <div className="mt-6"><TrialCTA label="See how it works" /></div>
         </div>
       </section>
 
@@ -160,7 +160,7 @@ export default function TakeoffDemoPage() {
         <p className="mt-4 text-sm leading-relaxed text-slate-600">
           Create a real Free Workspace, upload your own plans, use your own jobs and pricing, and keep using it for as long as the free allowances are enough. The optional Guided Walkthrough is there whenever you want help learning the connected workflow.
         </p>
-        <TrialCTA label="Create my free workspace" />
+        <TrialCTA label="See how it works" />
       </section>
 
       {/* FAQ */}

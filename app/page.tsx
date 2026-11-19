@@ -127,11 +127,11 @@ export default async function Home() {
             <span>Log in</span>
           </Link>
           <Link
-            href="/signup"
+            href="/free-trial"
             className={`${controls.button} ${controls.primary} ${controls.large} ${loginActions.heroShadow}`}
           >
             <span className={controls.icon} aria-hidden="true"><Icon name="arrow" /></span>
-            <span>Create Free Workspace</span>
+            <span>See how it works</span>
           </Link>
           <Link
             href={marketingLink}

@@ -171,7 +171,7 @@ export function DocumentGenerator({config,search,services,account,auth,onAuthCom
                     <div className={s.generateArea}><Button variant="primary" icon="check" pending={generating} onClick={()=>void generate()}>{generating?'Checking your allowance…':copy.action}</Button><p>Nothing is sent to your {copy.recipient}.</p></div>
                     <p className={s.generateAllowance}><Icon name="file"/>{account.limits.docPerDay===null?'Included with your QuoteCore+ workspace.':`Uses 1 of your ${account.limits.docPerDay} document generations per day.`}<button type="button" onClick={()=>setDialog('allowances')}>How limits work</button></p>
                   </>}
-                  {requestError&&<div className={s.errorBox} role="alert"><p>{requestError}</p>{limitError&&!account.canRemoveBranding&&<Button onClick={()=>openAccount('allowance')}>Get 10 documents a day for free</Button>}{limitError&&account.canRemoveBranding&&<a className={s.transferLink} href="/signup">Create a Free Workspace<Icon name="arrow"/></a>}</div>}
+                  {requestError&&<div className={s.errorBox} role="alert"><p>{requestError}</p>{limitError&&!account.canRemoveBranding&&<Button onClick={()=>openAccount('allowance')}>Get 10 documents a day for free</Button>}{limitError&&account.canRemoveBranding&&<a className={s.transferLink} href="/free-trial">See how it works<Icon name="arrow"/></a>}</div>}
                 </>}
               </div>
               <div className={s.editorFooter}><div>{step===0?<span className={s.footerHint}><Icon name="shield"/>You’re in control of every detail.</span>:<Button icon="back" variant="ghost" onClick={()=>navigate((step-1) as 0|1)} disabled={generating||printing}>Back</Button>}</div>

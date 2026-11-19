@@ -24,7 +24,7 @@ export function OverviewVideoDialog({ config, onClose }: { config: HomepageConfi
         {failed && id ? (
           <a className={n.pendingLink} href={`https://www.youtube.com/watch?v=${id}`} target="_blank" rel="noopener noreferrer">Watch on YouTube<Icon name="arrow" size={16} /></a>
         ) : (
-          <FreeWorkspaceButton variant="primary" size="default">Create my free workspace</FreeWorkspaceButton>
+          <FreeWorkspaceButton variant="primary" size="default">See how it works</FreeWorkspaceButton>
         )}
       </div>}
     </div>

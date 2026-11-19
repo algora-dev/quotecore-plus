@@ -149,7 +149,7 @@ export default function Post() {
         <li>Newer platform - integration ecosystem still growing</li>
       </ul>
 
-      <p><a href="/free-trial">Create a Free Workspace</a></p>
+      <p><a href="/free-trial">See how it works</a></p>
 
       <p>QuoteCore+ also includes a <a href="/suppliers">supplier directory</a> where roofing and construction suppliers can publish their catalogues and get found by contractors and AI search:</p>
 
@@ -275,7 +275,7 @@ export default function Post() {
       <hr />
 
       <h2>Try QuoteCore+ before you decide</h2>
-      <p>Not ready to commit to a platform yet? <Link href="/free-trial">Create a Free Workspace</Link> with no card or expiry and use it on your own jobs. The optional Guided Walkthrough can teach you the core workflow first, and the standalone free tools remain available when you only need a one-off calculation.</p>
+      <p>Not ready to commit to a platform yet? <Link href="/free-trial">See how it works</Link> with no card or expiry and use it on your own jobs. The optional Guided Walkthrough can teach you the core workflow first, and the standalone free tools remain available when you only need a one-off calculation.</p>
 
     </div>
   );

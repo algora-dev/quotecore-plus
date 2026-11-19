@@ -54,7 +54,7 @@ export default function FreeToolsHeader() {
               className="hidden xl:inline-flex"
               onClick={() => trackEvent("free_workspace_click", { location: "free-tools-nav" })}
             >
-              Free Workspace
+              See how it works
             </FreeWorkspaceButton>
           </div>
 
@@ -112,7 +112,7 @@ export default function FreeToolsHeader() {
               className="w-full"
               onClick={() => { trackEvent("free_workspace_click", { location: "free-tools-nav-menu" }); setMenuOpen(false); }}
             >
-              Create my Free Workspace
+              See how it works
             </FreeWorkspaceButton>
           </div>
         </div>

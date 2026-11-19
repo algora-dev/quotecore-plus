@@ -97,7 +97,7 @@ export default function NzRoofingQuotingSoftwarePage() {
         title={<>Roofing quoting software for New Zealand roofers.</>}
         lead="Measure the roof, calculate quantities, apply your own pricing, build the customer quote, then carry accepted work into material orders and invoices. One connected workflow built for measurement-driven roofing."
         primary={{ href: bookingHref, label: 'Book a free 20-minute call with Shaun' }}
-        secondary={{ href: '/signup', label: 'Create a free workspace' }}
+        secondary={{ href: '/free-trial', label: 'See how it works' }}
         proof={['Metric measurements', 'Long-run and cut-to-length roofing', 'NZD quoting with GST', 'Your own material and labour pricing']}
       />
 
@@ -240,8 +240,8 @@ export default function NzRoofingQuotingSoftwarePage() {
               {
                 title: 'Create a free workspace',
                 body: 'Set up your workspace and start measuring, pricing and quoting in metric.',
-                href: '/signup',
-                label: 'Create a free workspace',
+                href: '/free-trial',
+                label: 'See how it works',
               },
             ]}
           />
@@ -270,7 +270,7 @@ export default function NzRoofingQuotingSoftwarePage() {
         title="Quote NZ roofing work from the measurement up."
         body="Measure, price with your own rates, quote in NZD with GST, then carry accepted work into orders and invoices without re-typing the job."
         primary={{ href: bookingHref, label: 'Book a free 20-minute call with Shaun' }}
-        secondary={{ href: '/signup', label: 'Create a free workspace' }}
+        secondary={{ href: '/free-trial', label: 'See how it works' }}
       />
       <div style={{ height: 72 }} />
     </PageScaffold>

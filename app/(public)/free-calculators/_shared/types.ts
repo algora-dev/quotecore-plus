@@ -241,6 +241,13 @@ export function signupHref(config: Pick<TradeConfig, 'slug'>, draftId?: string):
   return draftId ? `${base}&draft=${draftId}` : base;
 }
 
+/** Free-trial pre-qualify page for a trade's plain CTAs (owner reroute
+ *  2026-11-19). Marketing origin (relative) - NOT the app origin, since
+ *  /free-trial is a marketing page. Draft-carrying handoffs keep signupHref. */
+export function freeTrialHrefFor(config: Pick<TradeConfig, 'slug'>): string {
+  return `/free-trial?ref=${config.slug}`;
+}
+
 /**
  * Save a calculator draft and return the draft ID.
  *

@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { TradeConfig } from './types';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
-import { signupHref } from './types';
+import { signupHref, freeTrialHrefFor } from './types';
 import { FreeToolsAuthProvider } from '../../_components/FreeToolsAuthProvider';
 import { FreeToolsAuthButton } from '../../_components/FreeToolsAuthButton';
 import '../../_components/free-tools-v2.css';
@@ -33,7 +33,7 @@ export function buildTradeMetadata(config: TradeConfig) {
  * FAQPage), sticky header, footer. Copy comes from the trade config.
  */
 export function TradeLayoutShell({ config, children }: { config: TradeConfig; children: ReactNode }) {
-  const signup = signupHref(config);
+  const signup = freeTrialHrefFor(config); // owner reroute 2026-11-19: plain CTAs go to /free-trial
 
   const webAppLd = {
     '@context': 'https://schema.org',
@@ -106,7 +106,7 @@ export function TradeLayoutShell({ config, children }: { config: TradeConfig; ch
                 Free Invoice Generator
               </Link>
               <Link href={signup} className="text-xs font-medium text-[#BD4A1A] hover:text-[#ff5722]">
-                Free Workspace
+                See how it works
               </Link>
             </div>
           </div>

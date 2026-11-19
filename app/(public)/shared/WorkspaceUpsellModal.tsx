@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { MarketingButton } from '@/components/marketing/MarketingButton';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { toFreeTrialHref } from '@/lib/freeTrialCta';
 import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
 
 /**
@@ -16,8 +17,9 @@ import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
  *
  * Design (owner 2026-11-18 rounds 2+3): v2 dark card (orange radial glow),
  * and the CTA is the standard marketing primary button (MarketingButton,
- * same as the header "Create free workspace") which opens /signup in a
- * NEW TAB so the user stays on their output.
+ * same as the header CTA). Owner reroute 2026-11-19: the CTA is now
+ * "See how it works" and lands on the /free-trial pre-qualify page (new
+ * tab, ?ref preserved) instead of straight into /signup.
  *
  * UX pattern (matches PostGenerationModal):
  * - ~2s delay after the output renders so the user reads their result first
@@ -183,7 +185,7 @@ export function WorkspaceUpsellModal({
             </QcButton>
           ) : (
             <MarketingButton
-              href={signupHref}
+              href={toFreeTrialHref(signupHref)}
               variant="primary"
               size="large"
               target="_blank"
@@ -191,7 +193,7 @@ export function WorkspaceUpsellModal({
               className="w-full"
               onClick={() => trackFreeToolEvent('ws_upsell_click', { slug }, toolCode)}
             >
-              Create my Free Workspace
+              See how it works
             </MarketingButton>
           )}
           {secondaryLinkHref && secondaryLinkText && (

@@ -30,8 +30,8 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
             <Link href="/login" className={`${controls.button} ${controls.glass}`}>
               <span>Log in</span>
             </Link>
-            <Link href="/signup" className={`${controls.button} ${controls.primary}`}>
-              <span>Free Workspace</span>
+            <Link href="/free-trial" className={`${controls.button} ${controls.primary}`}>
+              <span>See how it works</span>
             </Link>
           </div>
         </div>

@@ -85,7 +85,14 @@ function c(...classes: string[]) {
   return classes.map((name) => styles[name]).filter(Boolean).join(' ');
 }
 
-export default function FreeWorkspacePage() {
+export default async function FreeWorkspacePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ ref?: string }>;
+}) {
+  // Forward the ?ref tag inbound CTAs brought in, so signup attribution +
+  // per-tool welcome survive the /free-trial hop (owner plan 2026-11-19).
+  const refTag = (await searchParams)?.ref;
   // This is the verified, repo-configured booking destination, including env overrides.
   const bookingHref = homepageConfig.bookingHref || '/contact';
   const schemas = [
@@ -331,8 +338,9 @@ export default function FreeWorkspacePage() {
                 </li>
               ))}
             </ol>
-            {/* The single intentional signup entry on the page. The shared component owns /signup. */}
-            <FreeWorkspaceButton className={styles.signupCard}>
+            {/* The single intentional signup entry on the page. The shared component now
+                defaults to /free-trial; `direct` + forwarded ref keep this one on /signup. */}
+            <FreeWorkspaceButton className={styles.signupCard} direct refTag={refTag}>
               <span className={styles.signupHeader}>
                 <span className={styles.signupKicker}>Create My Free Workspace</span>
                 <span className={styles.signupArrow} aria-hidden="true">↗</span>

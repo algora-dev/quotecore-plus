@@ -10,7 +10,7 @@ export function CommercialHeroActions({ location }: { location: string; demoHref
         surface="commercial_hero_action_buttons"
         actions={[
           { href: workflowCallHref, label: shaunCallLabel, style: "primary", analyticsAction: "book_call" },
-          { href: "/signup", label: freeWorkspaceLabel, style: "secondary", analyticsAction: "free_workspace", freeWorkspace: true },
+          { href: "/free-trial", label: freeWorkspaceLabel, style: "secondary", analyticsAction: "free_workspace", freeWorkspace: true },
         ]}
       />
       <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-zinc-500">{shaunCallPromiseShort}</p>
@@ -37,7 +37,7 @@ export function CommercialFinalCta({
       body={body}
       actions={[
         { href: workflowCallHref, label: shaunCallLabel, style: "primary", analyticsAction: "book_call" },
-        { href: "/signup", label: freeWorkspaceLabel, style: "secondary", analyticsAction: "free_workspace", freeWorkspace: true },
+        { href: "/free-trial", label: freeWorkspaceLabel, style: "secondary", analyticsAction: "free_workspace", freeWorkspace: true },
       ]}
       footer={shaunCallPromiseShort}
     />

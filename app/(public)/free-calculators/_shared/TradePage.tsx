@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { TradeConfig } from './types';
-import { signupHref } from './types';
+import { signupHref, freeTrialHrefFor } from './types';
 import { TradeCalculator } from './TradeCalculator';
 import DemoCTACard from '@/components/DemoCTACard';
 import { QcLinkButton } from '@/app/components/ui/v2/QcButton';
@@ -18,7 +18,7 @@ const PITCH_EXTENSION_SLUGS = ['free-roof-pitch-calculator', 'free-roof-pitch-co
  */
 export function TradePage({ config }: { config: TradeConfig }) {
   const c = config.content;
-  const signup = signupHref(config);
+  const signup = freeTrialHrefFor(config); // owner reroute 2026-11-19: plain CTAs go to /free-trial
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 lg:px-6">
@@ -163,7 +163,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
                 </svg>
               </div>
               <div>
-                <p className="font-semibold text-slate-900 text-sm">Start your subscription</p>
+                <p className="font-semibold text-slate-900 text-sm">See how it works</p>
                 <p className="text-xs text-slate-500 mt-0.5">Full quoting, takeoff, and job management</p>
               </div>
             </div>

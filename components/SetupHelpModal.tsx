@@ -139,7 +139,7 @@ export default function SetupHelpModal() {
                 Book 25 minutes with Shaun
               </MarketingButton>
               <FreeWorkspaceButton variant="glass" size="large" className="w-full" onClick={() => trackEvent("setup_modal_cta_click", "free_workspace")}>
-                Create my free workspace
+                See how it works
               </FreeWorkspaceButton>
             </div>
 
