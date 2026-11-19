@@ -49,7 +49,7 @@
 .qc-job-capability-heading .qc-status { font-size:11px; padding:4px 8px; max-width:100%; text-align:left; }
 .qc-job-capability h3 { font-size:15px; font-weight:650; line-height:1.4; margin:0 0 4px; }
 .qc-job-capability > p { font-size:13px; color:var(--qc-text-secondary); line-height:1.65; margin:0 0 16px; }
-.qc-job-capability-actions { display:flex; flex-direction:column; align-items:flex-start; gap:8px; margin-top:auto; }
+.qc-job-capability-actions { display:flex; flex-direction:column; align-items:flex-start; gap:8px; margin-top:auto; min-height:80px; }
 .qc-job-capability-actions .qc-button { font-size:13px; width:100%; padding:10px 12px; justify-content:space-between; }
 .qc-job-capability-actions .qc-button > svg:first-child { margin-right:0; }
 .qc-job-capability-actions .qc-button.qc-job-secondary-action { padding:6px 0; min-height:32px; font-size:12px; border-color:transparent; background:transparent; color:var(--qc-text-link); width:auto; }
