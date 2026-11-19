@@ -359,7 +359,7 @@ export default function FreeWorkspacePage() {
             </p>
             <div className={styles.helpGrid}>
               {/* Agent: verify /your-job-demo exists in the deployment branch; see handoff. */}
-              <a href="/your-job-demo" className={styles.helpCard}>
+              <a href="/your-job-demo" target="_blank" rel="noopener noreferrer" className={styles.helpCard}>
                 <div className={styles.helpHead}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -371,7 +371,7 @@ export default function FreeWorkspacePage() {
                 <p>We will record how we would quote one of your jobs in QuoteCore+ so you can watch it in your own time.</p>
                 <span className={styles.helpAction}>Request your video <b aria-hidden="true">↗</b></span>
               </a>
-              <a href={bookingHref} className={styles.helpCard}>
+              <a href={bookingHref} target="_blank" rel="noopener noreferrer" className={styles.helpCard}>
                 <div className={styles.helpHead}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="3" y="5" width="18" height="16" rx="2" />
@@ -383,7 +383,7 @@ export default function FreeWorkspacePage() {
                 <p>Walk through your workflow live with Shaun and see how QuoteCore+ would fit the way you already quote today.</p>
                 <span className={styles.helpAction}>Book 25 minutes <b aria-hidden="true">↗</b></span>
               </a>
-              <a href="/quick-start-pricing" className={styles.helpCard}>
+              <a href="/quick-start-pricing" target="_blank" rel="noopener noreferrer" className={styles.helpCard}>
                 <div className={styles.helpHead}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="9" />
@@ -396,7 +396,7 @@ export default function FreeWorkspacePage() {
                 <p>Send us your pricing and we will help get it set up in the app faster so you can get to the useful part sooner.</p>
                 <span className={styles.helpAction}>See Quick Start <b aria-hidden="true">↗</b></span>
               </a>
-              <a href="/done-for-you-setup" className={styles.helpCard}>
+              <a href="/done-for-you-setup" target="_blank" rel="noopener noreferrer" className={styles.helpCard}>
                 <div className={styles.helpHead}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M14 4l6 6M9 9l6 6M5 21l8-8M3 17l4 4" />
