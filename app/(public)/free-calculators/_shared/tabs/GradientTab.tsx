@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useUnitSystem, useTradeConfig } from '../TradeCalculator';
+import { useUnitSystem, useTradeConfig, useSharedState } from '../TradeCalculator';
 
 const RAD = Math.PI / 180;
 const DEG = 180 / Math.PI;
@@ -15,6 +15,7 @@ type GradientMode = 'ratio' | 'percent' | 'degrees';
  */
 export function GradientTab() {
   const { lengthUnit } = useUnitSystem();
+  const { setShared } = useSharedState();
   const config = useTradeConfig();
   const cfg = config.gradient;
   if (!cfg) throw new Error(`Trade "${config.slug}" uses the gradient tab without a gradient config`);
@@ -74,6 +75,14 @@ export function GradientTab() {
     const fall = r * t;
     const slopeLength = d < 90 ? r / Math.cos(d * RAD) : r;
     setResult({ deg: d, ratioX: x, percent: p, run: r, fall, slopeLength });
+    // Free-workspace upsell at the output moment (owner 2026-11-19)
+    setShared({
+      popupTrigger: {
+        resultLabel: `${d.toFixed(1)}\u00b0 - 1 in ${x.toFixed(1)} (${p.toFixed(1)}%)`,
+        resultDetails: r > 0 ? `${cfg!.fallWord} ${fall.toFixed(2)} ${lengthUnit} over ${r.toFixed(2)} ${lengthUnit} run` : undefined,
+        stage: 'calc-to-quote',
+      },
+    });
   }
 
   const fallWord = cfg.fallWord;

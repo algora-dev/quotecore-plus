@@ -118,6 +118,16 @@ export function BattenTab() {
       totalLineal,
       approxRows,
     });
+    // Free-workspace upsell at the output moment (owner 2026-11-19)
+    setShared({
+      popupTrigger: {
+        resultLabel: `${totalLineal.toFixed(1)} ${linealUnit} of battens`,
+        resultDetails: `${actualArea.toFixed(2)} ${areaUnit} roof area - ${g}${isMetric ? 'mm' : 'in'} gauge + ${w}% waste`,
+        stage: 'calc-to-quote',
+        qty: totalLineal.toFixed(2),
+        unit: linealUnit,
+      },
+    });
   }
 
   function useForPricing() {

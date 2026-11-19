@@ -66,6 +66,12 @@ export function AreaTab() {
     setPitchDeg(d.toFixed(1));
   }
 
+  /** Free-workspace upsell fires at the output moment (owner 2026-11-19):
+   *  Calculate now triggers the popup, not just the pricing-conversion click. */
+  function fireResultPopup(resultLabel: string, qty: string, unit: string, resultDetails?: string) {
+    setShared({ popupTrigger: { resultLabel, resultDetails, stage: 'calc-to-quote', qty, unit } });
+  }
+
   function calculate() {
     if (inputMode === 'volume') {
       let v: number;
@@ -75,6 +81,7 @@ export function AreaTab() {
         v = parseFloat(directVolume) || 0;
       }
       setResult({ kind: 'volume', planArea: 0, factor: 1, actualArea: v, deg: 0, mode: 'plan' });
+      fireResultPopup(`${v.toFixed(2)} ${volumeUnit}`, v.toFixed(2), volumeUnit);
       return;
     }
 
@@ -89,6 +96,7 @@ export function AreaTab() {
         actualArea = parseFloat(directArea) || 0;
       }
       setResult({ kind: 'area', planArea: actualArea, factor: 1, actualArea, deg: 0, mode: 'actual' });
+      fireResultPopup(`${actualArea.toFixed(2)} ${areaUnit}`, actualArea.toFixed(2), areaUnit);
       return;
     }
 
@@ -106,6 +114,12 @@ export function AreaTab() {
     }
     const actualArea = planArea * factor;
     setResult({ kind: 'area', planArea, factor, actualArea, deg: d, mode: 'plan' });
+    fireResultPopup(
+      `${actualArea.toFixed(2)} ${areaUnit}`,
+      actualArea.toFixed(2),
+      areaUnit,
+      cfg!.useSlopeFactor && d > 0 ? `Plan: ${planArea.toFixed(2)} ${areaUnit} - ${factor.toFixed(4)} pitch factor` : undefined,
+    );
   }
 
   function useForPricing() {

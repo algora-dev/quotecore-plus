@@ -44,6 +44,18 @@ export function VolumeTab() {
     // weight only meaningful in metric (kg/m³)
     const weightKg = metric ? volumeWithWaste * cfg!.densityKgPerM3 : 0;
     setResult({ l, w, depthM, volume, volumeWithWaste, weightKg, waste });
+    // Free-workspace upsell at the output moment (owner 2026-11-19)
+    setShared({
+      popupTrigger: {
+        resultLabel: `${volumeWithWaste.toFixed(2)} ${volumeUnit}`,
+        resultDetails: metric && weightKg > 0
+          ? `Including ${waste}% waste - approx ${weightKg.toFixed(0)} kg`
+          : `Including ${waste}% waste`,
+        stage: 'calc-to-quote',
+        qty: volumeWithWaste.toFixed(2),
+        unit: volumeUnit,
+      },
+    });
   }
 
   function useForPricing() {

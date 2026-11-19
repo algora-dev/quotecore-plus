@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTradeConfig, useUnitSystem } from '../TradeCalculator';
+import { useTradeConfig, useUnitSystem, useSharedState } from '../TradeCalculator';
 import { AngleVertexDiagram } from '../AngleDiagram';
 import {
   calculateRidgeAngle,
@@ -81,6 +81,7 @@ export function AngleTab() {
   const [singlePitch, setSinglePitch] = useState('25');
 
   const [result, setResult] = useState<AngleResult | null>(null);
+  const { setShared } = useSharedState();
 
   function calculate() {
     let r: AngleResult;
@@ -114,6 +115,14 @@ export function AngleTab() {
     }
 
     setResult(r!);
+    // Free-workspace upsell at the output moment (owner 2026-11-19)
+    setShared({
+      popupTrigger: {
+        resultLabel: `${r!.finishedAngle}\u00b0 finished angle`,
+        resultDetails: `${r!.angleType} - bend from flat ${r!.bendAngleFromFlat}\u00b0`,
+        stage: 'calc-to-quote',
+      },
+    });
   }
 
 
