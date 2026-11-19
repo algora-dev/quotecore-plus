@@ -7,6 +7,8 @@ import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { getSignedUrls } from '@/app/lib/storage/helpers';
+import { BUCKETS } from '@/app/lib/storage/buckets';
 
 /** Server presentation shared by Quotes and Job Spaces. The original quote-list
  * reads, company scope, quota rules and creation props below are unchanged.
@@ -109,7 +111,44 @@ export async function QuoteIndexPage({
       .select('id', { count: 'exact', head: true })
       .eq('company_id', profile.company_id)
       .neq('status', 'draft');
-    return <JobSpacesList quotes={quotesRes.error ? undefined : quotes}
+    // Job-list thumbnails (owner 2026-11-19): the FIRST plan image ever
+    // uploaded to each job (earliest uploaded_at) provides the list preview.
+    const quoteIds = quotes.map((q) => q.id);
+    const thumbByQuote = new Map<string, string>();
+    if (quoteIds.length) {
+      // thumb_path is new (2026-11-19); not yet in the generated types, so the
+      // query builder is cast (same pattern as the insert/update sites).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: planFiles } = await (supabase as any)
+        .from('quote_files')
+        .select('quote_id, thumb_path')
+        .eq('company_id', profile.company_id)
+        .eq('file_type', 'plan')
+        .not('thumb_path', 'is', null)
+        .in('quote_id', quoteIds)
+        .order('uploaded_at', { ascending: true });
+      for (const f of (planFiles ?? []) as Array<{ quote_id: string; thumb_path: string | null }>) {
+        if (f.thumb_path && !thumbByQuote.has(f.quote_id)) thumbByQuote.set(f.quote_id, f.thumb_path);
+      }
+    }
+    // Batch-sign every distinct thumbnail (single round-trip). Signing
+    // failure degrades to placeholders, never blocks the list.
+    const signedByPath = new Map<string, string | null>();
+    try {
+      const thumbPaths = [...new Set(thumbByQuote.values())];
+      if (thumbPaths.length) {
+        const entries = await getSignedUrls(BUCKETS.QUOTE_DOCUMENTS, thumbPaths, 3600);
+        for (const entry of entries) signedByPath.set(entry.path, entry.signedUrl);
+      }
+    } catch (err) {
+      console.error('[QuoteIndexPage] thumbnail signing failed:', err);
+    }
+    const quotesWithThumbs = quotes.map((q) => {
+      const p = thumbByQuote.get(q.id);
+      return { ...q, thumb_url: (p ? signedByPath.get(p) : null) ?? null };
+    });
+
+    return <JobSpacesList quotes={quotesRes.error ? undefined : quotesWithThumbs}
       loadError={!!quotesRes.error} workspaceSlug={workspaceSlug}
       nonDraftCount={quotesRes.error || nonDraftCount == null ? undefined : nonDraftCount} />;
   }

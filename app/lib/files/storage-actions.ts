@@ -245,6 +245,37 @@ export async function saveFileMetadata(data: SaveFileMetadataInput): Promise<{ i
       console.error('[saveFileMetadata] upsert failed:', error);
       throw new Error(error.message);
     }
+
+    // Job-list thumbnail (owner 2026-11-19): plan images that arrived via the
+    // signed direct-upload path get a small preview for the Job Spaces list.
+    // The server downloads the object it just verified; non-fatal on failure.
+    if (data.fileType === 'plan') {
+      const { isImageMime, renderPlanThumbnail, uploadPlanThumbnail } =
+        await import('@/app/lib/files/plan-thumbnail');
+      if (isImageMime(realMime)) {
+        try {
+          const { data: blob, error: dlErr } = await supabase.storage.from(bucket).download(data.storagePath);
+          if (!dlErr && blob) {
+            const thumb = await renderPlanThumbnail(Buffer.from(await blob.arrayBuffer()));
+            if (thumb) {
+              const { createAdminClient } = await import('@/app/lib/supabase/admin');
+              const adminClient = createAdminClient();
+              const thumbPath = await uploadPlanThumbnail(adminClient, data.storagePath, thumb);
+              if (thumbPath) {
+                // thumb_path is new (2026-11-19); not yet in generated types.
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                await (adminClient as any).from('quote_files')
+                  .update({ thumb_path: thumbPath })
+                  .eq('id', saved.id);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('[saveFileMetadata] plan thumbnail failed:', err);
+        }
+      }
+    }
+
     revalidatePath('/account');
     return { id: saved.id };
   }

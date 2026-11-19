@@ -10,6 +10,8 @@ export interface JobSpaceRow {
   job_status: string | null;
   viewed_at: string | null;
   has_pending_revision: boolean;
+  /** Signed URL for the first uploaded plan's thumbnail (job list preview, 2026-11-19). */
+  thumb_url?: string | null;
 }
 export type JobSpaceSort = 'updated' | 'oldest' | 'name';
 type Tone = 'neutral' | 'success' | 'warning' | 'info' | 'danger';

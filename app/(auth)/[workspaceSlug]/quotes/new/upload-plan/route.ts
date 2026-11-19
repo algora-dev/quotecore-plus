@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { BUCKETS } from '@/app/lib/storage/buckets';
+import { isImageMime, renderPlanThumbnail, uploadPlanThumbnail } from '@/app/lib/files/plan-thumbnail';
 import { finaliseUpload } from '@/app/lib/files/upload-finaliser';
 import { isBillingError } from '@/app/lib/billing/entitlements';
 
@@ -83,7 +84,17 @@ export async function POST(request: NextRequest) {
     // Save metadata. company_id and mime_type are NOT NULL on quote_files;
     // previously these inserts were silently failing with a constraint
     // violation (the typed Supabase pass on 2026-05-12 surfaced this).
-    const { error: metadataError } = await supabase.from('quote_files').insert({
+    // Job-list thumbnail (owner 2026-11-19): small preview of the plan for
+    // the Job Spaces list. Non-fatal - a null thumb renders the placeholder.
+    let thumbPath: string | null = null;
+    if (isImageMime(finalised.mime)) {
+      const thumb = await renderPlanThumbnail(buffer);
+      if (thumb) thumbPath = await uploadPlanThumbnail(admin, storagePath, thumb);
+    }
+
+    // thumb_path is new (2026-11-19) and not yet in the generated types.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: metadataError } = await (supabase as any).from('quote_files').insert({
       company_id: company.id,
       quote_id: quoteId,
       file_name: file.name,
@@ -91,6 +102,7 @@ export async function POST(request: NextRequest) {
       file_size: finalised.size,
       mime_type: finalised.mime,
       storage_path: storagePath,
+      thumb_path: thumbPath,
     });
 
     if (metadataError) {

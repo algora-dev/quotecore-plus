@@ -91,7 +91,7 @@ export function JobSpacesList({ workspaceSlug, quotes, loadError = false, nonDra
         <QcIcon name="folder" /><h2>No matching job spaces</h2><p>Try a different name, quote number or status. Draft quotes are in Quotes.</p>
         <QcButton variant="primary" onClick={clearFilters}>Clear filters</QcButton>
       </div> : <>
-        <div className="qc-job-index-columns" aria-hidden="true"><span>Job / customer</span><span>Quote</span><span>Status</span><span>Updated</span><span /></div>
+        <div className="qc-job-index-columns" aria-hidden="true"><span /><span>Job / customer</span><span>Quote</span><span>Status</span><span>Updated</span><span /></div>
         <ul className="qc-job-index-list" aria-label="Job spaces">
           {visibleJobs.map(job => {
             const key = jobStatusKey(job);
@@ -100,6 +100,9 @@ export function JobSpacesList({ workspaceSlug, quotes, loadError = false, nonDra
             const timestamp = jobUpdatedDetail(job.updated_at);
             return <li key={job.id}>
               <Link href={jobSpaceHref(workspaceSlug, job.id)} prefetch={false} className="qc-job-index-row">
+                {job.thumb_url
+                  ? <img src={job.thumb_url} alt="" className="qc-job-index-thumb" loading="lazy" />
+                  : <span className="qc-job-index-thumb is-empty" aria-hidden="true"><QcIcon name="folder" /></span>}
                 <span className="qc-job-index-identity"><strong>{jobTitle(job)}</strong>
                   <span>{job.customer_name || 'Customer not named'}</span></span>
                 <span className="qc-job-index-number"><span className="qc-job-mobile-label">Quote </span>{job.quote_number == null ? 'Not numbered' : `#${job.quote_number}`}</span>

@@ -12,6 +12,7 @@ import {
   isBillingError,
 } from '@/app/lib/billing/errors';
 import { finaliseUpload } from '@/app/lib/files/upload-finaliser';
+import { isImageMime, renderPlanThumbnail, uploadPlanThumbnail } from '@/app/lib/files/plan-thumbnail';
 
 /**
  * Structured result for {@link createQuoteWithDetails}. The action returns
@@ -249,6 +250,18 @@ export async function uploadRoofPlanFile(quoteId: string, file: File): Promise<v
     storagePath,
   });
 
+  // Job-list thumbnail (owner 2026-11-19): small preview for the Job Spaces
+  // list. Non-fatal on failure - the row keeps a null thumb_path.
+  let thumbPath: string | null = null;
+  if (isImageMime(finalised.mime)) {
+    try {
+      const thumb = await renderPlanThumbnail(Buffer.from(await file.arrayBuffer()));
+      if (thumb) thumbPath = await uploadPlanThumbnail(admin, storagePath, thumb);
+    } catch (err) {
+      console.error('[uploadRoofPlanFile] plan thumbnail failed:', err);
+    }
+  }
+
   // Save metadata via server action (bypasses RLS). Use the server-measured
   // size + mime from the finaliser so the trigger that maintains
   // companies.storage_used_bytes can't be tricked by browser-supplied lies.
@@ -258,6 +271,7 @@ export async function uploadRoofPlanFile(quoteId: string, file: File): Promise<v
     fileSize: finalised.size,
     mimeType: finalised.mime,
     storagePath,
+    thumbPath,
   });
 }
 
@@ -269,6 +283,7 @@ async function saveRoofPlanMetadata(
     fileSize: number;
     mimeType: string;
     storagePath: string;
+    thumbPath?: string | null;
   }
 ): Promise<void> {
   const supabase = await createSupabaseServerClient();
@@ -276,7 +291,9 @@ async function saveRoofPlanMetadata(
   // company_id and mime_type are NOT NULL on quote_files; previous
   // versions of this insert were silently failing with a constraint
   // violation (typed Supabase pass on 2026-05-12 caught it).
-  const { error } = await supabase.from('quote_files').insert({
+  // thumb_path is new (2026-11-19) and not yet in the generated types.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from('quote_files').insert({
     company_id: metadata.companyId,
     quote_id: quoteId,
     file_name: metadata.fileName,
@@ -284,6 +301,7 @@ async function saveRoofPlanMetadata(
     file_size: metadata.fileSize,
     mime_type: metadata.mimeType,
     storage_path: metadata.storagePath,
+    thumb_path: metadata.thumbPath ?? null,
   });
 
   if (error) {
