@@ -5,6 +5,7 @@ import { calculate, calculateArea, componentPayload, convertSystem, exampleFor, 
   type RoofState, type Tab } from './roofing-model';
 import { Dialog, Icon, RoofDiagram, Segments } from './RoofingUI';
 import { RoofingForms } from './RoofingForms';
+import { WorkspaceUpsellModal, CALCULATOR_BLURB } from '../../shared/WorkspaceUpsellModal';
 
 export interface RoofingServices {
   /** Persists the established smart-component envelope, then returns an app URL.
@@ -109,5 +110,13 @@ export function RoofingCalculator({services={},preview=false,linkOrigin=''}:Prop
       <div className="qcr-dialog-actions">{services.saveComponent?<button type="button" className="qcr-button qcr-primary" disabled={saving} onClick={save}>{saving?'Saving draft…':'Continue to QuoteCore+'}<Icon name="arrow" size={17}/></button>:<button type="button" className="qcr-button qcr-primary" onClick={downloadComponent}>Download draft instead <Icon name="download" size={17}/></button>}<a className="qcr-button qcr-glass" href={link('/signup')} onClick={()=>track('free_workspace')}>Create Free Workspace <Icon name="play" size={16}/></a></div><p className="qcr-hint">Your calculator inputs stay in this tab. No account or payment is created here.</p>
     </Dialog>}
     {copyText&&<Dialog title="Copy your calculation" onClose={()=>setCopyText(null)}><p>The browser could not access your clipboard. Select and copy the text below.</p><textarea aria-label="Calculation text to copy" value={copyText} readOnly rows={10} data-dialog-initial-focus onFocus={e=>e.target.select()}/><button type="button" className="qcr-button qcr-primary" onClick={()=>setCopyText(null)}>Done</button></Dialog>}
+    <WorkspaceUpsellModal
+      trigger={!!result && !preview}
+      slug="free-roofing-calculator"
+      eyebrow="Your calculation is ready"
+      headline="Same tool. More power. Free."
+      blurb={CALCULATOR_BLURB}
+      signupHref="/signup?ref=free-roofing-calculator"
+    />
   </>;
 }

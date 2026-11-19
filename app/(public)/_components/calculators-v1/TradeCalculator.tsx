@@ -7,6 +7,7 @@ import { Dialog, Icon, Segments } from './CalculatorUI';
 import { CalculatorDiagram } from './CalculatorDiagrams';
 import { profileFor, storageKey, type Trade } from './calculator-profile';
 import { CalculatorForms } from './CalculatorForms';
+import { WorkspaceUpsellModal, CALCULATOR_BLURB } from '../../shared/WorkspaceUpsellModal';
 
 export interface CalculatorServices {
   /** Persists the established smart-component envelope, then returns an app URL.
@@ -102,6 +103,14 @@ export function TradeCalculator({trade,services={},preview=false,linkOrigin=''}:
       <div className="qck-assumptions-bar"><Icon name="info" size={18}/><p>These tools calculate geometry and estimate quantities. They do not assess structural suitability, fixing schedules or manufacturer requirements.</p></div>
     </main>
     {result&&!resultVisible&&<div className="qck-mobile-result-bar"><div><span>Live result</span><strong>{display} {state.tab==='pricing'?'':result.unit}</strong></div><button type="button" className="qck-button qck-primary qck-small" onClick={showResults}>View result <Icon name="arrow" size={16}/></button></div>}
+    <WorkspaceUpsellModal
+      trigger={!!result && !preview}
+      slug={profile.slug}
+      eyebrow="Your calculation is ready"
+      headline="Same tool. More power. Free."
+      blurb={CALCULATOR_BLURB}
+      signupHref={`/signup?ref=${profile.slug}`}
+    />
     <div className="qck-sr" role="status" aria-live="polite" aria-atomic="true">{announcement}</div>
     {toast&&<div className="qck-toast" role="status"><Icon name="check" size={16}/>{toast}</div>}
     {confirm&&confirm!=='save'&&<Dialog title={confirm==='reset'?'Reset this tool?':confirm==='example'?'Load the example?':confirm==='pricing'?'Use this measurement for pricing?':'Use your calculated surface area?'} onClose={()=>setConfirm(null)}>

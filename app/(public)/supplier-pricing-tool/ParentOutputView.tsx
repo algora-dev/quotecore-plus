@@ -10,6 +10,7 @@ import type { ParentJob, SupplierProduct } from './types';
 import { componentTotal, CUSTOM_BASIS_UNIT } from './types';
 import { priceParentOutput } from './parentPricing';
 import { ParentOutputActions } from './ParentOutputActions';
+import { WorkspaceUpsellModal, SUPPLIER_TOOL_BLURB } from '../shared/WorkspaceUpsellModal';
 import { fmt } from './pricing';
 import { PricingModeChip } from './PricingModeChoice';
 import type { PricingMode } from './PricingModeChoice';
@@ -233,6 +234,14 @@ export function ParentOutputView({
       <div className="pb-8">
         <ParentOutputActions job={job} catalog={catalog} includeLabour={includeLabour} onRestart={onRestart} />
       </div>
+
+      <WorkspaceUpsellModal
+        slug="supplier-pricing-tool"
+        eyebrow="Your priced takeoff is ready"
+        headline="Same tool. More power. Free."
+        blurb={SUPPLIER_TOOL_BLURB}
+        signupHref="/signup?ref=supplier-pricing-tool"
+      />
     </div>
   );
 }

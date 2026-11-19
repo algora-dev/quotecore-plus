@@ -13,6 +13,7 @@ import { useSupplierConfig } from './supplierConfig';
 import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 import { logEvent } from './adminData';
 import { OutputActions } from './OutputActions';
+import { WorkspaceUpsellModal, SUPPLIER_TOOL_BLURB } from '../shared/WorkspaceUpsellModal';
 
 export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tradeLabel, includeLabour = true, pricingMode = null, onBack, onRestart, onAddCustom, planImages }: {
   measureSet: MeasurementSet;
@@ -310,6 +311,13 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
           </button>
         </div>
       </div>
+      <WorkspaceUpsellModal
+        slug="supplier-pricing-tool"
+        eyebrow="Your priced takeoff is ready"
+        headline="Same tool. More power. Free."
+        blurb={SUPPLIER_TOOL_BLURB}
+        signupHref="/signup?ref=supplier-pricing-tool"
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { MarketingButton } from '@/components/marketing/MarketingButton';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
 import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
 
 /**
@@ -18,7 +19,7 @@ import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
  * same as the header "Create free workspace") which opens /signup in a
  * NEW TAB so the user stays on their output.
  *
- * UX pattern (matches PostGenerationModal / CalcResultPopup):
+ * UX pattern (matches PostGenerationModal):
  * - ~2s delay after the output renders so the user reads their result first
  * - once per browser session per tool (sessionStorage dismissal)
  * - result-first eyebrow, minimal words, single primary CTA
@@ -43,6 +44,12 @@ export const DOC_UPSELL_CONFIG: Record<'quote' | 'invoice' | 'order', { slug: st
   order: { slug: 'free-purchase-order-generator', eyebrow: 'Your purchase order is ready', signupHref: '/signup?ref=free-purchase-order-generator' },
 };
 
+/** Calculator family (2026-11-19): one blurb covers all trade + roofing calculators. */
+export const CALCULATOR_BLURB = 'In your Free Workspace, calculations like this are part of your quoting. Save your pricing once and every measurement turns into a priced, professional quote you can send and track.';
+
+/** Supplier pricing tool (2026-11-19). */
+export const SUPPLIER_TOOL_BLURB = 'In your Free Workspace, takeoffs like this become full quotes with your own pricing and branding - saved, editable and ready to send, with material orders a click away.';
+
 interface WorkspaceUpsellModalProps {
   /** Dismissal key suffix + analytics tag, e.g. "free-roof-takeoff" */
   slug: string;
@@ -60,6 +67,17 @@ interface WorkspaceUpsellModalProps {
   trigger?: boolean;
   /** Optional tool-code override for usage analytics */
   toolCode?: string;
+  /** Calculator family (2026-11-19): the result value, shown prominently under the eyebrow */
+  resultLabel?: string;
+  /** Optional breakdown line under the result */
+  resultDetails?: string;
+  /** Optional primary ACTION instead of the signup link (tier-aware smart-component save) */
+  onPrimaryAction?: () => void | Promise<void>;
+  /** Label for the action button */
+  primaryActionText?: string;
+  /** Optional secondary text link (e.g. the quote-generator funnel) */
+  secondaryLinkHref?: string;
+  secondaryLinkText?: string;
 }
 
 export function WorkspaceUpsellModal({
@@ -71,8 +89,15 @@ export function WorkspaceUpsellModal({
   signupHref,
   trigger = true,
   toolCode,
+  resultLabel,
+  resultDetails,
+  onPrimaryAction,
+  primaryActionText,
+  secondaryLinkHref,
+  secondaryLinkText,
 }: WorkspaceUpsellModalProps) {
   const [visible, setVisible] = useState(false);
+  const [busy, setBusy] = useState(false);
   const storageKey = `qcp:ws-upsell:${slug}`;
 
   const dismiss = useCallback(() => {
@@ -116,7 +141,14 @@ export function WorkspaceUpsellModal({
           </button>
         </div>
 
-        <h2 className="mt-3 text-[22px] md:text-2xl font-bold tracking-tight text-[#f7f8fa]">{headline}</h2>
+        {resultLabel && (
+          <div className="mt-4 rounded-[12px] border border-white/10 bg-white/[.04] px-4 py-3.5 text-center">
+            <p className="text-[22px] md:text-2xl font-bold tracking-tight text-[#f7f8fa] break-words">{resultLabel}</p>
+            {resultDetails && <p className="mt-1.5 text-xs leading-relaxed text-[#a8b0bc]">{resultDetails}</p>}
+          </div>
+        )}
+
+        <h2 className={resultLabel ? 'mt-4 text-lg md:text-xl font-bold tracking-tight text-[#f7f8fa]' : 'mt-3 text-[22px] md:text-2xl font-bold tracking-tight text-[#f7f8fa]'}>{headline}</h2>
         <p className="mt-2.5 text-sm leading-relaxed text-[#c5cbd5]">{blurb}</p>
 
         <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.17em] text-[#a8b0bc]">Plus, in your free workspace</p>
@@ -132,17 +164,45 @@ export function WorkspaceUpsellModal({
         </ul>
 
         <div className="mt-7">
-          <MarketingButton
-            href={signupHref}
-            variant="primary"
-            size="large"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full"
-            onClick={() => trackFreeToolEvent('ws_upsell_click', { slug }, toolCode)}
-          >
-            Create my Free Workspace
-          </MarketingButton>
+          {onPrimaryAction ? (
+            <QcButton
+              variant="primary"
+              className="w-full"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                trackFreeToolEvent('ws_upsell_click', { slug }, toolCode);
+                try {
+                  await onPrimaryAction();
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              {busy ? 'Working...' : (primaryActionText ?? 'Continue')}
+            </QcButton>
+          ) : (
+            <MarketingButton
+              href={signupHref}
+              variant="primary"
+              size="large"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full"
+              onClick={() => trackFreeToolEvent('ws_upsell_click', { slug }, toolCode)}
+            >
+              Create my Free Workspace
+            </MarketingButton>
+          )}
+          {secondaryLinkHref && secondaryLinkText && (
+            <a
+              href={secondaryLinkHref}
+              className="mt-3 block text-center text-sm text-[#a8b0bc] hover:text-[#FF8A3D] underline underline-offset-4 transition-colors"
+              onClick={() => trackFreeToolEvent('ws_upsell_secondary_click', { slug }, toolCode)}
+            >
+              {secondaryLinkText}
+            </a>
+          )}
         </div>
         <p className="mt-3 text-center text-xs text-[#a8b0bc]">Free · No card · No trial clock</p>
 

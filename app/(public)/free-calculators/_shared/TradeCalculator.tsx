@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, createContext, useContext } from 'react';
+import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import {
   type UnitSystem,
   lengthUnit,
@@ -15,7 +15,8 @@ import { VolumeTab } from './tabs/VolumeTab';
 import { SmartComponentTab } from './tabs/SmartComponentTab';
 import { AngleTab } from './tabs/AngleTab';
 import { BattenTab } from './tabs/BattenTab';
-import { CalcResultPopup } from './CalcResultPopup';
+import { WorkspaceUpsellModal, CALCULATOR_BLURB } from '../../shared/WorkspaceUpsellModal';
+import { trackFreeToolEvent } from '../../lib/trackFreeToolEvent';
 import { useFreeToolsAuth } from '../../_components/FreeToolsAuthProvider';
 
 // ─── Trade config context ────────────────────────────
@@ -120,6 +121,16 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
 
   const smartTabId = config.tabs.find((t) => t.kind === 'smart')?.id;
 
+  // One usage event per page view when the first result fires (previously
+  // logged inside CalcResultPopup before the 2026-11-19 workspace-modal swap).
+  const resultLoggedRef = useRef(false);
+  useEffect(() => {
+    if (shared.popupTrigger && !resultLoggedRef.current) {
+      resultLoggedRef.current = true;
+      trackFreeToolEvent('result');
+    }
+  }, [shared.popupTrigger]);
+
   const unitValue: UnitContextValue = {
     system,
     toggle: () => setSystem((s) => (s === 'metric' ? 'imperial' : 'metric')),
@@ -217,33 +228,27 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
                 T1 anon → signup funnel · T2 signed-in-no-workspace →
                 onboarding · T3 → direct save to workspace. The action
                 itself (onCta) is provided by SmartComponentTab. */}
-            <CalcResultPopup
+            <WorkspaceUpsellModal
               trigger={!!shared.popupTrigger}
-              stage={shared.popupTrigger?.stage ?? 'calc-to-quote'}
               slug={config.slug}
-              resultLabel={shared.popupTrigger?.resultLabel ?? ''}
+              eyebrow={shared.popupTrigger?.stage === 'smart-to-signup' ? 'Your component is ready' : 'Your calculation is ready'}
+              resultLabel={shared.popupTrigger?.resultLabel}
               resultDetails={shared.popupTrigger?.resultDetails}
-              onCta={shared.popupTrigger?.onCta}
-              ctaText={shared.popupTrigger?.stage === 'smart-to-signup'
+              headline={shared.popupTrigger?.stage === 'smart-to-signup' ? 'Reuse it on every quote.' : 'Same tool. More power. Free.'}
+              blurb={CALCULATOR_BLURB}
+              signupHref={`/signup?ref=${config.slug}`}
+              onPrimaryAction={shared.popupTrigger?.stage === 'smart-to-signup' ? shared.popupTrigger.onCta : undefined}
+              primaryActionText={shared.popupTrigger?.stage === 'smart-to-signup'
                 ? (!authUser
                     ? 'Save to my Free Workspace'
                     : tierInfo?.tier === 3
                       ? 'Save this component to your workspace'
                       : 'Create your Free Workspace to save this component')
-                : 'Add this to a free quote'
-              }
-              ctaHref={shared.popupTrigger?.stage === 'smart-to-signup'
-                ? `/signup?ref=${config.slug}`
-                : `/free-quote-generator?qty=${encodeURIComponent(shared.popupTrigger?.qty ?? '')}&unit=${encodeURIComponent(shared.popupTrigger?.unit ?? 'm\u00b2')}&ref=${config.slug}`
-              }
-              secondaryText={shared.popupTrigger?.stage === 'smart-to-signup'
-                ? (!authUser
-                    ? 'Reuse it on every quote - materials, waste, pricing and pitch included'
-                    : tierInfo?.tier === 3
-                      ? 'It will be added to your Smart Components, ready to use in any quote'
-                      : 'Create your Free Workspace and this component will be added for you')
-                : 'Turn measurements into a professional quote in 2 minutes - no signup needed'
-              }
+                : undefined}
+              secondaryLinkHref={shared.popupTrigger && shared.popupTrigger.stage !== 'smart-to-signup'
+                ? `/free-quote-generator?qty=${encodeURIComponent(shared.popupTrigger.qty ?? '')}&unit=${encodeURIComponent(shared.popupTrigger.unit ?? 'm\u00b2')}&ref=${config.slug}`
+                : undefined}
+              secondaryLinkText={shared.popupTrigger && shared.popupTrigger.stage !== 'smart-to-signup' ? 'Add this to a free quote instead' : undefined}
             />
           </div>
         </SharedStateContext.Provider>
