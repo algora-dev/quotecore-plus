@@ -228,7 +228,7 @@ export default async function FreeWorkspacePage({
             <p className={styles.eyebrow}>02 / The foundation of every quote</p>
             <div className={styles.pricingHead}>
               <h2 id="pricing-title" className={styles.pricingTitle}>
-                <span>Get your pricing into QuoteCore+.</span>
+                <span>Get your pricing into <span className={styles.brandNowrap}>QuoteCore+.</span></span>
                 <span className={styles.gradientText}>That&apos;s what turns measurements into a finished quote.</span>
               </h2>
             </div>
@@ -345,7 +345,7 @@ export default async function FreeWorkspacePage({
                 <span className={styles.signupKicker}>Create My Free Workspace</span>
                 <span className={styles.signupArrow} aria-hidden="true">↗</span>
               </span>
-              <span className={styles.signupTitle}>Ready to see what QuoteCore+ can do for you?</span>
+              <span className={styles.signupTitle}>Ready to see what QuoteCore<span className={styles.plusWhite}>+</span> can do for you?</span>
               <span className={styles.signupDescription}>
                 Start with the guided demo, then try your own workspace and add your pricing.
               </span>
@@ -366,8 +366,9 @@ export default async function FreeWorkspacePage({
               If you want help connecting QuoteCore+ to the way you already work, choose the option that suits you best.
             </p>
             <div className={styles.helpGrid}>
-              {/* Agent: verify /your-job-demo exists in the deployment branch; see handoff. */}
-              <a href="/your-job-demo" target="_blank" rel="noopener noreferrer" className={styles.helpCard}>
+              {/* /your-job-demo verified live in the deployment branch (2026-11-19). */}
+              <div className={styles.helpCell}>
+                <a href="/your-job-demo" target="_blank" rel="noopener noreferrer" className={styles.helpCard}>
                 <div className={styles.helpHead}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -378,7 +379,9 @@ export default async function FreeWorkspacePage({
                 <h3>Send us a job</h3>
                 <p>We will record how we would quote one of your jobs in QuoteCore+ so you can watch it in your own time.</p>
                 <span className={styles.helpAction}>Request your video <b aria-hidden="true">↗</b></span>
-              </a>
+                </a>
+                <a href="/contact" target="_blank" rel="noopener noreferrer" className={styles.helpSubLink}>Or just get in touch with us <b aria-hidden="true">↗</b></a>
+              </div>
               <a href={bookingHref} target="_blank" rel="noopener noreferrer" className={styles.helpCard}>
                 <div className={styles.helpHead}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
