@@ -4,7 +4,7 @@
 /* Dark glass CTA vars (owner standard 2026-11-16, DFY book-button recipe tuned for the orange strip): dark frosted fill keeps white ink readable over the gradient, rim/sheen/glint match the standard. */
 .inner { position: relative; width: 100%; max-width: 1280px; margin: auto; padding: 17px 24px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: clamp(20px,4vw,52px); align-items: center; --qc-glass-ink:#f7f8fa; --qc-glass-fill:rgba(13,17,23,.55); --qc-glass-hover:rgba(13,17,23,.44); --qc-glass-edge:rgba(255,255,255,.30); --qc-glass-sheen:rgba(255,255,255,.08); --qc-glass-toe:rgba(255,255,255,.03); --qc-glass-rim:rgba(255,255,255,.30); --qc-glass-highlight:rgba(255,255,255,.16); --qc-glass-lowlight:rgba(0,0,0,.2); --qc-glass-shadow:rgba(60,22,6,.24); --qc-glass-hover-shadow:rgba(60,22,6,.3); --qc-glass-accent:#ffb36b; --qc-glass-glint:rgba(255,255,255,.45); --qc-glass-solid:#1b232e; --qc-glass-pressed:#151c26; }
 .copy { min-width: 0; }
-.eyebrow { margin: 0 0 8px; font-size: 10px; font-weight: 800; line-height: 1.3; letter-spacing: .18em; color: #fff1e8; text-transform: uppercase; }
+.eyebrow { margin: 0 0 8px; font-size: 10px; font-weight: 800; line-height: 1.3; letter-spacing: .18em; color: #161a20; text-transform: uppercase; }
 .copy h2 { max-width: 900px; margin: 0; font-size: clamp(20px,2vw,29px); font-weight: 580; line-height: 1.2; letter-spacing: -.035em; text-wrap: pretty; }
 .copy strong { font-weight: 750; }
 .finePrint { max-width: 900px; margin: 7px 0 0; color: #15191f; font-size: 12px; font-style: italic; font-weight: 560; line-height: 1.45; }

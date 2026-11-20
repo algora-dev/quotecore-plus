@@ -1,13 +1,12 @@
 import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { FreeWorkspaceButton } from '@/components/marketing/FreeWorkspaceButton';
-import { MarketingButton } from '@/components/marketing/MarketingButton';
 import Link from 'next/link';
-import { WorkflowExplorer } from './WorkflowExplorer';
-import { Icon } from './Icon';
+import { HomepageJourney } from './HomepageJourney';
+import { HomepageHelp } from './HomepageHelp';
+import { LimitedTimeJobStrip } from './LimitedTimeJobStrip';
 import { homepageConfig, type HomepageConfig } from './homepage-config';
 import styles from './HomeLocked.module.css';
-import { LimitedTimeJobStrip } from './LimitedTimeJobStrip';
 
 function c(...names: string[]) { return names.map((name) => styles[name]).filter(Boolean).join(' '); }
 
@@ -39,37 +38,26 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
         </div>
       </section>
 
+      <HomepageJourney />
+
       <LimitedTimeJobStrip />
 
-      <section className={c('price-strip')} id="pricing"><div className={c('wrap','price-layout')}>
-        <div><p className={styles.eyebrow}>Pricing that fits your business</p><h2>Only pay for what you need.</h2><p className={c('price-copy')}>Try QuoteCore+ first, learn which tools and usage fit the way you work, then create your exact plan inside your account.</p></div>
-        <div className={c('price-summary')}><p className={c('price-range')}><span className={c('price-unit')}><strong>From US$29/mo</strong><span>for lighter setups</span></span><span className={c('price-tail')}><i className={c('price-separator')}>to</i><span className={c('price-unit')}><strong>US$259/mo</strong><span>for larger configurations.</span></span></span></p><div className={c('price-actions')}><MarketingButton href="/pricing" className={c('btn','btn-primary')}>See how pricing works →</MarketingButton><Link href="/done-for-you-setup" className={c('text-link')}><span className={c('dfy-link-label')}>Want us to set it up?</span><span className={c('dfy-link-action')}>Inquire about Done For You →</span></Link></div></div>
-      </div></section>
-
-      <section className={c('founder-section')} id="shaun"><div className={c('wrap','founder-grid')}>
-        <div className={c('founder-copy')}><p className={styles.eyebrow}>25 minutes with someone who knows roofing</p><h2>Show me how you measure, estimate or quote today. <span className={styles.gradient}>I&apos;ll show you how to do it faster and easier.</span></h2><p className={c('founder-claim')}>I&apos;ve yet to work with a roofing business where I couldn&apos;t help them speed up or simplify their quoting process.<span className={c('founder-claim-by')}>- Shaun, Founder of QuoteCore+</span></p><div className={c('founder-actions')}><MarketingButton href={bookingHref} className={c('btn','btn-primary')}>Book my free 25-minute call →</MarketingButton><span className={c('bonus-note')}><strong>Even if you never use QuoteCore+,</strong> you leave with something practical to try in your business.</span></div><details className={c('why-call')}><summary>Why book the call?</summary><div className={c('why-copy')}>You&apos;ll get a tailored look at how QuoteCore+ could fit your current workflow, not a generic product tour. Before we finish, Shaun will also share his #1 tip for increasing the chance that a quote turns into a job.</div></details></div>
-        <div className={c('founder-side')}><div className={c('video-embed')}><iframe src="https://www.youtube-nocookie.com/embed/4E3khV0qRyI?rel=0" title="Why I built QuoteCore+" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen loading="lazy" /></div><div className={c('call-steps')}><div className={c('call-step')}><b>01 · Tell me</b><span>Bring a job, or just talk me through how you quote now.</span></div><div className={c('call-step')}><b>02 · I&apos;ll show you</b><span>See the QuoteCore+ workflow that best fits the way you work.</span></div><div className={c('call-step')}><b>03 · Take this too</b><span>My #1 tip for turning more of your quotes into jobs.</span></div></div></div>
-      </div></section>
-
       <section className={styles.workspace} id="workspace"><div className={c('wrap','workspace-grid')}>
-        <div><p className={styles.eyebrow}>Prefer to try it yourself?</p><h2>Create your free live workspace.</h2><p>Explore your real QuoteCore+ workspace, use the optional guided walkthrough when you want help, or start measuring, quoting and sending your own jobs straight away.</p><div className={c('workspace-mini')}><span>Real Free Workspace</span><span>Optional walkthrough</span><span>Your own jobs</span></div><FreeWorkspaceButton className={c('btn','btn-primary')}>See how it works →</FreeWorkspaceButton></div>
-        <div className={c('app-shot')}><span className={c('shot-badge')}>Real working workspace</span><img src="/marketing/home/demo/demo-01-workspace.webp" alt="QuoteCore+ working workspace" /></div>
+        <div><p className={styles.eyebrow}>TRY THE REAL APP FOR FREE</p><h2>Your workspace. Your pricing. No pressure.</h2><p>Create a Free Workspace with no card and no expiry. Start with the optional guided demo, then add your own pricing and try a real roofing job. Paid plans are there when you need more usage or storage.</p><div className={c('workspace-mini')}><span>No credit card</span><span>No expiry</span><span>Guided demo included</span></div><FreeWorkspaceButton className={c('btn','btn-primary')}>See how it works →</FreeWorkspaceButton><p style={{ marginTop: 12, fontSize: 12 }}><Link href="/pricing" style={{ color: '#ffb36b', textDecoration: 'underline', textUnderlineOffset: 3 }}>How does paid pricing work?</Link></p></div>
+        <div className={c('app-shot')}><span className={c('shot-badge')}>Real QuoteCore+ workspace</span><img src="/marketing/home/demo/demo-01-workspace.webp" alt="QuoteCore+ sample workspace with saved jobs and quoting tools" loading="lazy" /></div>
       </div></section>
+
 
       <section className={styles.reviews} id="reviews"><div className={styles.wrap}><header className={c('reviews-head')}><p className={styles.eyebrow}>Customer experiences</p><h2>From people doing the work.</h2></header><div className={c('review-grid')}>
         <figure className={styles.review}><div className={c('review-top')}><p>Built around the way they already work</p><span className={c('quote-mark')}>“</span></div><blockquote>“The app is so simple and allows us to price everything the way we already have for years.”</blockquote><figcaption className={c('review-footer')}><span className={styles.avatar}>RM</span><span><strong>Rob Mander</strong><small>FMR Solutions</small></span></figcaption></figure>
         <figure className={styles.review}><div className={c('review-top')}><p>A much faster workflow</p><span className={c('quote-mark')}>“</span></div><blockquote>“We haven&apos;t had to print out a roof plan... at least 4x faster than our old process.”</blockquote><figcaption className={c('review-footer')}><span className={styles.avatar}>GK</span><span><strong>Greg Kepp</strong><small>Sky High Roofing</small></span></figcaption></figure>
-        <figure className={styles.review}><div className={c('review-top')}><p>Everything connected</p><span className={c('quote-mark')}>“</span></div><blockquote>“…everything that used to need three different apps. Having everything in one place is so handy.”</blockquote><figcaption className={c('review-footer')}><span className={styles.avatar}>TE</span><span><strong>Tony Edwards</strong><small>NZAV</small></span></figcaption></figure>
-      </div></div></section>
+        <figure className={styles.review}><div className={c('review-top')}><p>Set up and quoting faster</p><span className={c('quote-mark')}>“</span></div><blockquote>“...we save so much time with our pricing, this app is a game changer for roofers!”</blockquote><figcaption className={c('review-footer')}><span className={styles.avatar}>RJ</span><span><strong>Right Roofing</strong><small>Done For You customer</small></span></figcaption></figure>
+      </div>
+      </div></section>
 
-      <section className={styles.dfy} id="done-for-you"><div className={styles.blueprint} aria-hidden="true" /><div className={styles.wrap}><div className={c('dfy-panel')}>
-        <div><p className={styles.eyebrow}>Get started faster</p><h2><span>Don&apos;t want to spend hours</span><span className={styles.orange}>figuring out new software?</span><span className={styles.grey}>We&apos;ll set it up for you.</span></h2><p>Send us your pricing, your workflow, even a job you&apos;ve previously quoted. Quick Start sets up your components from US$49. Done For You is the full fast track: everything configured, a guided walkthrough on your own jobs, plus three months of QuoteCore+ and support.</p><div className={c('dfy-actions')}><MarketingButton href="/done-for-you-setup" size="large" className={c('btn','btn-primary')}>Done For You Package →</MarketingButton><MarketingButton href="/quick-start-pricing" variant="glass" size="large" className={c('btn','dfy-qs')}>Quick Start Package</MarketingButton></div></div>
-        <div className={c('dfy-cards')} aria-label="What our setup services include"><div className={c('dfy-card')}><span className={c('dfy-card-icon')}><Icon name="calculator" size={21} /></span><div><span className={c('dfy-title-row')}><b>Configured for you</b><span className={c('dfy-tag','dfy-tag-both')}>Quick Start + DFY</span></span><span>Your pricing and components set up for you. Done For You adds your full workflow.</span></div></div><div className={c('dfy-card')}><span className={c('dfy-card-icon')}><Icon name="roof" size={21} /></span><div><span className={c('dfy-title-row')}><b>Guided on your jobs</b><span className={c('dfy-tag')}>DFY only</span></span><span>A live or recorded walkthrough using your own pricing and jobs.</span></div></div><div className={c('dfy-card')}><img className={c('dfy-card-logo')} src="/marketing/home/qc-app-icon.png" alt="" width={38} height={38} loading="lazy" decoding="async" /><div><span className={c('dfy-title-row')}><b>3 months of QuoteCore+ included</b><span className={c('dfy-tag')}>DFY only</span></span><span>The plan your setup needs is part of the price.</span></div></div><div className={c('dfy-card')}><span className={c('dfy-card-icon')}><Icon name="people" size={21} /></span><div><span className={c('dfy-title-row')}><b>3 months of support</b><span className={c('dfy-tag')}>DFY only</span></span><span>Real ongoing support to ensure you quote faster and easier.</span></div></div></div>
-      </div></div></section>
 
-      <WorkflowExplorer demoHref="/free-trial" config={config} />
 
-      <section className={styles.final}><div className={styles.wrap}><h2>Tell me how you measure, estimate or quote today.<br /><span className={styles.gradient}>I&apos;ll show you how to do it faster and easier.</span></h2><p>Bring a job if you have one. If you don&apos;t, just talk me through your process. We&apos;ll use the 25 minutes to find the quickest QuoteCore+ workflow for your business.</p><MarketingButton href={bookingHref} className={c('btn','btn-primary')}>Book my free 25-minute call →</MarketingButton><br /><span className={c('final-bonus')}>And I&apos;ll give you my #1 tip for winning more of the quotes you already sent.</span></div></section>
+      <HomepageHelp bookingHref={bookingHref} />
     </main>
     <SiteFooter />
   </div>;

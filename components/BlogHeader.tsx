@@ -17,7 +17,7 @@ function buildNavItems(appHref: string, homepage: boolean): NavItem[] {
     { label: "See how it works", href: "/free-trial", newTab: true },
     { label: "Features", href: homepage ? "#workflow" : "/features" },
     { label: "Done For You", href: "/done-for-you-setup" },
-    { label: "Pricing", href: homepage ? "#pricing" : "/pricing" },
+    { label: "Pricing", href: "/pricing" },
     { label: "Book 25 minutes with Shaun", href: workflowCallHref },
   ];
 }

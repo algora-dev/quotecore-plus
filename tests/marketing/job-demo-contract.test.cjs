@@ -4,15 +4,14 @@ const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 const root = join(__dirname, '../..');
 const read = path => readFileSync(join(root,path),'utf8');
-test('strip sits between homepage hero and existing pricing, with one CTA',()=>{
+test('strip sits after the homepage workflow and before the free workspace, with one CTA',()=>{
  const home=read('components/marketing/home/Homepage.tsx');
  assert.match(home, /<LimitedTimeJobStrip \/>/);
- assert.ok(home.indexOf('<LimitedTimeJobStrip />')>home.indexOf('className={styles.hero}'));
- assert.ok(home.indexOf('<LimitedTimeJobStrip />')<home.indexOf("c('price-strip')"));
+ assert.ok(home.indexOf('<LimitedTimeJobStrip />')>home.indexOf('<HomepageJourney />'));
+ assert.ok(home.indexOf('<LimitedTimeJobStrip />')<home.indexOf('className={styles.workspace}'));
  const strip=read('components/marketing/home/LimitedTimeJobStrip.tsx');
  assert.match(strip,/href="\/your-job-demo"/);
- // CTA standardised to the glass MarketingButton recipe (owner 2026-11-16).
- assert.equal((strip.match(/<MarketingButton/g)||[]).length,1);
+ assert.equal((strip.match(/<MarketingButton\s/g)||[]).length,1);
  assert.match(strip,/Learn more/);
 });
 test('job demo has page, accessible four-step client form and public metadata',()=>{
