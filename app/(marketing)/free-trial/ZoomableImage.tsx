@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useId, useRef, useState, type MouseEvent } from 'react';
+import { useEffect, useId, useState, type MouseEvent } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import styles from './FreeWorkspaceLocked.module.css';
 
@@ -18,10 +19,18 @@ type ZoomableImageProps = {
 };
 
 /**
- * An image that opens as a simple centered enlarged view (owner 2026-11-20):
- * plain overlay, no animations, no scroll lock, no blur - just show the
- * image large in the middle of the page and close on X, backdrop or Escape.
- * Small client boundary keeps the marketing pages server-rendered.
+ * Enlarged-image viewer, rebuilt from scratch (owner 2026-11-20).
+ *
+ * Root cause of the previous glitchiness: the overlay rendered inside the
+ * card elements, whose hover transforms (translateY lift) reposition any
+ * position:fixed descendant while it is open. This version portals the
+ * overlay to document.body so it lives outside every animated ancestor.
+ *
+ * Deliberately simple: plain dark overlay, centered white card, image with
+ * explicit intrinsic dimensions (no size jump while loading), close on X,
+ * backdrop click or Escape. No animations, no scroll lock, no focus
+ * juggling. The full-size image is preloaded on hover so it is usually
+ * cached before the click.
  */
 export default function ZoomableImage({
   src,
@@ -36,8 +45,12 @@ export default function ZoomableImage({
   priority = false,
 }: ZoomableImageProps) {
   const [open, setOpen] = useState(false);
-  const trigger = useRef<HTMLButtonElement>(null);
   const titleId = useId();
+
+  function preloadFullImage() {
+    const preload = document.createElement('img');
+    preload.src = src;
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -55,10 +68,10 @@ export default function ZoomableImage({
   return (
     <>
       <button
-        ref={trigger}
         type="button"
         className={className}
         onClick={() => setOpen(true)}
+        onMouseEnter={preloadFullImage}
         aria-label={`View larger: ${title}`}
       >
         <Image
@@ -82,29 +95,32 @@ export default function ZoomableImage({
           </span>
         ) : null}
       </button>
-      {open ? (
-        <div className={styles.zoomOverlay} onClick={onBackdropClick} role="presentation">
-          <div
-            className={styles.zoomDialog}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className={styles.zoomDialogClose}
-              onClick={() => setOpen(false)}
-              aria-label="Close image preview"
-            >
-              ×
-            </button>
-            {/* eslint-disable-next-line @next/next/no-img-element -- Plain img: uses the exact src already cached by the browser, no re-optimization pop-in. */}
-            <img src={src} alt={alt} className={styles.zoomDialogImage} />
-            <p id={titleId} className={styles.zoomDialogCaption}>{title}</p>
-          </div>
-        </div>
-      ) : null}
+      {open
+        ? createPortal(
+            <div className={styles.zoomOverlay} onClick={onBackdropClick} role="presentation">
+              <div
+                className={styles.zoomDialog}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  className={styles.zoomDialogClose}
+                  onClick={() => setOpen(false)}
+                  aria-label="Close image preview"
+                >
+                  ×
+                </button>
+                {/* eslint-disable-next-line @next/next/no-img-element -- Plain img with intrinsic dimensions; preloaded on hover so it renders instantly. */}
+                <img src={src} alt={alt} width={width} height={height} className={styles.zoomDialogImage} />
+                <p id={titleId} className={styles.zoomDialogCaption}>{title}</p>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
