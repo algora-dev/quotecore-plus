@@ -104,9 +104,16 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
    const next=await loadPricingAssistantData();setCurrent(next.current);setSessions(next.sessions);setChosen([]);setPhase('choose');setConfirmDelete(false);setSavedCount(0);
    router.replace(`/${workspaceSlug}/pricing/assistant${next.current?`?session=${next.current.session.id}`:''}`);
    setNotice('Import drafts deleted. Previously saved Smart Components remain in your library.');
+ }catch(e){setError(e instanceof Error?e.message:'Unable to remove import.');}finally{setBusy(false);}
+ }
+ async function removeResumableImport(id:string){
+  setBusy(true);setError('');
+  try{const result=await deletePricingSession(id);if(!result.ok)throw Error(result.message);
+   setSessions(prev=>prev.filter(s=>s.id!==id));
+   setNotice('Import removed. Previously saved Smart Components remain in your library.');
   }catch(e){setError(e instanceof Error?e.message:'Unable to remove import.');}finally{setBusy(false);}
  }
- async function toggleRecording(){
+async function toggleRecording(){
   if(recorder.current?.state==='recording'){recorder.current.stop();return;}
   if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){setError('Voice recording is not supported in this browser. You can type instead.');return;}
   setError('');
@@ -218,7 +225,7 @@ export function PricingAssistantClient({workspaceSlug,data,loadError,collections
    {resumableSessions.length>0&&<div className="pa-entry-card pa-entry-resume">
     <span className="pa-entry-tag">PICK UP WHERE YOU LEFT OFF</span>
     <strong>Resume an import</strong>
-    <div className="pa-resume-list">{resumableSessions.map(s=><Link key={s.id} href={`/${workspaceSlug}/pricing/assistant?session=${s.id}`}>{s.source_name} <small>({s.remaining??s.extracted_count} left)</small></Link>)}</div>
+    <div className="pa-resume-list">{resumableSessions.map(s=><span key={s.id} className="pa-resume-item"><Link href={`/${workspaceSlug}/pricing/assistant?session=${s.id}`}>{s.source_name} <small>({s.remaining??s.extracted_count} left)</small></Link><button type="button" className="pa-resume-remove" aria-label={`Remove import ${s.source_name}`} title="Remove this import" disabled={busy} onClick={()=>void removeResumableImport(s.id)}><QcIcon name="close"/></button></span>)}</div>
    </div>}
   </section>}
   {!current&&entryMode!=='choose'&&<div className="pa-method-switch"><QcButton variant="ghost" size="sm" disabled={busy} onClick={()=>setEntryMode('choose')}><QcIcon name="back"/> Choose a different method</QcButton></div>}
