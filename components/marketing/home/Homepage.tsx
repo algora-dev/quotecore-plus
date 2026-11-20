@@ -3,6 +3,7 @@ import SiteFooter from '@/components/SiteFooter';
 import { FreeWorkspaceButton } from '@/components/marketing/FreeWorkspaceButton';
 import Link from 'next/link';
 import { HomepageJourney } from './HomepageJourney';
+import { HomepageMeasureWays } from './HomepageMeasureWays';
 import { HomepageHelp } from './HomepageHelp';
 import { LimitedTimeJobStrip } from './LimitedTimeJobStrip';
 import { homepageConfig, type HomepageConfig } from './homepage-config';
@@ -37,6 +38,8 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
           </div>
         </div>
       </section>
+
+      <HomepageMeasureWays />
 
       <HomepageJourney />
 

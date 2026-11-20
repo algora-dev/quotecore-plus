@@ -3,6 +3,7 @@ import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { FreeWorkspaceButton } from '@/components/marketing/FreeWorkspaceButton';
 import { homepageConfig } from '@/components/marketing/home/homepage-config';
+import { measureWays, measureWayImages } from '@/components/marketing/home/measure-ways';
 import { buildBreadcrumbSchema, buildSoftwareApplicationSchema, siteUrl } from '@/lib/schema';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
 import ZoomableImage from './ZoomableImage';
@@ -20,47 +21,9 @@ export const metadata: Metadata = {
 
 const imageBase = '/marketing/free-trial';
 const images = {
-  written: { src: `${imageBase}/demo-measurements-written.webp`, width: 1055, height: 1491 },
-  sketch: { src: `${imageBase}/demo-roof-sketch.webp`, width: 1491, height: 1055 },
-  plan: { src: `${imageBase}/demo-roof-plan.webp`, width: 998, height: 786 },
-  satellite: { src: `${imageBase}/demo-roof-satellite.webp`, width: 1413, height: 1113 },
+  ...measureWayImages,
   quote: { src: `${imageBase}/demo-finished-quote.webp`, width: 964, height: 1336 },
 } as const;
-
-const workflowMethods = [
-  {
-    number: 1,
-    title: 'Measured on site',
-    description: 'You already have the quantities and measurements written down.',
-    image: images.written,
-    alt: 'Handwritten roofing measurements and quantities on lined paper.',
-    dialogTitle: 'Written measurements and quantities from the demo job',
-  },
-  {
-    number: 2,
-    title: 'Sketched by hand',
-    description: 'You draw the roof shape and label the hips, ridges, valleys, and dimensions yourself.',
-    image: images.sketch,
-    alt: 'Hand-drawn roof plan with measurements written onto the sketch.',
-    dialogTitle: 'Roof sketch with measurements from the demo job',
-  },
-  {
-    number: 3,
-    title: 'Supplied roof plan',
-    description: 'You work from a plan and need to measure the roof from that document.',
-    image: images.plan,
-    alt: 'Architectural roof plan with labeled roof elements and dimensions.',
-    dialogTitle: 'Architectural roof plan from the demo job',
-  },
-  {
-    number: 4,
-    title: 'Satellite measurement',
-    description: 'You measure from the overhead roof image and build the quote from there.',
-    image: images.satellite,
-    alt: 'Satellite image of the same roof shown in the demo job.',
-    dialogTitle: 'Satellite roof image from the demo job',
-  },
-] as const;
 
 const steps = [
   {
@@ -177,8 +140,9 @@ export default async function FreeWorkspacePage({
           <div className={styles.wrap}>
             <p className={styles.eyebrow}>01 / Recognize your workflow</p>
             <div className={styles.examplesIntro}>
-              <h2 id="examples-title" className={c('examplesTitle', 'gradientText')}>
-                You get your roof quantities and measurements one of these 4 ways.
+              <h2 id="examples-title" className={styles.examplesTitle}>
+                You get your roof quantities and measurements{' '}
+                <span className={styles.gradientText}>one of these 4 ways.</span>
               </h2>
               <aside className={styles.roofTypes} aria-label="Roofing materials supported">
                 <span className={styles.roofTypesKicker}>Built for the roofing you do</span>
@@ -192,14 +156,13 @@ export default async function FreeWorkspacePage({
               exact same job used in the guided demo.
             </p>
             <div className={styles.demoGrid}>
-              {workflowMethods.map((method) => (
+              {measureWays.map((method) => (
                 <article className={styles.demoCard} key={method.number}>
                   <ZoomableImage
                     {...method.image}
                     className={styles.demoShot}
                     title={method.dialogTitle}
                     alt={method.alt}
-                    badge={`${method.number} / Demo job`}
                     hint="View larger"
                     sizes="(max-width: 620px) 92vw, (max-width: 1100px) 45vw, 24vw"
                   />

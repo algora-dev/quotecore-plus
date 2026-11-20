@@ -7,7 +7,7 @@ const read = (file) => readFileSync(join(root, file), 'utf8');
 
 test('homepage order keeps compact journey, original job strip, workspace, testimonials, then help', () => {
   const source = read('components/marketing/home/Homepage.tsx');
-  const anchors = ['<HomepageJourney />', '<LimitedTimeJobStrip />', 'className={styles.workspace}', 'className={styles.reviews}', '<HomepageHelp'];
+  const anchors = ['<HomepageMeasureWays />', '<HomepageJourney />', '<LimitedTimeJobStrip />', 'className={styles.workspace}', 'className={styles.reviews}', '<HomepageHelp'];
   let at = 0;
   for (const anchor of anchors) {
     const next = source.indexOf(anchor);
@@ -21,10 +21,26 @@ test('workflow includes faster promise, accessible single-open panels and a dire
   assert.match(source, /there&apos;s an easier and faster way to quote them/);
   assert.match(source, /Here&apos;s how it works in our app/);
   assert.match(source, /aria-expanded=\{active === index\}/);
+  assert.match(source, /sectionLight/);
   assert.match(source, /hidden=\{active !== index\}/);
   assert.match(source, /href="\/features"/);
   assert.match(source, /Click to see how it works/);
   assert.doesNotMatch(source, /—/);
+});
+
+test('measure ways section: shared cards above journey, no demo-job pill, free-trial heading restyled', () => {
+  const mw = read('components/marketing/home/HomepageMeasureWays.tsx');
+  assert.match(mw, /Most roofers measure roofs/);
+  assert.match(mw, /one of these four ways\./);
+  assert.match(mw, /If you measure like this, QuoteCore\+ can help you\./);
+  assert.ok(!mw.includes('badge='));
+  assert.doesNotMatch(mw, /—/);
+  const shared = read('components/marketing/home/measure-ways.ts');
+  assert.match(shared, /Measured on site/);
+  assert.match(shared, /Satellite measurement/);
+  const ft = read('app/(marketing)/free-trial/page.tsx');
+  assert.ok(!ft.includes('/ Demo job'));
+  assert.ok(ft.includes('<span className={styles.gradientText}>one of these 4 ways.</span>'));
 });
 
 test('pricing copy promises only accepted file formats and human review', () => {

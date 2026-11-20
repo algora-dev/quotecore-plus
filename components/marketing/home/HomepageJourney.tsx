@@ -89,7 +89,7 @@ export function HomepageJourney() {
   const [active, setActive] = useState<number | null>(null);
   const panelId = useId();
 
-  return <section id="workflow" aria-labelledby="journey-title" className={s.section} data-analytics-surface="homepage-journey" data-analytics-location="homepage-directly-below-hero">
+  return <section id="workflow" aria-labelledby="journey-title" className={`${s.section} ${s.sectionLight}`} data-analytics-surface="homepage-journey" data-analytics-location="homepage-directly-below-hero">
     <div className={s.wrap}>
       <header className={s.header}>
         <h2 id="journey-title">However you measure roofs, <span>there&apos;s an easier and faster way to quote them.</span></h2>

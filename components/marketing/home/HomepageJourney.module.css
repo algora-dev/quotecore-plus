@@ -90,3 +90,8 @@
 .featuresTeaser a:hover{text-decoration:underline;text-underline-offset:4px}
 .featuresTeaser a:focus-visible{outline:3px solid #ff9a5c;outline-offset:3px}
 @media(max-width:720px){.subhead{margin-top:10px}.featuresTeaser{margin-top:13px;padding:14px 16px;display:block}.featuresTeaser a{margin-top:4px}}
+
+/* Light theme variant (owner 2026-11-20): section flips to paper, heading and subhead go ink; step cards, expansion and teaser keep their dark surfaces. */
+.sectionLight{background:#fbfcff;color:#0a0b10;border-bottom:1px solid rgba(10,11,16,.08)}
+.sectionLight .header h2{color:#0a0b10}
+.sectionLight .subhead{color:#606575}
