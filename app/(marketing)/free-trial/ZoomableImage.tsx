@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useRef, type MouseEvent } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type MouseEvent } from 'react';
 import Image from 'next/image';
 import styles from './FreeWorkspaceLocked.module.css';
 
@@ -18,8 +18,11 @@ type ZoomableImageProps = {
 };
 
 /**
- * An image that opens a native, keyboard-accessible dialog.
- * Using a small client boundary keeps the marketing page a server component.
+ * An image that opens in a clean, centered modal overlay
+ * (owner 2026-11-20: the native dialog felt glitchy; this state-driven
+ * overlay animates in, locks page scroll, closes on Escape/backdrop and
+ * restores focus to the trigger). Keeping this a small client boundary
+ * preserves the server-component marketing pages.
  */
 export default function ZoomableImage({
   src,
@@ -33,19 +36,33 @@ export default function ZoomableImage({
   sizes = '(max-width: 620px) 100vw, 50vw',
   priority = false,
 }: ZoomableImageProps) {
-  const dialog = useRef<HTMLDialogElement>(null);
+  const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
 
-  function openImage() {
-    if (!dialog.current?.open) dialog.current?.showModal();
-  }
+  const closeImage = useCallback(() => setOpen(false), []);
 
-  function closeImage() {
-    dialog.current?.close();
-  }
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeImage();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    document.body.style.overflow = 'hidden';
+    closeRef.current?.focus();
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      trigger.current?.focus();
+    };
+  }, [open, closeImage]);
 
-  function onBackdropClick(event: MouseEvent<HTMLDialogElement>) {
+  function onBackdropClick(event: MouseEvent<HTMLDivElement>) {
     if (event.target === event.currentTarget) closeImage();
   }
 
@@ -55,7 +72,7 @@ export default function ZoomableImage({
         ref={trigger}
         type="button"
         className={className}
-        onClick={openImage}
+        onClick={() => setOpen(true)}
         aria-label={`View larger: ${title}`}
       >
         <Image
@@ -79,33 +96,38 @@ export default function ZoomableImage({
           </span>
         ) : null}
       </button>
-      <dialog
-        ref={dialog}
-        className={styles.zoomDialog}
-        aria-labelledby={titleId}
-        onClick={onBackdropClick}
-        onClose={() => trigger.current?.focus()}
-      >
-        <div className={styles.zoomDialogInner}>
-          <button
-            type="button"
-            className={styles.zoomDialogClose}
-            onClick={closeImage}
-            aria-label="Close image preview"
+      {open ? (
+        <div className={styles.zoomOverlay} onClick={onBackdropClick} role="presentation">
+          <div
+            className={styles.zoomDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            onClick={(event) => event.stopPropagation()}
           >
-            ×
-          </button>
-          <Image
-            src={src}
-            alt={alt}
-            width={width}
-            height={height}
-            sizes="(max-width: 620px) 100vw, 1240px"
-            className={styles.zoomDialogImage}
-          />
-          <p id={titleId} className={styles.zoomDialogCaption}>{title}</p>
+            <div className={styles.zoomDialogInner}>
+              <button
+                ref={closeRef}
+                type="button"
+                className={styles.zoomDialogClose}
+                onClick={closeImage}
+                aria-label="Close image preview"
+              >
+                ×
+              </button>
+              <Image
+                src={src}
+                alt={alt}
+                width={width}
+                height={height}
+                sizes="(max-width: 620px) 100vw, 1240px"
+                className={styles.zoomDialogImage}
+              />
+              <p id={titleId} className={styles.zoomDialogCaption}>{title}</p>
+            </div>
+          </div>
         </div>
-      </dialog>
+      ) : null}
     </>
   );
 }

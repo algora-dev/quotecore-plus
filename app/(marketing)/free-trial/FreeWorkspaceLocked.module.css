@@ -228,14 +228,17 @@
     }
     @media (prefers-reduced-motion:reduce){.root *, .root *::before, .root *::after{transition:none !important;animation:none !important;scroll-behavior:auto !important}}
 /* Accessible native modal for clickable demonstration images. */
-.zoomDialog{padding:0;border:none;border-radius:18px;max-width:min(96vw,1300px);max-height:94vh;background:#fff;color:#303641;box-shadow:0 32px 90px rgba(0,0,0,.4);overflow:visible}
-.zoomDialog::backdrop{background:rgba(8,10,14,.78);backdrop-filter:blur(8px)}
+.zoomOverlay{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:22px;background:rgba(8,10,14,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);animation:zoomFadeIn .18s ease-out}
+.zoomDialog{padding:0;border:none;border-radius:18px;max-width:min(96vw,1300px);max-height:90vh;background:#fff;color:#303641;box-shadow:0 32px 90px rgba(0,0,0,.4);overflow:auto;animation:zoomCardIn .22s cubic-bezier(.2,.8,.2,1)}
 .zoomDialogInner{position:relative;padding:14px}
-.zoomDialogImage{max-width:min(92vw,1240px);max-height:82vh;width:auto;height:auto;object-fit:contain;border-radius:12px;background:#f3f5f8}
+.zoomDialogImage{max-width:min(92vw,1240px);max-height:78vh;width:auto;height:auto;object-fit:contain;border-radius:12px;background:#f3f5f8}
 .zoomDialogCaption{padding:11px 8px 2px;color:#505965;font-size:14px;font-weight:650}
 .zoomDialogClose{position:absolute;z-index:2;right:20px;top:20px;display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:12px;background:rgba(10,11,16,.88);color:#fff;font-size:24px;cursor:pointer}
 .zoomDialogClose:hover{background:#191f27}
-@media(max-width:620px){.zoomDialog{max-width:100vw;width:100vw;max-height:92vh;border-radius:20px 20px 0 0;margin:auto 0 0}.zoomDialogInner{padding:10px}.zoomDialogImage{max-width:100%;width:100%;max-height:72vh}.zoomDialogClose{right:14px;top:14px}}
+@keyframes zoomFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes zoomCardIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+@media(max-width:620px){.zoomOverlay{padding:14px}.zoomDialog{border-radius:18px;max-height:88vh}.zoomDialogInner{padding:10px}.zoomDialogImage{max-width:100%;width:100%;max-height:70vh}.zoomDialogClose{right:14px;top:14px}}
+@media(prefers-reduced-motion:reduce){.zoomOverlay,.zoomDialog{animation:none}}
 
 .root button{font:inherit}
 .root .heroMock{line-height:normal}

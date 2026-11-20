@@ -30,8 +30,9 @@ test('workflow includes faster promise, accessible single-open panels and a dire
 
 test('measure ways section: shared cards above journey, no demo-job pill, free-trial heading restyled', () => {
   const mw = read('components/marketing/home/HomepageMeasureWays.tsx');
-  assert.match(mw, /Most roofers measure roofs/);
-  assert.match(mw, /one of these four ways\./);
+  assert.match(mw, /Most roofers measure roofs|Most roofers<\/span> measure roofs/);
+  assert.ok(mw.includes('<span className={s.gradient}>Most roofers</span>'));
+  assert.ok(mw.includes('<span className={s.gradient}>four ways.</span>'));
   assert.match(mw, /If you measure like this, QuoteCore\+ can help you\./);
   assert.ok(!mw.includes('badge='));
   assert.doesNotMatch(mw, /—/);

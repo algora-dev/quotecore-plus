@@ -12,7 +12,7 @@ export function HomepageMeasureWays() {
   return <section aria-labelledby="measure-ways-title" className={s.section}>
     <div className={s.wrap}>
       <header className={s.header}>
-        <h2 id="measure-ways-title">Most roofers measure roofs <span className={s.gradient}>one of these four ways.</span></h2>
+        <h2 id="measure-ways-title"><span className={s.gradient}>Most roofers</span> measure roofs one of these <span className={s.gradient}>four ways.</span></h2>
         <p className={s.subhead}>If you measure like this, QuoteCore+ can help you.</p>
       </header>
       <div className={s.grid}>
