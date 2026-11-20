@@ -50,6 +50,35 @@ export function welcomeEmailEnabled(): boolean {
   return v === '1' || v === 'true';
 }
 
+/**
+ * Runtime kill-switch arm state, stored in app_runtime_config
+ * (key 'welcome_email_enabled' = 'true'). Env vars bake into builds, so the
+ * DB row lets the owner arm/disarm prod sending with one SQL statement and
+ * no redeploy (owner 2026-11-20). Short cache keeps the every-minute sweep
+ * cheap; env flag and DB row are OR'd.
+ */
+const DB_FLAG_CACHE_TTL_MS = 30_000;
+let dbFlagCache: { value: boolean; fetchedAt: number } | null = null;
+
+export async function welcomeEmailEnabledWithDb(): Promise<boolean> {
+  if (welcomeEmailEnabled()) return true;
+  if (dbFlagCache && Date.now() - dbFlagCache.fetchedAt < DB_FLAG_CACHE_TTL_MS) return dbFlagCache.value;
+  try {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from('app_runtime_config')
+      .select('value')
+      .eq('key', 'welcome_email_enabled')
+      .maybeSingle();
+    const value = data?.value === 'true';
+    dbFlagCache = { value, fetchedAt: Date.now() };
+    return value;
+  } catch {
+    dbFlagCache = { value: false, fetchedAt: Date.now() };
+    return false;
+  }
+}
+
 type EnqueueInput = {
   userId: string;
   companyId: string;
@@ -100,7 +129,7 @@ const MAX_ATTEMPTS = 3;
 /** Claim + send all due welcome emails. Called every minute by the cron route. */
 export async function sweepWelcomeEmails(): Promise<WelcomeSweepResult> {
   const result: WelcomeSweepResult = { claimed: 0, sent: 0, skipped: 0, failed: 0 };
-  if (!welcomeEmailEnabled()) {
+  if (!(await welcomeEmailEnabledWithDb())) {
     result.disabled = true;
     return result;
   }
