@@ -17,7 +17,6 @@ const ADMIN_NAV: { label: string; href: string; soon?: boolean }[] = [
   { label: 'Feedback', href: '/admin/feedback' },
   { label: 'App Users', href: '/admin/users' },
   { label: 'Free Tool Usage', href: '/admin/free-tool-usage' },
-  ...(process.env.NEXT_PUBLIC_PRICING_SETUP_ENABLED === 'true' ? [{ label: 'Quick Start orders', href: '/admin/pricing-quick-start' }] : []),
   { label: 'Roof Components', href: '/admin/roof-components' },
   { label: 'Suppliers', href: '/admin/suppliers' },
   { label: 'Supplier Applications', href: '/admin/supplier-applications' },

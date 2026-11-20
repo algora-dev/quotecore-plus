@@ -127,7 +127,7 @@ export async function withPurchasedScan(req: NextRequest,
     if (billingKind !== 'custom_metered') {
       // Free Workspace scans (owner 2026-11-04): 'admin-free-*' grants meter
       // against the grant's scanTokens in the same ledger the Billing card
-      // and quota walls read. Other admin-granted comps keep the standard
+      // and quota walls read. Other admin grant kinds keep the standard
       // unmetered path (2026-10-17 rule) until they get the same treatment.
       if (billingKind === 'custom_admin_granted') {
         const win = await loadFreeScanWindow(profile.company_id);

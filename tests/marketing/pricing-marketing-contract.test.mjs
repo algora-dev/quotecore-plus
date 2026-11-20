@@ -5,7 +5,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -29,14 +29,12 @@ test('Quick Start upload endpoint sends staff an enquiry; does not bill', () => 
   assert.doesNotMatch(route, /from ['"]stripe['"]|checkout\.sessions\.create/i);
 });
 
-// NOTE (Ron 2026-11-15): the external marketing handoff retires the in-app instant
-// Quick Start checkout (HTTP 410 stub). development currently keeps Gavin's $49
-// Stripe checkout (commit 31195abf), so the 410 assertions are skipped until the
-// owner decides the in-app direction. Public marketing pages are enquiry-only.
-test.skip('legacy immediate Quick Start checkout stays retired', () => {
-  const route = source('app/api/pricing-setup/quick-start/route.ts');
-  assert.match(route, /status:410/);
-  assert.doesNotMatch(route, /checkout\.sessions\.create/);
+// Owner decision 2026-11-20: the in-app immediate Quick Start Stripe checkout is
+// removed entirely. Quick Start is enquiry-only via the public marketing page and
+// /api/quick-start-inquiry (email intake, no payment); orders are handled
+// manually in Stripe by staff when a customer confirms scope.
+test('legacy immediate Quick Start checkout stays retired', () => {
+  assert.equal(existsSync(resolve(root, 'app/api/pricing-setup/quick-start/route.ts')), false);
 });
 
 test('Done For You advertises US$199 and three months of included paid software and support', () => {
@@ -54,7 +52,7 @@ test('public pricing calculator uses existing app calculations without billing c
   const actual = source('app/components/pricing/calculator/PricingCalculator.tsx');
   assert.match(host, /import \{ PricingCalculator \}/);
   assert.match(host, /catalog=\{PREVIEW_CATALOG\}/);
-  assert.match(host, /continueHref=\{\(\) => '\/signup'\}/);
+  assert.match(host, /continueHref=\{\(\) => '\/free-trial'\}/);
   assert.match(host, /publicNextSteps/);
   assert.doesNotMatch(host, /onContinue=|from ['"]stripe['"]|checkout\.sessions\.create/i);
   assert.match(actual, /PublicPricingNextSteps/);

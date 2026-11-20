@@ -11,7 +11,8 @@ test('strip sits between homepage hero and existing pricing, with one CTA',()=>{
  assert.ok(home.indexOf('<LimitedTimeJobStrip />')<home.indexOf("c('price-strip')"));
  const strip=read('components/marketing/home/LimitedTimeJobStrip.tsx');
  assert.match(strip,/href="\/your-job-demo"/);
- assert.equal((strip.match(/<Link\s/g)||[]).length,1);
+ // CTA standardised to the glass MarketingButton recipe (owner 2026-11-16).
+ assert.equal((strip.match(/<MarketingButton/g)||[]).length,1);
  assert.match(strip,/Learn more/);
 });
 test('job demo has page, accessible four-step client form and public metadata',()=>{
@@ -32,7 +33,7 @@ test('public submission validates attachments, consent and job details',()=>{
 test('public pricing still mounts the actual authenticated calculator without Stripe continuation',()=>{
  const host=read('app/(marketing)/pricing/PublicPricingCalculator.tsx');
  assert.match(host,/import \{ PricingCalculator \} from/);
- assert.match(host,/continueHref=\{\(\) => '\/signup'\}/);
+ assert.match(host,/continueHref=\{\(\) => '\/free-trial'\}/);
  assert.doesNotMatch(host,/onContinue=|checkout\.sessions|stripe\.checkout/i);
 });
 test('Done For You modal retains close X, multi-selection and visible component example',()=>{
