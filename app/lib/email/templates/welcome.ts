@@ -13,17 +13,22 @@
  *    per the 2026-11-17 outreach learnings).
  *  - Footer is reply-friendly (no "automated message - don't reply" line).
  *  - Help options are plain text links (owner preference 2026-11-20), not
- *    buttons - the single orange CTA stays "Start the Guided Demo".
+ *    buttons - the single orange CTA opens the Free Workspace itself
+ *    (owner 10:19: quote-core.com/demo is the OLD public demo and has
+ *    nothing to do with the user's workspace; the CTA must open the app
+ *    "like it normally would", with no raw-URL fallback line under it).
  */
 
 import 'server-only';
-import { renderEmailLayout, paraHtml, ctaBlock, escapeHtml } from '../baseLayout';
+import { renderEmailLayout, paraHtml, escapeHtml } from '../baseLayout';
 
 export const WELCOME_EMAIL_SUBJECT = 'Welcome to QuoteCore+! Your quickest path to better quotes';
 export const WELCOME_EMAIL_FROM = 'Shaun at QuoteCore+ <shaun@quote-core.com>';
 export const WELCOME_EMAIL_REPLY_TO = 'shaun@quote-core.com';
 
-const DEMO_URL = 'https://quote-core.com/demo';
+// Owner 2026-11-20 10:19: the CTA opens the user's Free Workspace (the app),
+// not the public demo. Same env pattern as buildOutreachUnsubscribeUrl.
+const APP_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://app.quote-core.com';
 const YOUR_JOB_URL = 'https://quote-core.com/your-job-demo';
 const CALENDLY_URL = 'https://calendly.com/quote-core-info/meeting';
 const QUICK_START_URL = 'https://quote-core.com/quick-start-pricing';
@@ -70,7 +75,9 @@ export function renderWelcomeEmail({ firstName, unsubscribeUrl }: WelcomeEmailIn
         ${step('2. Explore the demo business', 'Browse completed jobs, saved pricing, and finished quotes to see how everything connects.')}
         ${step('3. Switch to your Free Workspace and add your own pricing', 'Once your pricing is saved, turning measurements and quantities into accurate quotes becomes much faster and easier.')}
       </table>
-      ${ctaBlock('Start the Guided Demo', DEMO_URL)}
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 12px 0;"><tr><td style="background-color:#F97316;border-radius:8px;">
+        <a href="${escapeHtml(APP_URL)}" style="display:inline-block;padding:12px 24px;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:8px;">Open your Free Workspace</a>
+      </td></tr></table>
       <p style="margin:32px 0 10px 0;font-size:15px;line-height:22px;color:#0A0A0A;font-weight:600;">Need help? We&rsquo;ve got you covered.</p>
       ${helpOption(YOUR_JOB_URL, 'Send us a job', 'Get a free video showing how we\u2019d quote it in QuoteCore+.')}
       ${helpOption(CALENDLY_URL, 'Book a free 25-minute call', 'I\u2019ll show you how it fits your workflow.')}
@@ -104,7 +111,7 @@ Browse completed jobs, saved pricing, and finished quotes to see how everything 
 3. Switch to your Free Workspace and add your own pricing
 Once your pricing is saved, turning measurements and quantities into accurate quotes becomes much faster and easier.
 
-Start the Guided Demo: ${DEMO_URL}
+Start the Guided Demo (inside your workspace): open your Free Workspace at ${APP_URL}
 
 Need help? We've got you covered.
 
