@@ -40,7 +40,7 @@ test('help includes optional founder video and banner uses dark eyebrow ink', ()
   const help = read('components/marketing/home/HomepageHelp.tsx');
   const banner = read('components/marketing/home/LimitedTimeJobStrip.module.css');
   assert.match(help, /<details className=\{s.founderStory\}>/);
-  assert.match(help, /videoId="rqmEtartkYw"/);
+  assert.match(help, /videoId="4E3khV0qRyI"/);
   assert.match(help, /Why I built QuoteCore\+/);
   assert.match(banner, /\.eyebrow\s*\{[^}]*color:\s*#161a20/s);
   assert.doesNotMatch(help, /—/);

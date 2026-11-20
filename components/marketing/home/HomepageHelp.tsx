@@ -44,7 +44,7 @@ export function HomepageHelp({ bookingHref }: { bookingHref: string }) {
         </summary>
         <div className={s.founderPanel}>
           <div className={s.founderVideo}>
-            <YouTubeLite videoId="rqmEtartkYw" title="The story behind QuoteCore+ and why Shaun built it" thumbnail="/shaun-smiling.jpg" />
+            <YouTubeLite videoId="4E3khV0qRyI" title="How to Quote Roofing Jobs Faster - Why I Built QuoteCore+" thumbnail="/marketing/home/founder-video-thumb.webp" uploadDate="2026-11-01" />
           </div>
           <div className={s.founderStoryCopy}>
             <h3>Built by a roofer who wanted a better way.</h3>
