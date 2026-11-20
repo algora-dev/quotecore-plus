@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { runDueScheduledMessages } from '@/app/lib/messages/scheduled';
+import { sweepWelcomeEmails } from '@/app/lib/email/welcomeQueue';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -37,6 +38,19 @@ export async function GET(request: Request) {
   try {
     const result = await runDueScheduledMessages();
     console.log('[cron/dispatch-scheduled-messages] sweep result:', result);
+
+    // Welcome email queue (owner 2026-11-20): piggybacked on this every-minute
+    // route so it inherits the pg_cron cadence without new cron infra. Kept in
+    // its own try/catch - a welcome-email failure must never break scheduled
+    // messages. Gated by WELCOME_EMAIL_ENABLED; atomic claim prevents double
+    // sends even if the every-30-min vercel.json backup fires concurrently.
+    try {
+      const welcome = await sweepWelcomeEmails();
+      if (welcome.claimed > 0) console.log('[cron/dispatch-scheduled-messages] welcome email sweep:', welcome);
+    } catch (welcomeErr) {
+      console.error('[cron/dispatch-scheduled-messages] welcome email sweep failed:', welcomeErr instanceof Error ? welcomeErr.message : welcomeErr);
+    }
+
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown error';

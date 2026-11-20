@@ -19,10 +19,17 @@ export type EmailLayoutInput = {
   /** Pre-rendered inner HTML (may contain <p>, <table>, etc.). */
   innerHtml: string;
   /**
-   * Optional preview text (preheader) - first ~100 chars shown in the inbox
-   * preview line on most clients. Hidden visually inside the email.
-   */
+  * Optional preview text (preheader) - first ~100 chars shown in the inbox
+  * preview line on most clients. Hidden visually inside the email.
+  */
   preheader?: string;
+  /**
+  * Replaces the default footer block entirely (owner 2026-11-20): emails
+  * that invite replies (e.g. the welcome email) must not show the
+  * "automated message - don't reply" line. Render with the same inline
+  * styles the default footer uses.
+  */
+  footerHtml?: string;
 };
 
 const LOGO_URL = 'https://quote-core.com/icon.png';
@@ -35,7 +42,7 @@ const escapeHtml = (s: string) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 
-export function renderEmailLayout({ heading, innerHtml, preheader }: EmailLayoutInput): string {
+export function renderEmailLayout({ heading, innerHtml, preheader, footerHtml }: EmailLayoutInput): string {
   const preheaderHtml = preheader
     ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#F9FAFB;opacity:0;">${escapeHtml(preheader)}</div>`
     : '';
@@ -55,9 +62,9 @@ ${preheaderHtml}
 ${innerHtml}
 </td></tr>
 <tr><td style="padding:24px 32px;background-color:#F9FAFB;border-top:1px solid #F3F4F6;">
-<p style="margin:0 0 6px 0;font-size:12px;line-height:18px;color:#6B7280;">QuoteCore<span style="color:#F97316;">+</span> &mdash; Quoting &amp; job management for trades</p>
+${footerHtml ?? `<p style="margin:0 0 6px 0;font-size:12px;line-height:18px;color:#6B7280;">QuoteCore<span style="color:#F97316;">+</span> &mdash; Quoting &amp; job management for trades</p>
 <p style="margin:0 0 6px 0;font-size:12px;line-height:18px;color:#9CA3AF;">Sent via QuoteCore+ &bull; <a href="mailto:info@quote-core.com" style="color:#9CA3AF;text-decoration:underline;">info@quote-core.com</a></p>
-<p style="margin:0;font-size:11px;line-height:16px;color:#9CA3AF;font-style:italic;">This is an automated message &mdash; please don't reply to this email.</p>
+<p style="margin:0;font-size:11px;line-height:16px;color:#9CA3AF;font-style:italic;">This is an automated message &mdash; please don't reply to this email.</p>`}
 </td></tr></table></td></tr></table></body></html>`;
 }
 

@@ -3,6 +3,7 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { checkRateLimit } from '@/app/lib/security/rateLimit';
 import { ensureCompanyHasCollection } from '@/app/lib/data/ensure-company-has-collection';
+import { enqueueWelcomeEmail } from '@/app/lib/email/welcomeQueue';
 import { PREVIEW_CATALOG } from '@/app/components/pricing/calculator/calculatorConfig';
 import { getStripeMode } from '@/app/lib/billing/stripe';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -180,6 +181,23 @@ async function provisionFreeWorkspace(
     }
   } catch (err) {
     console.error('[complete-signin] free workspace: grant row threw (non-fatal):', err);
+  }
+
+  // Welcome email (owner 2026-11-20, copy finalized 09:43): queue a row
+  // that fires ~5 min after the workspace is provisioned. This function is
+  // the single choke point BOTH signup paths run through (Google first
+  // sign-in AND email/password confirmation click), so the delay matches
+  // the owner's timing spec. Sending is flag-gated (WELCOME_EMAIL_ENABLED)
+  // and enqueueWelcomeEmail is best-effort - it never breaks sign-in.
+  try {
+    await enqueueWelcomeEmail({
+      userId: user.id,
+      companyId: company.id,
+      email: user.email ?? '',
+      firstName: fullName.split(' ')[0] || null,
+    });
+  } catch (err) {
+    console.error('[complete-signin] free workspace: welcome email enqueue failed (non-fatal):', err);
   }
 
   const suffix = draftId

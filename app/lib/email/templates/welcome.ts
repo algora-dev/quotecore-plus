@@ -1,112 +1,133 @@
 /**
- * Welcome email template - sent after a user confirms their email address.
+ * Welcome email (owner copy finalized 2026-11-20 09:43).
  *
- * Two variants:
- *   - Email/password signup: sent from /auth/callback after first
- *     confirmation. Single CTA: "Confirm Email" → dashboard.
- *   - Send only from an explicit post-provisioning/welcome-email flow. The current Free Workspace signup has no mandatory onboarding wizard.
- *     Includes a Tutorials blurb + "Go to Tutorials" button (Google users
- *     are auto-confirmed by Supabase, so they get the richer email).
+ * Sent ~5 minutes after a Free Workspace is first provisioned - the queue
+ * row is enqueued by provisionFreeWorkspace() in complete-signin.ts, which
+ * both signup paths (Google OAuth + email/password confirmation) run
+ * through, and dispatched by the scheduled-messages cron sweep
+ * (app/lib/email/welcomeQueue.ts).
+ *
+ * Deliberately different from other transactional emails:
+ *  - Sent FROM Shaun ("Shaun at QuoteCore+") with reply-to shaun@, because
+ *    the copy invites replies (owner replies train Gmail Primary delivery,
+ *    per the 2026-11-17 outreach learnings).
+ *  - Footer is reply-friendly (no "automated message - don't reply" line).
+ *  - Help options are plain text links (owner preference 2026-11-20), not
+ *    buttons - the single orange CTA stays "Start the Guided Demo".
  */
 
 import 'server-only';
-import { renderEmailLayout, paraHtml, ctaBlock, note } from '../baseLayout';
+import { renderEmailLayout, paraHtml, ctaBlock, escapeHtml } from '../baseLayout';
 
-const escapeHtml = (s: string) =>
-  s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+export const WELCOME_EMAIL_SUBJECT = 'Welcome to QuoteCore+! Your quickest path to better quotes';
+export const WELCOME_EMAIL_FROM = 'Shaun at QuoteCore+ <shaun@quote-core.com>';
+export const WELCOME_EMAIL_REPLY_TO = 'shaun@quote-core.com';
+
+const DEMO_URL = 'https://quote-core.com/demo';
+const YOUR_JOB_URL = 'https://quote-core.com/your-job-demo';
+const CALENDLY_URL = 'https://calendly.com/quote-core-info/meeting';
+const QUICK_START_URL = 'https://quote-core.com/quick-start-pricing';
+const DONE_FOR_YOU_URL = 'https://quote-core.com/done-for-you-setup';
+
+const link = (url: string, label: string) =>
+  `<a href="${escapeHtml(url)}" style="color:#F97316;font-weight:600;text-decoration:none;">${escapeHtml(label)}</a>`;
+
+/** One recommendation row: bold title + description. */
+const step = (title: string, desc: string) => `
+<tr><td style="padding:0 0 14px 0;">
+  <p style="margin:0;font-size:15px;line-height:22px;color:#0A0A0A;font-weight:600;">${escapeHtml(title)}</p>
+  <p style="margin:2px 0 0 0;font-size:14px;line-height:21px;color:#374151;">${escapeHtml(desc)}</p>
+</td></tr>`;
+
+/** One help option: link on its own line + em-dash description. */
+const helpOption = (url: string, label: string, desc: string) => `
+<p style="margin:0 0 10px 0;font-size:14px;line-height:21px;color:#374151;">
+  ${link(url, label)} &mdash; ${escapeHtml(desc)}
+</p>`;
 
 export type WelcomeEmailInput = {
-  /** The user's full name (from signup). */
-  fullName: string;
-  /** The workspace slug, used to build the dashboard link. */
-  workspaceSlug: string;
-  /** Base URL of the app (e.g. https://quotecore-plus-main.vercel.app). */
-  appUrl: string;
-  /**
-   * Whether this is a Google OAuth signup. Google users get the Tutorials
-   * blurb + button. Email/password users get the single "Confirm Email"
-   * CTA only.
-   */
-  isGoogleSignup?: boolean;
+  /** The user's first name (single word, pre-trimmed). */
+  firstName: string | null | undefined;
+  /** Per-recipient unsubscribe URL (HMAC token, same scheme as outreach). */
+  unsubscribeUrl: string;
 };
 
-export function renderWelcomeEmail({ fullName, workspaceSlug, appUrl, isGoogleSignup = false }: WelcomeEmailInput): {
+export function renderWelcomeEmail({ firstName, unsubscribeUrl }: WelcomeEmailInput): {
   subject: string;
   html: string;
   text: string;
 } {
-  const firstName = fullName.split(' ')[0] || fullName;
-  const dashboardUrl = `${appUrl}/${workspaceSlug}`;
-  const tutorialsUrl = `${appUrl}/${workspaceSlug}/tutorials`;
+  const name = (firstName ?? '').trim() || 'there';
 
-  let innerHtml: string;
-  let text: string;
-
-  if (isGoogleSignup) {
-    // Google signup variant: Tutorials blurb + button.
-    innerHtml = `
-      <p style="margin:0 0 16px 0;font-size:15px;line-height:24px;color:#374151;">Hi ${escapeHtml(firstName)},</p>
-      ${paraHtml(`Welcome to <strong style="color:#F97316;">QuoteCore+</strong> - we're glad to have you on board.`)}
-      ${paraHtml(`Your account is ready. You can start quoting, measuring, and managing jobs right away.`)}
-      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px 0;">
-        <tr><td style="padding:12px 16px;background-color:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;">
-          <p style="margin:0;font-size:14px;line-height:22px;color:#9A3412;">
-            <strong>New here?</strong> Check out our tutorials to get up and running in minutes - from setting up your company to sending your first quote.
-          </p>
-        </td></tr>
+  const innerHtml = `
+      <p style="margin:0 0 16px 0;font-size:15px;line-height:24px;color:#374151;">Hi ${escapeHtml(name)},</p>
+      ${paraHtml(`Welcome to <strong style="color:#F97316;">QuoteCore+</strong>! Your Free Workspace is ready.`)}
+      ${paraHtml(`We know you want to see if QuoteCore+ can make quoting <strong>faster, easier, and more accurate</strong>, without spending hours figuring it out.`)}
+      ${paraHtml(`Built by roofers, for roofers, QuoteCore+ supports different ways of working. It&rsquo;s just a matter of finding what works best for you.`)}
+      <p style="margin:24px 0 10px 0;font-size:15px;line-height:22px;color:#0A0A0A;font-weight:600;">Here&rsquo;s what we recommend:</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 10px 0;">
+        ${step('1. Try the guided demo (about 10 minutes)', 'Complete 4 short tasks to see how pricing, measuring, and quoting work together.')}
+        ${step('2. Explore the demo business', 'Browse completed jobs, saved pricing, and finished quotes to see how everything connects.')}
+        ${step('3. Switch to your Free Workspace and add your own pricing', 'Once your pricing is saved, turning measurements and quantities into accurate quotes becomes much faster and easier.')}
       </table>
-      ${ctaBlock('Go to Tutorials', tutorialsUrl)}
-      ${note("If you didn't create an account, you can safely ignore this email.")}
+      ${ctaBlock('Start the Guided Demo', DEMO_URL)}
+      <p style="margin:32px 0 10px 0;font-size:15px;line-height:22px;color:#0A0A0A;font-weight:600;">Need help? We&rsquo;ve got you covered.</p>
+      ${helpOption(YOUR_JOB_URL, 'Send us a job', 'Get a free video showing how we\u2019d quote it in QuoteCore+.')}
+      ${helpOption(CALENDLY_URL, 'Book a free 25-minute call', 'I\u2019ll show you how it fits your workflow.')}
+      ${helpOption(QUICK_START_URL, 'Quick Start', 'We\u2019ll set up your pricing.')}
+      ${helpOption(DONE_FOR_YOU_URL, 'Done For You', 'Setup, personalized training, and ongoing support.')}
+      ${paraHtml(`Or simply <strong>reply to this email</strong> and tell me what you need help with.`)}
+      <p style="margin:28px 0 0 0;font-size:15px;line-height:24px;color:#374151;">Cheers,<br/><strong style="color:#0A0A0A;">Shaun</strong><br/>
+        <span style="font-size:13px;color:#6B7280;">Founder, QuoteCore+ &bull; 20+ years in roofing &amp; construction</span></p>
     `;
 
-    text = `Hi ${firstName},
+  const footerHtml = `<p style="margin:0 0 6px 0;font-size:12px;line-height:18px;color:#6B7280;">You&rsquo;re receiving this because you created a free QuoteCore+ workspace.</p>
+<p style="margin:0 0 6px 0;font-size:12px;line-height:18px;color:#9CA3AF;">Hit reply &mdash; it goes straight to Shaun. &bull; <a href="${escapeHtml(unsubscribeUrl)}" style="color:#9CA3AF;text-decoration:underline;">Unsubscribe</a></p>
+<p style="margin:0;font-size:11px;line-height:16px;color:#9CA3AF;">QuoteCore<span style="color:#F97316;">+</span> &bull; <a href="https://quote-core.com" style="color:#9CA3AF;text-decoration:underline;">quote-core.com</a></p>`;
 
-Welcome to QuoteCore+ - we're glad to have you on board.
+  const text = `Hi ${name},
 
-Your account is ready. You can start quoting, measuring, and managing jobs right away.
+Welcome to QuoteCore+! Your Free Workspace is ready.
 
-New here? Check out our tutorials to get up and running in minutes: ${tutorialsUrl}
+We know you want to see if QuoteCore+ can make quoting faster, easier, and more accurate, without spending hours figuring it out.
 
-If you didn't create an account, you can safely ignore this email.
+Built by roofers, for roofers, QuoteCore+ supports different ways of working. It's just a matter of finding what works best for you.
 
-- The QuoteCore+ team`;
-  } else {
-    // Email/password confirmation variant: single "Confirm Email" CTA.
-    innerHtml = `
-      <p style="margin:0 0 16px 0;font-size:15px;line-height:24px;color:#374151;">Hi ${escapeHtml(firstName)},</p>
-      ${paraHtml(`Welcome to <strong style="color:#F97316;">QuoteCore+</strong> - we're glad to have you on board.`)}
-      ${paraHtml(`Your account is ready. Click below to confirm your email and start quoting, measuring, and managing jobs right away.`)}
-      ${ctaBlock('Confirm Email', dashboardUrl)}
-      ${note("If you didn't create an account, you can safely ignore this email.")}
-    `;
+Here's what we recommend:
 
-    text = `Hi ${firstName},
+1. Try the guided demo (about 10 minutes)
+Complete 4 short tasks to see how pricing, measuring, and quoting work together.
 
-Welcome to QuoteCore+ - we're glad to have you on board.
+2. Explore the demo business
+Browse completed jobs, saved pricing, and finished quotes to see how everything connects.
 
-Your account is ready. Click below to confirm your email and start quoting, measuring, and managing jobs right away:
+3. Switch to your Free Workspace and add your own pricing
+Once your pricing is saved, turning measurements and quantities into accurate quotes becomes much faster and easier.
 
-${dashboardUrl}
+Start the Guided Demo: ${DEMO_URL}
 
-If you didn't create an account, you can safely ignore this email.
+Need help? We've got you covered.
 
-- The QuoteCore+ team`;
-  }
+Send us a job (free video showing how we'd quote it in QuoteCore+): ${YOUR_JOB_URL}
+Book a free 25-minute call: ${CALENDLY_URL}
+Quick Start (we'll set up your pricing): ${QUICK_START_URL}
+Done For You (setup, personalized training, and ongoing support): ${DONE_FOR_YOU_URL}
+
+Or simply reply to this email and tell me what you need help with.
+
+Cheers,
+Shaun
+Founder, QuoteCore+ - 20+ years in roofing & construction
+
+You're receiving this because you created a free QuoteCore+ workspace.
+Unsubscribe: ${unsubscribeUrl}`;
 
   const html = renderEmailLayout({
     heading: 'Welcome to QuoteCore+',
     innerHtml,
-    preheader: `Hi ${firstName}, welcome to QuoteCore+ - your quoting and job management toolkit.`,
+    preheader: 'Your Free Workspace is ready - here\u2019s the quickest path to faster, easier quotes.',
+    footerHtml,
   });
 
-  return {
-    subject: 'Welcome to QuoteCore+ - let\'s get started',
-    html,
-    text,
-  };
+  return { subject: WELCOME_EMAIL_SUBJECT, html, text };
 }
