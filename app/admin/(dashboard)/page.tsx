@@ -14,11 +14,20 @@ export const dynamic = 'force-dynamic';
 export default async function AdminHome() {
   const supabase = createAdminClient();
 
-  const [openTickets, urgentTickets, totalCompanies, totalUsers] = await Promise.all([
+  // Owner 2026-11-20: count REAL accounts only. Raw table counts double-count
+  // every signup (the demo-first redirect provisions a visitor-@demo.invalid
+  // user + fictional demo company ~30s after each real signup). These RPCs use
+  // the same semantics as the Users panel App view (is_test_account=false and
+  // plan_code<>'demo'). Migration 20261120130000_admin_real_counts.sql.
+  const [openTickets, urgentTickets, realCompanies, realUsers] = await Promise.all([
     supabase.from('support_tickets').select('id', { count: 'exact', head: true }).neq('status', 'resolved'),
     supabase.from('support_tickets').select('id', { count: 'exact', head: true }).eq('priority', 'urgent').neq('status', 'resolved'),
-    supabase.from('companies').select('id', { count: 'exact', head: true }),
-    supabase.from('users').select('id', { count: 'exact', head: true }),
+    // RPCs are newer than the generated DB types - plain-promise casts here,
+    // same pattern as users/actions.ts.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).rpc('admin_real_company_count'),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).rpc('admin_real_user_count'),
   ]);
 
   const stats: { label: string; value: number | null; href?: string; tone: 'default' | 'warn' }[] = [
@@ -35,13 +44,13 @@ export default async function AdminHome() {
       tone: (urgentTickets.count ?? 0) > 0 ? 'warn' : 'default',
     },
     {
-      label: 'Companies',
-      value: totalCompanies.count ?? 0,
+      label: 'Companies (real)',
+      value: Number(realCompanies?.data ?? 0),
       tone: 'default',
     },
     {
-      label: 'Users',
-      value: totalUsers.count ?? 0,
+      label: 'Users (real)',
+      value: Number(realUsers?.data ?? 0),
       tone: 'default',
     },
   ];

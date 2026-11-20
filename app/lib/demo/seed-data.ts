@@ -61,10 +61,17 @@ export function demoCurrencyFromAcceptLanguage(header: string | null): DemoCurre
 }
 export function fictionalCompany(id: string, slug: string, now: string, system: DemoMeasurementSystem = 'metric', currency: DemoCurrency = 'GBP'): Database['public']['Tables']['companies']['Insert'] {
   return { id, slug, name: QCP_DEMO_NAME, plan_code: 'demo', subscription_status: 'active',
+    // Demo tenants are internal artifacts (owner 2026-11-20): stamp them test
+    // so admin counts/tabs never mix fictional companies with real accounts.
+    is_test_account: true,
     default_currency: currency, default_language: 'en', default_measurement_system: system, default_trade: 'roofing',
     default_tax_rate: 20, default_material_margin_percent: 0, default_labor_margin_percent: 0,
     onboarding_completed_at: now, plan_started_at: now, notify_on_recipient_view: false,
     notification_prefs: {}, payment_details: { instructions: 'Demo only. No payment is due.' },
     is_supplier: false, stripe_customer_id: null, stripe_subscription_id: null, stripe_price_id: null,
-    admin_paused: false, admin_override_plan_code: null, admin_override_until: null, comp_until: null };
+    admin_paused: false, admin_override_plan_code: null, admin_override_until: null, comp_until: null
+    // is_test_account is not yet in the generated DB types (regen pending,
+    // same situation as billing_model in users/actions.ts) - the cast keeps
+    // the literal fully type-checked except for that one column.
+  } as unknown as Database['public']['Tables']['companies']['Insert'];
 }
