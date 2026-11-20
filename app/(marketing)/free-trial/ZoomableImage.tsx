@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useId, useRef, useState, type MouseEvent } from 'react';
+import { useEffect, useId, useRef, useState, type MouseEvent } from 'react';
 import Image from 'next/image';
 import styles from './FreeWorkspaceLocked.module.css';
 
@@ -18,11 +18,10 @@ type ZoomableImageProps = {
 };
 
 /**
- * An image that opens in a clean, centered modal overlay
- * (owner 2026-11-20: the native dialog felt glitchy; this state-driven
- * overlay animates in, locks page scroll, closes on Escape/backdrop and
- * restores focus to the trigger). Keeping this a small client boundary
- * preserves the server-component marketing pages.
+ * An image that opens as a simple centered enlarged view (owner 2026-11-20):
+ * plain overlay, no animations, no scroll lock, no blur - just show the
+ * image large in the middle of the page and close on X, backdrop or Escape.
+ * Small client boundary keeps the marketing pages server-rendered.
  */
 export default function ZoomableImage({
   src,
@@ -38,32 +37,19 @@ export default function ZoomableImage({
 }: ZoomableImageProps) {
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
-
-  const closeImage = useCallback(() => setOpen(false), []);
 
   useEffect(() => {
     if (!open) return;
-    const previousOverflow = document.body.style.overflow;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closeImage();
-      }
+      if (event.key === 'Escape') setOpen(false);
     };
     document.addEventListener('keydown', onKeyDown);
-    document.body.style.overflow = 'hidden';
-    closeRef.current?.focus();
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = previousOverflow;
-      trigger.current?.focus();
-    };
-  }, [open, closeImage]);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open]);
 
   function onBackdropClick(event: MouseEvent<HTMLDivElement>) {
-    if (event.target === event.currentTarget) closeImage();
+    if (event.target === event.currentTarget) setOpen(false);
   }
 
   return (
@@ -105,26 +91,17 @@ export default function ZoomableImage({
             aria-labelledby={titleId}
             onClick={(event) => event.stopPropagation()}
           >
-            <div className={styles.zoomDialogInner}>
-              <button
-                ref={closeRef}
-                type="button"
-                className={styles.zoomDialogClose}
-                onClick={closeImage}
-                aria-label="Close image preview"
-              >
-                ×
-              </button>
-              <Image
-                src={src}
-                alt={alt}
-                width={width}
-                height={height}
-                sizes="(max-width: 620px) 100vw, 1240px"
-                className={styles.zoomDialogImage}
-              />
-              <p id={titleId} className={styles.zoomDialogCaption}>{title}</p>
-            </div>
+            <button
+              type="button"
+              className={styles.zoomDialogClose}
+              onClick={() => setOpen(false)}
+              aria-label="Close image preview"
+            >
+              ×
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element -- Plain img: uses the exact src already cached by the browser, no re-optimization pop-in. */}
+            <img src={src} alt={alt} className={styles.zoomDialogImage} />
+            <p id={titleId} className={styles.zoomDialogCaption}>{title}</p>
           </div>
         </div>
       ) : null}
