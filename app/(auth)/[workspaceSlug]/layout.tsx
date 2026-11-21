@@ -1,4 +1,15 @@
+import type { Metadata } from 'next';
 import { PushSessionBridge } from '@/app/components/pwa/PushSessionBridge';
+
+export const metadata: Metadata = {
+  icons: {
+    icon: [
+      { url: '/app-favicon.ico' },
+      { url: '/app-icon.png', type: 'image/png' },
+    ],
+    apple: [{ url: '/app-apple-icon.png' }],
+  },
+};
 import { ReactNode } from 'react';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
