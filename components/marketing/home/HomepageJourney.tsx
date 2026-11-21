@@ -79,8 +79,8 @@ const steps: Step[] = [
       { title: 'Keep learning', body: 'Feedback from a declined quote can improve the next one. Optional follow-up automation is available.' },
     ],
     outcome: 'Less guessing. Better follow-up. More chances to win work.',
-    media: '/how-it-works/how-it-works-3.png',
-    mediaAlt: 'QuoteCore+ document message centre for sending and monitoring customer communications',
+    media: '/marketing/current-ux/message-center.webp',
+    mediaAlt: 'QuoteCore+ Message Center showing quote opened and declined updates with follow-up actions',
     learnHref: '/features/sending-and-tracking', learnLabel: 'Explore quote tracking',
   },
 ];
