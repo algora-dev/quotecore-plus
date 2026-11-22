@@ -1,578 +1,188 @@
-import type { Metadata } from "next";
-import BlogHeader from "@/components/BlogHeader";
-import SiteFooter from "@/components/SiteFooter";
-import Breadcrumbs from "@/components/Breadcrumbs";
-import { CommercialFinalCta, CommercialHeroActions } from "@/components/conversion/CommercialConversion";
-import DemoCTACard from "@/components/DemoCTACard";
-import ThreeWaysToWork from "@/components/ThreeWaysToWork";
-import {
-  buildSoftwareApplicationSchema,
-  buildBreadcrumbSchema,
-  buildFaqSchema,
-  siteUrl,
-} from "@/lib/schema";
+import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
+import Link from 'next/link';
+import BlogHeader from '@/components/BlogHeader';
+import SiteFooter from '@/components/SiteFooter';
+import YouTubeLite from '@/components/YouTubeLite';
+import { MarketingButton } from '@/components/marketing/MarketingButton';
+import { buildBreadcrumbSchema, buildFaqSchema, buildSoftwareApplicationSchema, siteUrl } from '@/lib/schema';
+import { hreflangLanguages } from '@/lib/seo/hreflang';
+import { takeoffMedia, takeoffVideoSchema, validTakeoffVideoId } from './media';
+import styles from './RoofTakeoff.module.css';
+
+const path = '/roofing-takeoff-software';
+const canonical = `${siteUrl}${path}`;
+const title = 'AI Roof Takeoff: Plans & Satellite Images | QuoteCore+';
+const description = 'AI roof measurement from plans, blueprints or uploaded satellite images. Calibrate, scan or trace manually, edit every roof component and apply saved pricing.';
 
 export const metadata: Metadata = {
-  title: "Roofing Takeoff Software for PDF Plans | QuoteCore+",
-  description:
-    "Measure roof areas, lengths and pitch from PDF plans with Roof Scan Assist and digital takeoff - on phone, tablet or desktop. Get automatic material quantities and pricing. Free roof takeoff builder - no signup required.",
-  openGraph: {
-    title: "Roofing Takeoff Software for PDF Plans | QuoteCore+",
-    description:
-      "Measure roof areas, lengths and pitch from PDF plans with Roof Scan Assist and digital takeoff - on phone, tablet or desktop. Get automatic material quantities and pricing. Free roof takeoff builder - no signup required.",
-    url: "/roofing-takeoff-software",
-    siteName: "QuoteCore+",
-    type: "website",
-  },
-  alternates: {
-    canonical: "https://quote-core.com/roofing-takeoff-software",
-  },
+  title: { absolute: title }, description,
+  alternates: { canonical, languages: hreflangLanguages(path) },
+  robots: { index: true, follow: true },
+  openGraph: { title, description, url: canonical, siteName: 'QuoteCore+', type: 'website',
+    images: [{ url: `${siteUrl}/og-image.jpg`, width: 1200, height: 630, alt: 'QuoteCore+ digital roof takeoff software' }] },
+  twitter: { card: 'summary_large_image', title, description, images: [`${siteUrl}/og-image.jpg`] },
 };
 
 const faqs = [
   {
-    question: "Can QuoteCore+ do roofing takeoffs from PDF plans?",
-    answer:
-      "Yes. Upload a PDF plan, satellite image or drawing and use the digital takeoff tools to measure roof areas, ridge, hip, valley, eave and barge lengths, and pitch. Measurements are calculated automatically and feed directly into Smart Components for pricing.",
+    question: 'Can I measure a roof from satellite images without visiting the site?',
+    answer: 'Yes. Upload a clear overhead or satellite roof image, calibrate it using a reliable known dimension, then trace the roof manually or use Roof Scan Assist. QuoteCore+ does not automatically fetch satellite imagery from a street address. Verify dimensions, roof pitch and any obscured areas before quoting.',
   },
   {
-    question: "How does Roof Scan Assist work for roof takeoffs?",
-    answer:
-      "Roof Scan Assist analyses an uploaded plan in stages: it scans the plan, you review and correct the detected roof outline, then component detection identifies ridges, hips, valleys, barges and spouting on the corrected geometry. You review and adjust everything before it becomes part of the estimate. It speeds up the takeoff process significantly, especially for complex roofs with multiple sections - and it works on mobile as well as desktop.",
+    question: 'Can AI measure a roof from satellite images or PDF plans?',
+    answer: 'Yes. Roof Scan Assist works with suitable calibrated roof plans, architectural drawings and uploaded satellite or overhead images. Image quality, scale, lighting, shadows, tree cover and roof complexity affect how accurately it identifies roof geometry. You can inspect, edit, add or redraw measurements before accepting the result.',
   },
   {
-    question: "Can I do roof takeoff on my phone or tablet?",
-    answer:
-      "Yes. The full takeoff workflow runs on phones and tablets: upload the plan, calibrate the scale, measure areas and lengths, use Roof Scan Assist, assign components and save & continue. The job saves to your account, so you can finish on desktop or keep going on site.",
+    question: 'Can I measure a roof from an architectural PDF or blueprint without printing it?',
+    answer: 'Yes. Upload a clear architectural roof drawing, blueprint or PDF plan, calibrate a known distance, and measure areas and roof lines on screen. You can also use an uploaded satellite image. Check the scale and pitch before finalising quantities.',
   },
   {
-    question: "Can I measure ridge, hip, and valley lengths, not just roof areas?",
-    answer:
-      "Yes. The digital takeoff tools measure both roof surface areas and linear lengths - ridges, hips, valleys, barges, eaves, flashings and spouting. All measurements can be named, grouped by roof section, and assigned different materials and pitch values.",
+    question: 'Is there a free roof takeoff tool?',
+    answer: 'Yes. The standalone Free Roof Takeoff tool lets you upload your own plan or image, calibrate it, measure and review a report without signing up. Roof Scan Assist access is subject to device credits and availability. A Free Workspace adds saved jobs and reusable pricing libraries, subject to plan limits.',
   },
   {
-    question: "Does QuoteCore+ calculate material quantities from takeoff measurements?",
-    answer:
-      "Yes. Smart Components apply your stored materials, labour, waste allowances and pricing rules to takeoff measurements automatically. When you measure a roof area, the corresponding material quantities, screws, flashings and labour are calculated without manual entry.",
-  },
-  {
-    question: "What plan formats does QuoteCore+ support for takeoff?",
-    answer:
-      "QuoteCore+ supports uploaded images (PNG, JPG) and multi-page PDF plans - upload the whole PDF (e.g. council plans), pick the page you need, and it is converted to an image for measuring. For best results, use a view that shows just the area you want to measure, large enough to read clearly, with the scale or a known dimension visible so you can calibrate. You can also use the free roof takeoff builder without uploading a plan if you already have measurements.",
-  },
-  {
-    question: "Can I export takeoff measurements without creating a quote?",
-    answer:
-      "Yes. Measurements can be reviewed and adjusted before you decide to create a quote. The takeoff feeds into the estimate and quote only when you choose to proceed. The free roof takeoff builder also lets you generate measurements without any commitment.",
+    question: 'Are roof measurements priced automatically as I draw or use AI?',
+    answer: 'Yes. With your saved Smart Components and pricing library configured, a completed roof area or line can calculate the linked component price from its measurement and your rules. Manual and AI-assisted takeoffs use the same pricing workflow. Review the priced takeoff, then continue to a customer quote without typing those measurements again.',
   },
 ];
 
-const faqSchema = buildFaqSchema(faqs);
-
-const breadcrumbSchema = buildBreadcrumbSchema([
-  { name: "Home", url: `${siteUrl}/` },
-  { name: "Roofing Takeoff Software", url: `${siteUrl}/roofing-takeoff-software` },
-]);
-
-const softwareSchema = {
-  "@context": "https://schema.org",
-  ...buildSoftwareApplicationSchema(),
-};
-
-const takeoffSteps = [
-  {
-    number: "01",
-    title: "Upload PDF plans or use Roof Scan Assist",
-    body: "Upload a roof plan, satellite image or drawing - on phone, tablet or desktop. With Roof Scan Assist the workflow is staged: scan the plan, review and correct the detected outline, then let component detection find ridges, hips, valleys, barges and spouting on the corrected geometry. Or measure manually with digital takeoff tools.",
-  },
-  {
-    number: "02",
-    title: "Measure roof areas, lengths and pitch digitally",
-    body: "Name each roof area, assign pitch and material type. Digital takeoff handles angles, pitches and complex roof geometry. Measure ridges, hips, valleys, eaves, barges, flashings and spouting lengths. Takeoffs save with the job, so you can measure on site and continue later on another device.",
-  },
-  {
-    number: "03",
-    title: "Smart Components apply material quantities, waste and labour",
-    body: "Measurements feed directly into Smart Components, which apply your stored materials, waste allowances, labour rates and pricing rules automatically. No spreadsheet formulas, no manual re-entry.",
-  },
-  {
-    number: "04",
-    title: "Review, adjust and send as a quote",
-    body: "Check the takeoff and pricing, adjust any measurement or quantity, then send it to the customer as a professional quote. The same data carries through to material orders and invoices.",
-  },
-];
-
-const whatItMeasures = [
-  "Roof surface areas (by pitch)",
-  "Ridge, hip, valley, eave and barge lengths",
-  "Flashing and trim lengths",
-  "Spouting and downpipe quantities",
-  "Pitch and slope calculations",
-  "Material quantities with waste allowances applied",
-];
-
-const limitations = [
-  {
-    title: "No 3D modelling",
-    body: "QuoteCore+ measures roof geometry in 2D from plans and images. It does not generate 3D roof models or visualisations.",
-  },
-  {
-    title: "No cutting lists",
-    body: "QuoteCore+ calculates material quantities and pricing, not individual cutting schedules for each piece of material on site.",
-  },
-];
+type IconKind = 'arrow' | 'check' | 'ruler' | 'scan' | 'layers' | 'file' | 'sparkles' | 'upload' | 'edit';
+function Icon({ kind }: { kind: IconKind }) {
+  const shapes: Record<IconKind, ReactNode> = {
+    arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
+    check: <path d="m5 12 4 4L19 6" />,
+    ruler: <><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 6v4m4-4v3m4-3v4m4-4v3"/></>,
+    scan: <><path d="M4 9V5a1 1 0 0 1 1-1h4m6 0h4a1 1 0 0 1 1 1v4m0 6v4a1 1 0 0 1-1 1h-4m-6 0H5a1 1 0 0 1-1-1v-4"/><path d="m7 13 3-4 3 4 4-5"/></>,
+    layers: <><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/></>,
+    file: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></>,
+    sparkles: <><path d="m12 3 1.8 5.5L20 11l-6.2 2.5L12 19l-1.8-5.5L4 11l6.2-2.5Z"/><path d="m19 18 .6 1.4L21 20l-1.4.6L19 22l-.6-1.4L17 20l1.4-.6Z"/></>,
+    upload: <><path d="M12 16V3m-4 4 4-4 4 4"/><path d="M4 16v4h16v-4"/></>,
+    edit: <><path d="m4 20 4-1 11-11a2 2 0 0 0-3-3L5 16l-1 4Z"/><path d="m14 7 3 3"/></>,
+  };
+  return <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">{shapes[kind]}</svg>;
+}
 
 export default function RoofingTakeoffSoftwarePage() {
-  return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-
-      <main className="min-h-screen bg-white text-zinc-950">
-        <BlogHeader />
-        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Roofing Takeoff Software" }]} />
-
-        {/* Cross-trade notice */}
-        <div className="border-b border-zinc-200 bg-zinc-50 px-6 py-3 text-center text-sm text-zinc-600">
-          QuoteCore+ also works across cladding, flooring, fencing, landscaping, and other construction trades.{" "}
-          <a href="/construction-quoting-software" className="font-medium text-[#FF6B35] hover:underline">
-            See the full construction quoting software page
-          </a>
+  const videoId = validTakeoffVideoId(takeoffMedia.videoId);
+  const videoSchema = takeoffVideoSchema();
+  const schemas = [
+    buildBreadcrumbSchema([{ name: 'Home', url: `${siteUrl}/` }, { name: 'Roof Takeoff Software', url: canonical }]),
+    { '@context': 'https://schema.org', ...buildSoftwareApplicationSchema() },
+    buildFaqSchema(faqs),
+    ...(videoSchema ? [videoSchema] : []),
+  ];
+  return <>
+    {schemas.map((schema, i) => <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }} />)}
+    <BlogHeader />
+    <main className={styles.root}>
+      {/* 01: Light hero. Visible first-screen search intent and the two real destinations. */}
+      <section className={`${styles.section} ${styles.hero}`} aria-labelledby="takeoff-title">
+        <div className={`${styles.wrap} ${styles.heroGrid}`}>
+          <div className={styles.heroCopy}>
+            <p className={styles.eyebrow}>AI roof measurement · Manual digital takeoff</p>
+            <h1 id="takeoff-title">Measure roofs from plans or satellite images. <span className={styles.gradientText}>With or without AI.</span></h1>
+            <p className={styles.heroLead}>Measure from a PDF roof plan, architectural drawing, blueprint or uploaded satellite image. Trace roof areas and lines yourself, or use editable <strong>Roof Scan Assist</strong>. Your completed measurements are priced using your saved components and flow straight into a customer quote. <strong>No measuring twice or re-entering numbers.</strong></p>
+            <div className={styles.actions} data-analytics-surface="roof_takeoff_hero" data-analytics-location="roof_takeoff_hero">
+              <MarketingButton href="/signup" variant="primary" size="large" className={styles.primaryCta}>Create Free Workspace <Icon kind="arrow" /></MarketingButton>
+              <MarketingButton href="/free-roof-takeoff" variant="glass" size="large" className={styles.secondaryCta}>Try Free Roof Takeoff</MarketingButton>
+            </div>
+            <p className={styles.reassurance}><Icon kind="check" /> No credit card · Manual takeoff available free · AI subject to credits</p>
+            {videoId ? <a href="#takeoff-tutorial" className={styles.tutorialLink}>Watch the takeoff tutorial <span aria-hidden="true">↓</span></a> : null}
+          </div>
+          <aside className={styles.videoCard} id="takeoff-tutorial" aria-label="Digital roof takeoff demonstration" data-analytics-surface="roof_takeoff_video" data-analytics-location="roof_takeoff_hero">
+            <div className={styles.videoTop}><span className={styles.statusDot} /> DIGITAL ROOF TAKEOFF <span>QUOTECORE+</span></div>
+            {videoId ? <YouTubeLite videoId={videoId} title="How to measure roofs from plans and satellite images in QuoteCore+" className={styles.videoEmbed} uploadDate={takeoffMedia.videoUploadDate} /> :
+              <div className={styles.videoPlaceholder}>
+                {/* Existing real screenshot, not a simulated playable video. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/marketing/home/takeoff-workspace-v2.webp" alt="QuoteCore+ digital roof takeoff showing editable roof geometry over a satellite image" loading="eager" />
+                <span className={styles.videoOverlay}><strong>See the real takeoff workflow</strong><span>Your YouTube tutorial goes here</span></span>
+              </div>}
+            <p className={styles.videoCaption}>See the connected workflow: roof image, editable measurements, automatic component pricing and a quote.</p>
+          </aside>
         </div>
+      </section>
 
-        {/* Hero */}
-        <section className="relative overflow-hidden pb-16 pt-12">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.10),transparent_34%)]" />
-          <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
-            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Roofing takeoff software that measures plans digitally and calculates materials automatically.
-            </h1>
-
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Upload plans and measure roof areas, lengths and pitch digitally on site from your phone or tablet, or at the office on desktop. Roof Scan Assist detects roof geometry automatically. Smart Components&#8482; turn measurements into material quantities and priced estimates. Start in a Free Workspace and upgrade only when you need more.
-            </p>
-
-            <CommercialHeroActions location="roofing_takeoff_hero" />
-
-            <p className="mt-3 text-sm text-zinc-500">No card and no expiry. Use the Free Workspace on your own jobs for as long as it suits you.</p>
+      {/* 02: Dark method chooser, with editable AI outcomes as the differentiator. */}
+      <section className={`${styles.section} ${styles.dark}`} aria-labelledby="methods-title">
+        <div className={styles.wrap}>
+          <p className={styles.eyebrow}>Two ways to measure</p>
+          <h2 id="methods-title">You choose how much <span className={styles.darkAccent}>AI helps.</span></h2>
+          <div className={styles.methodGrid}>
+            <Link href="/features/digital-roof-takeoff" className={styles.methodCard} data-analytics-surface="roof_takeoff_manual" data-analytics-location="roof_takeoff_methods">
+              <div className={styles.methodTitle}><span className={styles.methodIcon}><Icon kind="ruler" /></span><div><span className={styles.methodLabel}>YOUR CONTROL</span><h3>Measure it yourself</h3></div></div>
+              <p>Calibrate your plan or satellite image, then draw a roof area, ridge, hip, valley, barge or rake. As you complete each area or line, its linked component calculates the price using your saved rates.</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className={styles.methodImage} src="/marketing/current-ux/digital-takeoff-manual.webp" alt="Manual tracing of roof areas and lengths in the QuoteCore+ Digital Takeoff workspace" loading="lazy" />
+              <span className={styles.methodAction}>Explore manual takeoff <Icon kind="arrow" /></span>
+            </Link>
+            <Link href="/features/ai-scan-assist" className={styles.methodCard} data-analytics-surface="roof_takeoff_ai" data-analytics-location="roof_takeoff_methods">
+              <div className={styles.methodTitle}><span className={styles.methodIcon}><Icon kind="scan" /></span><div><span className={styles.methodLabel}>AI-ASSISTED</span><h3>Let Roof Scan Assist help</h3></div></div>
+              <p>Upload and calibrate a roof plan <strong>or satellite image</strong>. AI Roof Scan Assist proposes roof outlines, areas and component lines. Review, move or redraw them, then use the same automatic pricing.</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className={styles.methodImage} src="/marketing/current-ux/ai-scan-assist-completed-roof.webp" alt="Editable roof geometry after an AI Roof Scan Assist takeoff in QuoteCore+" loading="lazy" />
+              <span className={styles.methodAction}>Explore AI Roof Scan Assist <Icon kind="arrow" /></span>
+            </Link>
           </div>
-        </section>
+          <div className={styles.qualityNote}><Icon kind="edit" /><p><strong>AI roof measurement you can correct.</strong> Upload a clear, correctly calibrated plan or satellite image for the best result. Shadows, trees, low resolution and complex roofs can reduce accuracy. Inspect and edit the suggested outlines, roof areas and lines before pricing the job.</p></div>
+        </div>
+      </section>
 
-        {/* What is roofing takeoff software? */}
-        <section className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
-          <h2 className="text-3xl font-semibold sm:text-4xl">
-            What is roofing takeoff software?
-          </h2>
-
-          <p className="mt-6 text-lg leading-8 text-zinc-700">
-            Roofing takeoff software helps contractors measure roof areas, lengths and pitch from plans or images, and calculate material quantities from those measurements.
-          </p>
-          <p className="mt-5 text-lg leading-8 text-zinc-600">
-            Manual takeoff means printing plans, using a scaling ruler to measure dimensions, counting features by hand, and entering everything into a spreadsheet. It works, but it is slow, error-prone, and has to be repeated from scratch on every job.
-          </p>
-          <p className="mt-5 text-lg leading-8 text-zinc-600">
-            QuoteCore+ replaces that with digital takeoff tools and Roof Scan Assist. Upload a plan, measure digitally or let AI detect roof geometry, and Smart Components&#8482; automatically apply materials, labour, waste and pricing. The takeoff becomes an estimate, and the estimate becomes a quote - all in one connected workflow.
-          </p>
-          <p className="mt-5 text-lg leading-8 text-zinc-600">
-            You may see this category called roof takeoff, roof measurement, roofing quantity takeoff or plan measurement software - and in the estimating stage, roofing estimating from plans. The distinction matters: <strong className="text-zinc-950">takeoff creates the measurements; estimating applies the pricing and material logic.</strong> This page covers the measurement side; for pricing see{' '}
-            <a href="/roofing-estimating-software" className="text-[#BD4A1A] hover:underline">roofing estimating software</a>, or{' '}
-            <a href="/measurement-to-quote-tool" className="text-[#BD4A1A] hover:underline">turn measurements you already have into pricing</a>.
-          </p>
-          <p className="mt-5 text-lg leading-8 text-zinc-600">
-            Whatever your plans and units - PDF drawings or blueprints, shingles, metal panels or membrane, square feet and roofing squares with pitch ratios like 6:12, or square metres with pitch degrees - the takeoff workflow is the same: calibrate, measure, verify, done - on phone, tablet or desktop. Measuring across other trades too? See{' '}
-            <a href="/construction-takeoff-software" className="text-[#BD4A1A] hover:underline">construction takeoff software for roofs, siding and floors</a>.
-          </p>
-        </section>
-
-        <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
-          <DemoCTACard location="roofing_takeoff_software_intro" />
-        </section>
-
-        {/* Three ways to work */}
-        <ThreeWaysToWork
-          className="max-w-4xl"
-          title="Measure in QuoteCore+, or bring your own measurements"
-          intro="Takeoff is the measurement step - start from the source you actually have."
-          cards={[
-            {
-              title: "Measure it in QuoteCore+",
-              body: "Calibrate the scale and measure roof areas, ridges, hips, valleys, barges and spouting from plans or images - on phone, tablet or desktop. Use the staged Roof Scan Assist path where it helps, then review and correct before anything is priced.",
-              href: "/features/digital-roof-takeoff",
-              linkLabel: "See digital takeoff →",
-            },
-            {
-              title: "Use measurements from another source",
-              body: "Already have a site measure, an aerial/satellite report or another takeoff app’s numbers? Enter them directly and apply the same saved materials, waste and pricing rules.",
-              href: "/measurement-to-quote-tool",
-              linkLabel: "See measurement-to-quote →",
-            },
-            {
-              title: "Ask Smart Assistant",
-              body: "Need a number while you work? Ask Smart Assistant to find jobs, quotes, orders and invoices by text or voice instead of navigating every screen.",
-            },
-          ]}
-          footnote="The quantities your takeoff produces flow straight into Smart Components™ pricing and the quote - takeoff creates the measurements, estimating applies the pricing logic."
-        />
-
-        {/* Key takeoff features */}
-        <section className="bg-zinc-50 py-20">
-          <div className="mx-auto max-w-4xl px-6 lg:px-8">
-            <h2 className="text-3xl font-semibold sm:text-4xl">
-              Key takeoff features
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-zinc-600">
-              The tools that make takeoff faster and more accurate in QuoteCore+.
-            </p>
-
-            <div className="mt-12 grid gap-6 sm:grid-cols-2">
-              <a
-                href="/features/digital-roof-takeoff"
-                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-6 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-              >
-                <h3 className="text-xl font-semibold">Digital roof takeoff</h3>
-                <p className="mt-3 text-zinc-600">
-                  Measure roof areas, lengths and pitch from uploaded plans. Handles angles, complex geometry and multiple roof sections.
-                </p>
-              </a>
-              <a
-                href="/features/ai-scan-assist"
-                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-6 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-              >
-                <h3 className="text-xl font-semibold">Roof Scan Assist</h3>
-                <p className="mt-3 text-zinc-600">
-                  Automatically identifies roof areas, ridges, hips, valleys, barges and spouting from an uploaded plan.
-                </p>
-              </a>
-              <a
-                href="/features/smart-components"
-                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-6 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-              >
-                <h3 className="text-xl font-semibold">Smart Components&#8482;</h3>
-                <p className="mt-3 text-zinc-600">
-                  Automatically apply materials, labour, waste and pricing to takeoff measurements. No manual quantity calculation.
-                </p>
-              </a>
-              <a
-                href="/features/material-ordering"
-                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-6 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-              >
-                <h3 className="text-xl font-semibold">Material ordering</h3>
-                <p className="mt-3 text-zinc-600">
-                  Turn takeoff quantities into a material order with supplier details carried over. No re-keying.
-                </p>
-              </a>
-            </div>
+      {/* 03: Light proof, pricing bridge and concise discoverable answers. */}
+      <section className={`${styles.section} ${styles.result}`} aria-labelledby="result-title">
+        <div className={styles.wrap}>
+          <div className={styles.resultHead}><div><p className={styles.eyebrow}>Every measurement counts</p><h2 id="result-title">Draw it or scan it. <span className={styles.gradientText}>The price follows.</span></h2></div><p>Each measured area or line connects to its saved pricing component. QuoteCore+ applies your material, labour, pitch and waste rules, then carries the same quantities into your customer quote.</p></div>
+          <ol className={styles.flowSteps} aria-label="From roof measurement to customer quote"><li><strong>01</strong><span>Draw or scan the roof</span></li><li><strong>02</strong><span>Components price automatically</span></li><li><strong>03</strong><span>Review and send the quote</span></li></ol>
+          <div className={styles.resultsGrid}>
+            <figure className={styles.exampleCard}>
+              <div className={styles.exampleHeader}>01 / MEASURE &amp; PRICE</div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/marketing/home/demo/demo-02-takeoff.webp" alt="Roof plan showing digital measurement of roof features inside the QuoteCore+ takeoff workstation" loading="lazy" />
+              <figcaption><strong>Each roof component is measured and priced</strong><span>Draw it yourself or edit the AI result. Your saved rates do the maths.</span></figcaption>
+            </figure>
+            <span className={styles.betweenArrow} aria-hidden="true"><Icon kind="arrow" /></span>
+            <figure className={styles.exampleCard}>
+              <div className={styles.exampleHeader}>02 / REVIEW YOUR QUOTE</div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/marketing/current-ux/quote-builder-components-measurements.webp" alt="QuoteCore+ quote builder using roofing quantities and saved pricing components" loading="lazy" />
+              <figcaption><strong>Your priced job is already there</strong><span>Check the materials and labour, then prepare the customer quote. No re-entry.</span></figcaption>
+            </figure>
           </div>
-        </section>
-
-        {/* How takeoff works */}
-        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
-          <h2 className="text-3xl font-semibold sm:text-4xl">
-            How takeoff works in QuoteCore+
-          </h2>
-          <p className="mt-4 text-lg leading-8 text-zinc-600">
-            From plan upload to material quantities in four steps.
-          </p>
-
-          <div className="mt-12 flex flex-col gap-5">
-            {takeoffSteps.map((s) => (
-              <div
-                key={s.number}
-                className="rounded-[2rem] border border-zinc-200 bg-white px-7 py-6 shadow-sm"
-              >
-                <div className="flex items-start gap-6">
-                  <span className="w-12 shrink-0 text-2xl font-semibold text-zinc-950">
-                    {s.number}
-                  </span>
-                  <div>
-                    <h3 className="text-xl font-semibold">{s.title}</h3>
-                    <p className="mt-3 text-zinc-600">{s.body}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className={styles.routeLinks}>
+            <Link href="/roofing-pricing-setup" data-analytics-surface="roof_takeoff_pricing_step" data-analytics-location="roof_takeoff_related"><span><span className={styles.currencyGlyph} aria-hidden="true">$</span></span><span><strong>Need to set up your pricing?</strong><small>Enter your rates or import a price list with AI</small></span><Icon kind="arrow" /></Link>
+            <Link href="/roof-measurements-to-price" data-analytics-surface="roof_takeoff_existing_measurements" data-analytics-location="roof_takeoff_related"><span><Icon kind="ruler" /></span><span><strong>Already have measurements?</strong><small>Price your existing quantities with saved rates</small></span><Icon kind="arrow" /></Link>
           </div>
-        </section>
-
-        {/* Keep Xero for accounting */}
-        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
-          <div className="rounded-[1.5rem] border border-[#FF6B35]/30 bg-orange-50/50 px-6 py-6 text-center">
-            <h2 className="text-2xl font-semibold sm:text-3xl">Keep Xero for accounting</h2>
-            <p className="mt-3 text-lg leading-8 text-zinc-600">
-              Connect your QuoteCore+ account to Xero, then open a quote summary and choose{" "}
-              <strong>Send to App &rarr; Xero</strong> to export its information as a
-              draft invoice with line items.{" "}
-              <a href="/integrations/xero" className="font-medium text-[#BD4A1A] hover:underline">
-                See how the Xero integration works
-              </a>
-              .
-            </p>
+          <p className={styles.researchNote}>Measuring remotely? Read our <Link href="/research/google-earth-roof-measurement-accuracy">ten-roof Google Earth measurement study</Link> for real comparisons and limitations.</p>
+          <div className={styles.faq} aria-labelledby="faq-title">
+            <h3 id="faq-title">Common questions</h3>
+            {faqs.map((faq) => <details key={faq.question}><summary>{faq.question}</summary><p>{faq.answer}</p></details>)}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* What QuoteCore+ measures in takeoff */}
-        <section className="bg-zinc-50 py-20">
-          <div className="mx-auto max-w-4xl px-6 lg:px-8">
-            <h2 className="text-3xl font-semibold sm:text-4xl">
-              What QuoteCore+ measures in takeoff
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-zinc-600">
-              Roofing-specific measurement types handled by the digital takeoff workflow.
-            </p>
-
-            <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-              {whatItMeasures.map((item) => (
-                <li
-                  key={item}
-                  className="flex items-start gap-3 rounded-[1.5rem] border border-zinc-200 bg-white px-5 py-4 text-zinc-700"
-                >
-                  <span className="mt-1 shrink-0 font-bold text-[#FF6B35]">
-                    ✓
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
+      {/* 04: Dark final CTA. Each choice is a complete, clickable card. */}
+      <section className={`${styles.section} ${styles.closing}`} aria-labelledby="closing-title">
+        <div className={styles.wrap}>
+          <p className={styles.eyebrow}>Start measuring</p>
+          <h2 id="closing-title">From roof image to roof quote, <span className={styles.darkAccent}>your way.</span></h2>
+          <div className={styles.compareGrid}>
+            <Link href="/signup" className={`${styles.compareCard} ${styles.featured}`} data-analytics-surface="roof_takeoff_workspace" data-analytics-location="roof_takeoff_footer" aria-label="Create your Free Workspace to save takeoffs, use your pricing libraries and build quotes">
+              <div className={styles.compareTop}><span>FOR YOUR REAL JOBS</span><strong>RECOMMENDED</strong></div>
+              <div className={styles.compareTitle}><h3>QuoteCore+ Free Workspace</h3></div>
+              <p>Save your takeoffs, use your pricing library for automatic component prices, and build customer quotes without re-entering measurements. Manual and AI options, subject to free limits.</p>
+              <span className={styles.compareAction}>Create Free Workspace <Icon kind="arrow" /></span>
+            </Link>
+            <Link href="/free-roof-takeoff" className={`${styles.compareCard} ${styles.standalone}`} data-analytics-surface="roof_takeoff_free_tool" data-analytics-location="roof_takeoff_footer" aria-label="Open the standalone free roof takeoff tool without signing up">
+              <div className={styles.compareTop}><span>FOR A QUICK TAKEOFF</span></div>
+              <div className={styles.compareTitle}><h3>Standalone free roof tool</h3></div>
+              <p>Upload your own plan or overhead image, calibrate and measure in the browser. No signup needed. AI access depends on device credits.</p>
+              <span className={styles.compareAction}>Try Free Roof Takeoff <Icon kind="arrow" /></span>
+            </Link>
           </div>
-        </section>
-
-        {/* Takeoff vs estimating */}
-        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
-          <h2 className="text-3xl font-semibold sm:text-4xl">
-            Takeoff vs estimating - what&apos;s the difference?
-          </h2>
-
-          <p className="mt-6 text-lg leading-8 text-zinc-700">
-            Takeoff is the measurement step - measuring roof areas, lengths and pitch from a plan. Estimating adds pricing, labour, waste and material quantities to those measurements.
-          </p>
-          <p className="mt-5 text-lg leading-8 text-zinc-600">
-            Many contractors do takeoff in one tool, then re-enter the measurements into a spreadsheet to estimate. QuoteCore+ does both in one workflow: takeoff measurements feed directly into Smart Components&#8482;, which apply materials, labour, waste and pricing automatically.
-          </p>
-          <p className="mt-5 text-lg leading-8 text-zinc-600">
-            See the{" "}
-            <a href="/roofing-estimating-software" className="font-medium text-[#FF6B35] hover:underline">
-              roofing estimating software
-            </a>{" "}
-            page for more on the estimating side.
-          </p>
-        </section>
-
-        {/* Honest limitations */}
-        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
-          <h2 className="text-3xl font-semibold sm:text-4xl">
-            What QuoteCore+ does not do
-          </h2>
-          <div className="mt-8 space-y-4">
-            {limitations.map((l) => (
-              <div
-                key={l.title}
-                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5"
-              >
-                <p className="font-semibold text-zinc-950">{l.title}</p>
-                <p className="mt-2 text-sm leading-7 text-zinc-600">{l.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Comparing takeoff tools */}
-        <section className="bg-zinc-50 py-20">
-          <div className="mx-auto max-w-4xl px-6 lg:px-8">
-            <h2 className="text-3xl font-semibold sm:text-4xl">
-              Comparing takeoff tools?
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-zinc-600">
-              Looking at RoofSnap, EagleView, PlanSwift, Roofr, STACK, HOVER or Bluebeam? We compare them with QuoteCore+ honestly - features, workflow and pricing:
-            </p>
-            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <a
-                href="/roofsnap-alternative"
-                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-              >
-                <p className="font-semibold text-zinc-950">RoofSnap alternative</p>
-                <p className="mt-1 text-sm text-zinc-600">
-                  Closest product-to-product comparison - measure-and-quote software vs software.
-                </p>
-              </a>
-              <a
-                href="/eagleview-alternative"
-                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-              >
-                <p className="font-semibold text-zinc-950">EagleView alternative</p>
-                <p className="mt-1 text-sm text-zinc-600">
-                  Aerial measurement reports vs plan-based takeoff you own.
-                </p>
-              </a>
-              <a
-                href="/planswift-alternative"
-                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-              >
-                <p className="font-semibold text-zinc-950">PlanSwift alternative</p>
-                <p className="mt-1 text-sm text-zinc-600">
-                  General-purpose desktop takeoff vs roofing-native quoting.
-                </p>
-              </a>
-              <a
-                href="/roofr-alternative"
-                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-              >
-                <p className="font-semibold text-zinc-950">Roofr alternative</p>
-                <p className="mt-1 text-sm text-zinc-600">
-                  Broad roofing CRM platform vs focused estimating workflow.
-                </p>
-              </a>
-              <a
-                href="/stack-alternative-for-roofing"
-                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-              >
-                <p className="font-semibold text-zinc-950">STACK alternative for roofing</p>
-                <p className="mt-1 text-sm text-zinc-600">
-                  Multi-trade preconstruction platform vs roofing-native estimating.
-                </p>
-              </a>
-              <a
-                href="/hover-alternative"
-                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-              >
-                <p className="font-semibold text-zinc-950">HOVER alternative</p>
-                <p className="mt-1 text-sm text-zinc-600">
-                  Generated 3D property measurement vs owning the takeoff.
-                </p>
-              </a>
-              <a
-                href="/bluebeam-alternative-for-roofing"
-                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-              >
-                <p className="font-semibold text-zinc-950">Bluebeam alternative for roofing</p>
-                <p className="mt-1 text-sm text-zinc-600">
-                  PDF toolkit you configure vs roofing workflow already modelled.
-                </p>
-              </a>
-            </div>
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section className="bg-zinc-50 py-20">
-          <div className="mx-auto max-w-4xl px-6 lg:px-8">
-            <h2 className="text-3xl font-semibold sm:text-4xl">
-              Common questions
-            </h2>
-
-            <div className="mt-10 space-y-4">
-              {faqs.map((f) => (
-                <div
-                  key={f.question}
-                  className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5"
-                >
-                  <p className="font-semibold text-zinc-950">{f.question}</p>
-                  <p className="mt-3 text-sm leading-7 text-zinc-600">{f.answer}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Related */}
-        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
-          <h2 className="text-3xl font-semibold sm:text-4xl">Related</h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <a
-              href="/roofing-estimating-software"
-              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-            >
-              <p className="font-semibold text-zinc-950">Roofing estimating software</p>
-              <p className="mt-1 text-sm text-zinc-600">
-                Turn takeoff measurements into priced estimates with Smart Components.
-              </p>
-            </a>
-            <a
-              href="/roofing-quoting-software"
-              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-            >
-              <p className="font-semibold text-zinc-950">Roofing quoting software</p>
-              <p className="mt-1 text-sm text-zinc-600">
-                The full quote-to-invoice workflow for roofing contractors.
-              </p>
-            </a>
-            <a
-              href="/features/digital-roof-takeoff"
-              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-            >
-              <p className="font-semibold text-zinc-950">Digital roof takeoff</p>
-              <p className="mt-1 text-sm text-zinc-600">
-                Measure roof plans digitally with AI-assisted scanning.
-              </p>
-            </a>
-            <a
-              href="/features/ai-scan-assist"
-              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-            >
-              <p className="font-semibold text-zinc-950">Roof Scan Assist</p>
-              <p className="mt-1 text-sm text-zinc-600">
-                Automatic identification of roof areas, ridges, hips and valleys.
-              </p>
-            </a>
-            <a
-              href="/features/smart-components"
-              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-            >
-              <p className="font-semibold text-zinc-950">Smart Components&#8482;</p>
-              <p className="mt-1 text-sm text-zinc-600">
-                Reusable components that auto-apply materials and pricing to takeoff.
-              </p>
-            </a>
-            <a
-              href="/blog/how-to-do-a-roof-takeoff"
-              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-            >
-              <p className="font-semibold text-zinc-950">How to do a roof takeoff</p>
-              <p className="mt-1 text-sm text-zinc-600">
-                Step-by-step guide to measuring a roof from plans.
-              </p>
-            </a>
-            <a
-              href="/blog/how-to-measure-a-roof"
-              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-            >
-              <p className="font-semibold text-zinc-950">How to measure a roof</p>
-              <p className="mt-1 text-sm text-zinc-600">
-                Methods and tools for accurate roof measurement.
-              </p>
-            </a>
-            <a
-              href="/blog/manual-vs-digital-roof-takeoff"
-              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-            >
-              <p className="font-semibold text-zinc-950">Manual vs digital roof takeoff</p>
-              <p className="mt-1 text-sm text-zinc-600">
-                Weighing tape-and-ladder against measuring from plans on screen.
-              </p>
-            </a>
-          </div>
-        </section>
-
-        {/* Final CTA */}
-        <section className="mx-auto max-w-4xl px-6 py-24 lg:px-8">
-          <CommercialFinalCta
-            location="roofing_takeoff_final"
-            title="Measure. Price. Quote."
-            body="See the takeoff workflow yourself, or talk through how your existing plans, pricing and components would fit before you subscribe."
-          />
-        </section>
-
-        <SiteFooter />
-      </main>
-    </>
-  );
+        </div>
+      </section>
+    </main>
+    <SiteFooter />
+  </>;
 }

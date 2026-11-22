@@ -120,6 +120,7 @@ export default function SmartComponentsPage() {
               Reusable quoting components that know their own measurements, waste allowances, and pricing rules. Anything in your business - products, materials, services, labour - can be a component. Create once, use forever.
             </p>
             <TwoPathCta location="feature_smart_components_hero" className="mt-6" compact />
+            <p className="mt-4 text-sm text-zinc-600">Already have a roofing price list? <Link href="/roofing-pricing-setup" className="font-semibold text-[#B63D0A] hover:underline">See how to bring your prices across</Link>.</p>
           </div>
         </section>
 

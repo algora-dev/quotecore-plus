@@ -25,12 +25,12 @@ import { workflowCallHref } from '@/lib/booking';
 const bookingHref = workflowCallHref;
 
 export const metadata: Metadata = {
-  title: 'Roof Scan Assist: AI Roof Takeoff From Roof Plans | QuoteCore+',
-  description: 'Roof Scan Assist scans a calibrated roof plan in two stages, builds editable roof geometry for you, and on clear, simple-to-medium plans commonly completes both stages in around 1-2 minutes.',
+  title: 'Roof Scan Assist: AI Takeoff From Plans & Satellite Images | QuoteCore+',
+  description: 'Roof Scan Assist helps trace editable roof geometry from calibrated plans and uploaded satellite images. Check accuracy, edit detected areas and lines, and continue to pricing.',
   alternates: { canonical: 'https://quote-core.com/features/ai-scan-assist', languages: hreflangLanguages('/features/ai-scan-assist') },
   openGraph: {
-    title: 'Roof Scan Assist: AI Roof Takeoff From Roof Plans | QuoteCore+',
-    description: 'Scan a roof plan instead of tracing every line. Review, edit or replace the result in the same Digital Takeoff workspace before pricing.',
+    title: 'Roof Scan Assist: AI Takeoff From Plans & Satellite Images | QuoteCore+',
+    description: 'Scan a roof plan or uploaded satellite image. Review, edit or replace detected geometry in the same Digital Takeoff workspace before pricing.',
     url: 'https://quote-core.com/features/ai-scan-assist',
     siteName: 'QuoteCore+',
     type: 'website',
@@ -38,10 +38,10 @@ export const metadata: Metadata = {
 };
 
 const faqs: FaqItem[] = [
-  { question: 'What is an AI roof takeoff?', answer: 'Software interprets a roof plan and builds measured roof geometry automatically. QuoteCore+ leaves that geometry editable for review rather than returning a static report.' },
-  { question: 'Can I use Roof Scan Assist on my phone?', answer: 'Yes. Roof Scan Assist is available in the mobile Digital Takeoff experience as well as on desktop. It scans roof plans and drawings from the phone; it is not a camera or satellite scan of the physical roof.' },
-  { question: 'Can I scan an actual roof with my phone camera?', answer: 'No. Roof Scan Assist is designed for roof plans and drawings. It is not a satellite report or camera-based physical roof scanner.' },
-  { question: 'How accurate is it?', answer: 'There is no single percentage for every drawing. Correct calibration, source-plan clarity and roof complexity are the main variables that determine how much review or correction the result needs.' },
+  { question: 'What is an AI roof takeoff?', answer: 'Software interprets a calibrated roof plan or overhead image and suggests measured roof geometry. QuoteCore+ keeps the result editable for review instead of returning a static report.' },
+  { question: 'Can I use Roof Scan Assist on my phone?', answer: 'Yes. Roof Scan Assist is available in the mobile and desktop Digital Takeoff workspace. Upload a roof plan or satellite image and calibrate it first. It does not take live camera measurements or fetch satellite imagery by address.' },
+  { question: 'Can I scan an actual roof with my phone camera?', answer: 'It does not measure a physical roof through a live phone camera. It can analyse an uploaded roof plan or satellite/overhead image after you calibrate the scale; the result stays editable.' },
+  { question: 'How accurate is it?', answer: 'There is no single accuracy percentage for every image. Correct calibration, image resolution, lighting, shadows, trees and roof complexity determine how much correction the suggested geometry needs. The user reviews and edits the result.' },
   { question: 'Why use it if I can trace manually?', answer: 'It can reduce hands-on attention even when manual tracing is already fast. On a clear, correctly calibrated plan, a typical simple-to-medium complexity roof commonly completes both scan stages in around 1-2 minutes, and simple roofs can be faster. You can use that short window for another task, then review and fix only what needs correction.' },
   { question: 'Does a complex scan use more tokens?', answer: 'Yes. Each of the two scan stages can use the level that suits that part of the roof. For example, use Simple for an easy outside outline and Medium+ for more complicated internal geometry. Heavier processing can take longer and use more scan tokens, so you do not need to spend maximum tokens on every stage.' },
   { question: 'Why are there two scan stages?', answer: 'The first scan traces the outside roof outline, including the eave or gutter and barge or rake boundaries. You review that outline first. Then you either draw the internal roof components manually or run the second scan to find them. You can choose Simple, Medium or Medium+ independently for each stage.' },
@@ -63,8 +63,8 @@ export default function RoofScanAssistPage() {
     <PageScaffold breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Features', href: '/features' }, { label: 'Roof Scan Assist' }]} schemas={schemas}>
       <Hero
         eyebrow="Roof Scan Assist"
-        title={<>Scan a roof plan instead of tracing every line.</>}
-        lead="Roof Scan Assist reads a calibrated roof plan, identifies the roof faces and supported roof lines, and builds the takeoff for you. On a clear, correctly calibrated plan, a typical simple-to-medium complexity roof commonly completes both scan stages in around 1-2 minutes, and simple roofs can be faster."
+        title={<>Scan a roof plan or satellite image instead of tracing every line.</>}
+        lead="Roof Scan Assist reads a calibrated roof plan or uploaded satellite image, identifies visible roof faces and supported roof lines, and suggests an editable takeoff. On a clear, correctly calibrated plan, a typical simple-to-medium complexity roof commonly completes both scan stages in around 1-2 minutes, and simple roofs can be faster."
         primary={{ href: bookingHref, label: 'Book 25 minutes with Shaun' }}
         secondary={{ href: '/free-trial', label: 'See how it works', freeWorkspace: true }}
         proof={['Desktop and mobile', 'Fully editable result', 'Scan options for different roof complexity']}
@@ -73,7 +73,7 @@ export default function RoofScanAssistPage() {
 
       <Section>
         <Container>
-          <SectionHeader eyebrow="Direct answer" title="What does Roof Scan Assist actually do?" lead="It automates the repetitive part of a roof takeoff from plans. Instead of clicking around the drawing to trace every face and roof line, you calibrate the plan, choose the appropriate scan option and let the system build the geometry for you." />
+          <SectionHeader eyebrow="Direct answer" title="What does Roof Scan Assist actually do?" lead="It assists with the repetitive part of a roof takeoff from plans or satellite images. Upload a suitable image, calibrate it against a known dimension, choose the scan option and review the geometry it finds." />
           <FeatureGrid items={[
             { title: 'Build roof faces', body: <p>Identify the visible roof planes and turn them into measured areas inside the takeoff.</p> },
             { title: 'Find supported roof lines', body: <p>Detect supported ridges, hips, valleys, barges and spouting where the source drawing is clear enough.</p> },
@@ -139,7 +139,7 @@ export default function RoofScanAssistPage() {
 
       <Section>
         <Container>
-          <SectionHeader eyebrow="Roof takeoff on mobile" title="Start an AI roof-plan takeoff from your phone, not only from a desktop." lead="Digital Takeoff and Roof Scan Assist are available on mobile. Field and office staff get another way to work with a roof plan away from the main computer, without reducing the result to a read-only report. Roof Scan Assist scans roof plans and drawings from the phone; it is not a camera or satellite scan of the physical roof." />
+          <SectionHeader eyebrow="Roof takeoff on mobile" title="Start an AI roof-plan takeoff from your phone, not only from a desktop." lead="Digital Takeoff and Roof Scan Assist are available on mobile. Field and office staff get another way to work with a roof plan away from the main computer, without reducing the result to a read-only report. You can scan uploaded plans and satellite images from your phone or desktop. It does not fetch imagery by address or perform a live camera scan of a physical roof." />
           <FeatureGrid items={[
             { title: 'Open the plan on mobile', body: <p>Work from the same roof-plan workflow on a phone when that is the device in front of you.</p> },
             { title: 'Run Roof Scan Assist', body: <p>Start the automated geometry scan on mobile, then come back to the measured result instead of tracing every line on a small screen.</p> },

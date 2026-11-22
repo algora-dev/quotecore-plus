@@ -282,7 +282,7 @@ export default function DigitalRoofTakeoffPage() {
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">No automatic 3D model generation</h3>
-              <p className="mt-2 text-sm text-zinc-600">The takeoff builder works from 2D plans and drawings. It does not create 3D roof models or import aerial imagery directly.</p>
+              <p className="mt-2 text-sm text-zinc-600">The takeoff builder works with uploaded 2D plans, drawings and overhead or satellite images. It does not create 3D roof models or automatically fetch aerial imagery by address.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">Roof Scan Assist covers core components only</h3>
@@ -316,8 +316,8 @@ export default function DigitalRoofTakeoffPage() {
           <h2 className="text-2xl font-semibold tracking-tight">When it may not be the right fit</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-900">You need aerial or satellite measurement</h3>
-              <p className="mt-2 text-sm text-zinc-600">The takeoff builder works from plans you upload. It does not order aerial reports or pull satellite imagery. If you rely on aerial measurement services, you can still import those measurements manually.</p>
+              <h3 className="font-semibold text-slate-900">You need an automatic address-based aerial report</h3>
+              <p className="mt-2 text-sm text-zinc-600">The takeoff builder works with roof plans and overhead or satellite images you upload. It does not order aerial reports or fetch an image automatically by address. If you already have measurements from another service, you can enter them directly.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">You only do flat commercial roofing</h3>

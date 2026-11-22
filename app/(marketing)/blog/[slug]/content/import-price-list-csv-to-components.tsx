@@ -21,6 +21,14 @@ export default function Post() {
         quote draw from it.
       </p>
 
+      <p>
+        Just want to see how easy the setup can be?{' '}
+        <Link href="/roofing-pricing-setup" className={link}>
+          See how to bring your roofing price list into QuoteCore+
+        </Link>{' '}
+        by manual entry or assisted import, then reuse your saved pricing.
+      </p>
+
       <h2>Why re-typing a price list costs you twice</h2>
       <p>Manual price-list handling fails in two directions:</p>
       <ul>

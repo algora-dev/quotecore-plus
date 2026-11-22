@@ -86,6 +86,7 @@ export default async function Page({ searchParams }: { searchParams?: Promise<{ 
         <Container>
           <SplitFeature visual={<ProductFrame src="/marketing/current-ux/quote-builder-components-measurements.webp" alt="Current QuoteCore+ Quote Builder showing Smart Components and job measurements" width={2048} height={1112} caption="A Free Workspace saves the component library and measured job so the next quote does not start from a blank tool." />}>
             <h2>Free tool for the current task. Free Workspace for repeat work.</h2>
+            <p><a href="/roof-measurements-to-price">See how the full QuoteCore+ app turns roof measurements into a priced customer quote →</a></p>
             <p>The free tool is useful when you need to price the job in front of you. A QuoteCore+ Free Workspace keeps the setup and job history so those pricing rules are ready again tomorrow.</p>
             <FeatureGrid columns={2} items={[
               { kicker: 'Free browser tool', title: 'Current task', body: <p>Limited component library, measurements and priced output without creating an account.</p> },

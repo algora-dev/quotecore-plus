@@ -31,6 +31,13 @@ export default function Post() {
         .
       </p>
 
+      <p>
+        Want the saved app workflow rather than the standalone tool?{' '}
+        <Link href="/roof-measurements-to-price" className={link}>
+          See how QuoteCore+ turns your existing roof measurements into a priced quote
+        </Link>.
+      </p>
+
       <h2>What measurements does a roofing quote actually need?</h2>
       <p>A complete roof quote starts with two kinds of numbers:</p>
       <ul>

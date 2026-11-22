@@ -22,6 +22,10 @@ export default function Post() {
         - free to use, no signup required.
       </p>
 
+      <p>
+        Roofing contractor? <Link href="/roof-measurements-to-price" className={link}>See the full saved-pricing workflow for roof measurements</Link>.
+      </p>
+
       <hr />
 
       <h2>What happens after a site measure?</h2>

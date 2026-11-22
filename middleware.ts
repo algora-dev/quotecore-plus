@@ -94,6 +94,7 @@ const PUBLIC_PATHS = [
   '/quick-start-pricing', // Public Quick Start enquiry page (email intake, no auth, no payment)
   '/your-job-demo', // Public personal job-demo page (email intake, no auth)
   '/measurement-to-quote-tool', // Free measurement-to-pricing tool (renamed from /free-quote-builder)
+  '/roof-measurements-to-price', // Public full-app measurements-to-price acquisition page
   '/done-for-you-setup',
   '/custom-solutions',
   '/free-trial',
@@ -103,6 +104,7 @@ const PUBLIC_PATHS = [
   '/roofing-quoting-software',
   '/nz',               // NZ localized landing pages (/nz/roofing-quoting-software, /nz/long-run-roofing-estimating)
   '/roofing-estimating-software',
+  '/roofing-pricing-setup', // Public pricing-import conversion landing page
   '/roofing-takeoff-software',
   '/fastest-roofing-estimating-software', // Speed benchmark landing page (marketing)
   '/roofsnap-alternative',        // Competitor comparison pages (marketing)
