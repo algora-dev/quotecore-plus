@@ -42,6 +42,18 @@
 }
 @media(prefers-reduced-motion:reduce){.mi-segmented button{transition:none}}
 
+/* Review round 3 (owner 2026-11-22): relaxed review flow – assumed-unit
+   affordances and the never-drop leave warning. */
+.mi-unit--assumed{border-color:var(--qc-color-orange-core,#ff641f)}
+.mi-kind--assumed{background:var(--qc-color-orange-wash,#fff4eb);border-color:var(--qc-color-orange-core,#ff641f)}
+.mi-unit-quick{display:inline-flex;gap:6px;align-items:center}
+.mi-unit-quick button{appearance:none;border:1px solid var(--qc-border-divider);border-radius:8px;background:var(--qc-bg-surface);color:var(--qc-text-body);font:inherit;font-size:12px;font-weight:650;padding:7px 10px;cursor:pointer}
+.mi-unit-quick button:hover{border-color:var(--qc-color-orange-vivid,#ff8a3d)}
+.mi-unit-quick button:focus-visible{outline:2px solid var(--qc-focus-ring);outline-offset:2px}
+.mi-unit-quick button.is-active{background:linear-gradient(135deg,#FF641F 0%,#FF8A3D 55%,#FFB36B 100%);color:#191B20;border-color:transparent}
+.mi-leave-warn{display:grid;gap:10px;margin:16px 0 0;justify-items:start}
+.mi-leave-warn-actions{display:flex;gap:10px;flex-wrap:wrap}
+
 /* Review round 2 (owner 2026-11-16): spinner, toolbar, banner placement + spacing,
    row-click selection, rounded segmented ends, imported/skip badges. */
 .mi-spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(25,27,32,.28);border-top-color:#191B20;border-radius:50%;margin-right:9px;vertical-align:-2px}

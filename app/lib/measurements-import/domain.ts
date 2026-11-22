@@ -14,6 +14,9 @@ export const measurementEntrySchema = z.object({
 export const measurementLineSchema = z.object({
   label: z.string().trim().min(1).max(180),
   unit: z.string().max(30).default(''),
+  /** Owner 2026-11-22: true when the source had no unit and we pre-filled an
+   * editable guess from the reading kind. Cleared once the user edits it. */
+  unitGuessed: z.boolean().default(false),
   /** Best guess of what the numbers physically are. Derived from the source
    * unit and roofing keyword rules; the user never has to set it directly. */
   kind: z.enum(['area', 'lineal', 'quantity']).nullable().default(null),
@@ -82,6 +85,18 @@ export function kindFromUnit(unit: string): 'area' | 'lineal' | 'quantity' | nul
   if (LINEAL_UNIT.test(u)) return 'lineal';
   if (COUNT_UNIT.test(u)) return 'quantity';
   return null;
+}
+
+/** Editable unit guess for unit-less lines (owner 2026-11-22): correcting one
+ * wrong guess is faster than typing every missing unit by hand. */
+export function guessUnitForKind(kind: 'area' | 'lineal' | 'quantity'): string {
+  return kind === 'area' ? 'm²' : kind === 'lineal' ? 'm' : 'ea';
+}
+
+/** Lines that already look importable start selected (owner 2026-11-22) so
+ * the default path is review-and-confirm; problem lines stay candidates. */
+export function initialStatusFor(line: { matchedComponentId: string | null; unit: string }): 'selected' | 'candidate' {
+  return line.matchedComponentId && kindFromUnit(line.unit) !== null ? 'selected' : 'candidate';
 }
 
 const LENGTH_TO_M: Array<[RegExp, number]> = [

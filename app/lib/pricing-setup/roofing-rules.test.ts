@@ -16,6 +16,13 @@ test('roofing pitch rulebook uses the appropriate geometry only for recognized t
 test('ambiguous measurement basis suppresses automatic pitch',()=>{
  const d=classifyRoofing('Barge flashing','m²');assert.equal(d.confidence,'low');assert.equal(d.pitchType,'none');
 });
+test('plural and surface roofing labels hit their slot (owner 2026-11-22)',()=>{
+ const cases:[string,string][]=[
+  ['Ridges','ridge'],['Barges','barge'],['Verges','barge'],
+  ['Roof area','roof_area'],['Corrugated sheeting','roof_area'],
+ ];
+ for(const [name,slot] of cases){const c=classifyRoofing(name,'');assert.equal(c.slot,slot,`${name}: slot`);}
+});
 test('never invent missing prices, labour or waste',()=>{
  const d=draftFromExtraction({name:'Valley flashing',sourceUnit:'m',sourcePrice:21},'unknown');
  assert.equal(d.materialRate,null);assert.equal(d.labourRate,null);assert.equal(d.wasteKind,'unknown');

@@ -42,6 +42,7 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [creatingFor, setCreatingFor] = useState<MeasurementImportLineRow | null>(null);
+  const [leaveWarn, setLeaveWarn] = useState<number | null>(null);
 
   const quoteHref = `/${workspaceSlug}/quotes/${quoteId}`;
   const pending = (current?.lines ?? []).filter(l => l.status !== 'imported' && l.status !== 'skipped');
@@ -141,9 +142,14 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
   }
 
   /** Owner 2026-11-16: the user can ALWAYS continue – selected lines are added,
-   * anything failing or skipped is simply left out and stays in the import. */
+   * anything failing or skipped is simply left out and stays in the import.
+   * Owner 2026-11-22: but never silently – leaving with unprocessed candidate
+   * lines needs one explicit acknowledgement first. */
   async function confirm() {
     if (!current) return;
+    const unprocessed = pending.filter(l => l.status === 'candidate').length;
+    if (unprocessed > 0 && leaveWarn !== unprocessed) { setLeaveWarn(unprocessed); return; }
+    setLeaveWarn(null);
     setBusy(true); setError(''); setFailures([]);
     try {
       if (selected.length === 0) { router.push(quoteHref); return; }
@@ -282,6 +288,17 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
       {error && <div className="pa-alert mi-failures" role="alert">{error}</div>}
       {notice && <div className="pa-success mi-failures" role="status">{notice}</div>}
 
+      {leaveWarn !== null && leaveWarn > 0 && (
+        <div className="pa-alert mi-leave-warn" role="alert">
+          <strong>{leaveWarn} line{leaveWarn === 1 ? '' : 's'} still not added</strong>
+          <span> – each needs a component, unit or tick. They stay saved in this import until you add or skip them, so nothing is lost.</span>
+          <div className="mi-leave-warn-actions">
+            <QcButton size="sm" variant="ghost" onClick={() => setLeaveWarn(null)}>Keep reviewing</QcButton>
+            <QcButton size="sm" variant="primary" pending={busy} disabled={busy} onClick={confirm}>Continue to quote anyway →</QcButton>
+          </div>
+        </div>
+      )}
+
       <div className="pa-actions">
         <div className="pa-save-actions">
           <strong>{selected.length} selected</strong>
@@ -322,6 +339,7 @@ function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry
 }) {
   const data = line.line_data;
   const component = components.find(c => c.id === data.matchedComponentId);
+  const quickUnits = data.kind === 'area' ? ['m²', 'ft²', 'sq'] : data.kind === 'lineal' ? ['m', 'ft'] : data.kind === 'quantity' ? ['ea'] : [];
   const canCombine = !!component && LINEAL_FAMILY.has(component.measurement_type) && data.entries.length >= 2;
   const tone = data.matchedComponentId && (data.matchConfidence === 'high' || data.matchConfidence === 'medium' || data.matchOrigin === 'user') ? 'pa-in-found' : 'pa-in-missing';
   // Owner 2026-11-16: preview the line exactly like a quote-builder component
@@ -383,10 +401,19 @@ function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry
           <QcInput className={tone} value={drafts[`${line.id}:label`] ?? data.label} aria-label="Label"
             onChange={e => onField(line, 'label', e.target.value)}
             onBlur={() => onCommitField(line, 'label')} />
-          <QcInput className={`mi-unit ${tone}`} value={drafts[`${line.id}:unit`] ?? data.unit} aria-label="Unit" placeholder="unit"
+          <QcInput className={`mi-unit ${tone}${data.unitGuessed ? ' mi-unit--assumed' : ''}`} value={drafts[`${line.id}:unit`] ?? data.unit} aria-label="Unit" placeholder="unit"
             onChange={e => onField(line, 'unit', e.target.value)}
             onBlur={() => onCommitField(line, 'unit')} />
+          {data.unitGuessed && <span className="mi-kind mi-kind--assumed" data-qc-tip="The source had no unit – this is a guess from the reading. Change it if wrong.">assumed</span>}
           {data.kind && <span className="mi-kind">{KIND_LABEL[data.kind] ?? data.kind}</span>}
+          {(data.unitGuessed || !data.unit) && quickUnits.length > 0 && (
+            <div className="mi-unit-quick" role="group" aria-label="Set the unit">
+              {quickUnits.map(u => (
+                <button key={u} type="button" className={data.unit === u ? 'is-active' : ''}
+                  onClick={() => onSave(line, { unit: u, unitGuessed: false })}>{u}</button>
+              ))}
+            </div>
+          )}
           {component && <span className="mi-figure"><span className="mi-mini-label">Quantity</span><strong>{totalDisplay}</strong></span>}
           {component && costDisplay && <span className="mi-figure"><span className="mi-mini-label">Item + labour</span><strong>{costDisplay}</strong></span>}
         </div>

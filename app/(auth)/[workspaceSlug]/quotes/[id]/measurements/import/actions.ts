@@ -118,8 +118,11 @@ export async function updateMeasurementLine(importId: string, lineId: string, ed
       matchedName = null;
       confidence = 'none';
     }
+    // Owner 2026-11-22: editing the unit confirms it – clear the assumed flag.
+    const unitConfirmed = changes.unit !== undefined && changes.unit !== data.unit;
     const next = measurementLineSchema.parse({
       ...data, ...changes,
+      unitGuessed: unitConfirmed ? false : data.unitGuessed,
       matchedName, matchConfidence: confidence,
       matchOrigin: componentChanged ? 'user' : data.matchOrigin,
     });

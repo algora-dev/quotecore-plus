@@ -5,6 +5,7 @@ import { createSupabaseServerClient, requireCompanyContext, requireUser } from '
 import { verifyQuoteOwnership } from '@/app/lib/auth/ownership';
 import {
   measurementLineSchema, kindFromUnit,
+  guessUnitForKind, initialStatusFor,
   type ExtractedMeasurementLine, type MeasurementImportLineRow, type MeasurementImportRow,
 } from './domain';
 import { matchLine, type MatchComponent } from './auto-match';
@@ -44,15 +45,21 @@ export async function fetchLibraryComponents(admin: SupabaseClient, companyId: s
 function lineDataFromExtraction(line: ExtractedMeasurementLine, components: MatchComponent[]) {
   const unitKind = kindFromUnit(line.unit);
   const kind = line.kind ?? unitKind;
+  // Owner 2026-11-22: when the source states no unit, pre-fill an editable
+  // guess from the reading instead of hard-blocking the line at confirm time.
+  let unit = line.unit ?? '';
+  let unitGuessed = false;
+  if (!unit && kind) { unit = guessUnitForKind(kind); unitGuessed = true; }
   const match = matchLine(line.label, kind, components);
   const warnings: string[] = [];
-  if (!line.unit) warnings.push('No unit was found – set it while reviewing.');
+  if (unitGuessed) warnings.push(`No unit was written in the source – assumed ${unit} from the reading. Change it if wrong.`);
+  else if (!line.unit) warnings.push('No unit was found – set it while reviewing.');
   else if (kindFromUnit(line.unit) === null) warnings.push(`The unit "${line.unit}" was not recognised – check it while reviewing.`);
   if (line.kind && unitKind && line.kind !== unitKind) warnings.push('Source unit and reading disagree – check the measurement kind.');
   if (match.confidence === 'low') warnings.push('This match is a guess – check the component.');
   return measurementLineSchema.parse({
     label: line.label,
-    unit: line.unit,
+    unit, unitGuessed,
     kind,
     entries: line.entries.map(value => ({ value })),
     matchedComponentId: match.componentId,
@@ -80,13 +87,18 @@ export async function insertMeasurementImport(args: {
     extracted_count: usable.length,
   }).select('id').single();
   if (error || !session) throw Error('Unable to create the import. Has the measurements import migration been applied?');
-  const rows = usable.map((item, i) => ({
-    import_id: session.id, company_id: profile.company_id, user_id: profile.id,
-    source_index: i + 1,
-    source_excerpt: (item.excerpt ?? item.label).slice(0, 1200),
-    line_data: lineDataFromExtraction(item, args.components),
-    status: 'candidate',
-  }));
+  const rows = usable.map((item, i) => {
+    const data = lineDataFromExtraction(item, args.components);
+    return {
+      import_id: session.id, company_id: profile.company_id, user_id: profile.id,
+      source_index: i + 1,
+      source_excerpt: (item.excerpt ?? item.label).slice(0, 1200),
+      line_data: data,
+      // Owner 2026-11-22: importable lines start selected so the default path
+      // is review-and-confirm; problem lines stay candidates for attention.
+      status: initialStatusFor(data),
+    };
+  });
   const { error: insertError } = await admin.from('quote_measurement_import_lines').insert(rows);
   if (insertError) {
     await admin.from('quote_measurement_imports').delete().eq('id', session.id).eq('user_id', profile.id);

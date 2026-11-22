@@ -1,13 +1,13 @@
 import type { ExtractedLine, PricingDraft } from './domain';
 /** Versioned roofing domain rules. Ordering is significant: specific before general. */
-export const ROOFING_RULEBOOK_VERSION = '2026-11-14.1';
+export const ROOFING_RULEBOOK_VERSION = '2026-11-22.1';
 type Rule = {id:string;pattern:RegExp;measurement:PricingDraft['measurementType'];pitch:PricingDraft['pitchType'];slot:string;reason:string};
 const RULES:Rule[]=[
  {id:'valley',pattern:/\b(valley|valleys|valley tray|valley flashing)\b/i,measurement:'lineal',pitch:'valley_hip',slot:'valley',reason:'Conventional valley measured in plan view uses the hip/valley pitch correction.'},
  {id:'hip',pattern:/\b(hip|hips|hip cap|hip flashing|hip ridge)\b/i,measurement:'lineal',pitch:'valley_hip',slot:'hip',reason:'Conventional diagonal hip measured in plan view uses the hip/valley pitch correction.'},
- {id:'rake-barge',pattern:/\b(rake|rakes|barge|bargeboard|verge|gable edge|gable flashing)\b/i,measurement:'lineal',pitch:'rafter',slot:'barge',reason:'The sloping gable edge uses the rafter pitch correction for plan-view length.'},
- {id:'area',pattern:/\b(sheets?|sheeting|roof cover(?:ing)?|roofing tiles?|concrete tiles?|clay tiles?|shingles?|long[\s-]?run|standing seam|roof panels?|roof membrane|underlay(?:ment)?|roof blanket|insulation blanket|metal roofing|roof decking)\b/i,measurement:'area',pitch:'rafter',slot:'roof_area',reason:'Roof surface products use the rafter pitch correction when the measurement is a projected plan area.'},
- {id:'ridge',pattern:/\b(ridge|ridging|ridge capping|ridge cap)\b/i,measurement:'lineal',pitch:'none',slot:'ridge',reason:'A conventional horizontal ridge length is already horizontal. Confirm unusual roof geometry.'},
+ {id:'rake-barge',pattern:/\b(rake|rakes|barge|barges|bargeboard|verge|verges|gable edge|gable flashing)\b/i,measurement:'lineal',pitch:'rafter',slot:'barge',reason:'The sloping gable edge uses the rafter pitch correction for plan-view length.'},
+ {id:'area',pattern:/\b(sheets?|sheeting|roof cover(?:ing)?|roof area|total roof|corrugat(?:e|es|ed)|roofing tiles?|concrete tiles?|clay tiles?|shingles?|long[\s-]?run|standing seam|roof panels?|roof membrane|underlay(?:ment)?|roof blanket|insulation blanket|metal roofing|roof decking)\b/i,measurement:'area',pitch:'rafter',slot:'roof_area',reason:'Roof surface products use the rafter pitch correction when the measurement is a projected plan area.'},
+ {id:'ridge',pattern:/\b(ridge|ridges|ridging|ridge capping|ridge cap)\b/i,measurement:'lineal',pitch:'none',slot:'ridge',reason:'A conventional horizontal ridge length is already horizontal. Confirm unusual roof geometry.'},
  {id:'eaves',pattern:/\b(eaves?|gutter(?:ing)?|spout(?:ing)?|fascia|drip edge|drip flashing)\b/i,measurement:'lineal',pitch:'none',slot:'spouting',reason:'A conventional horizontal edge is not slope-adjusted.'},
  {id:'fixings',pattern:/\b(screws?|clips?|fixings?|fasteners?|nails?|bolts?|washers?|rivets?)\b/i,measurement:'quantity',pitch:'none',slot:'fixings',reason:'Counted fasteners do not receive a second pitch correction. Area-derived fixing quantities require their own explicit rule.'},
  {id:'labour',pattern:/\b(labou?r|installation|install|site setup|scaffold(?:ing)?)\b/i,measurement:'fixed',pitch:'none',slot:'custom',reason:'A service could be fixed or measured. Confirm its charging unit.'},
