@@ -68,6 +68,12 @@
 .mi-line--selectable{cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .mi-line--selectable:hover{border-color:var(--qc-color-orange-vivid,#ff8a3d)}
 .mi-line--selected{border-color:var(--qc-color-orange-core,#ff641f);box-shadow:0 0 0 2px var(--qc-color-orange-wash,#fff4eb)}
+/* Owner 2026-11-24: row-level reading confidence – pale green = confident,
+   light orange = needs checking (mirrors the pricing-extractor convention). */
+.mi-line--ok{background:var(--qc-color-green-wash,rgba(46,160,67,.08))}
+.mi-line--check{background:var(--qc-color-orange-wash,#fff4eb)}
+.mi-swap{font-size:11px;font-weight:650;color:var(--qc-color-orange-ink);border:1px dashed var(--qc-color-orange-core,#ff641f);border-radius:8px;padding:3px 10px;background:transparent;cursor:pointer;white-space:nowrap}
+.mi-swap:hover{border-style:solid;background:var(--qc-color-orange-wash,#fff4eb)}
 .mi-added-check,.mi-skip-mark{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:22px;height:22px;border-radius:999px;font-weight:750;font-size:13px;margin-top:4px}
 .mi-added-check{color:var(--qc-color-success-ink);background:var(--qc-color-success-bg)}
 .mi-skip-mark{color:var(--qc-text-secondary);background:var(--qc-bg-subtle)}

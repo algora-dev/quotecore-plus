@@ -2,6 +2,7 @@
  * the user reviews and confirms them. Mirrors the pricing-setup draft model:
  * extraction output is untrusted until validated against a chosen component. */
 import { z } from 'zod';
+import { normalizeMeasurementSystem, type MeasurementSystem } from '../types';
 
 export const measurementEntrySchema = z.object({
   /** Value in the SOURCE unit as written in the document. Canonical metric
@@ -30,6 +31,20 @@ export const measurementLineSchema = z.object({
   basisOverride: z.enum(['plan', 'actual']).nullable().default(null),
   /** Ask the builder's combine machinery to merge the entries at confirm time (linear family only). */
   combineEntries: z.boolean().default(false),
+  /** Owner 2026-11-24: deterministic reading of the written "N x M" / "N at M"
+   * pattern. Kept so the review can offer a one-tap swap when the
+   * quantity/measurement split was ambiguous. */
+  split: z.object({
+    pairs: z.array(z.object({
+      a: z.number().positive(),
+      b: z.number().positive(),
+      sep: z.enum(['x', 'at']),
+      aUnit: z.string().max(30).nullable().default(null),
+      bUnit: z.string().max(30).nullable().default(null),
+      ambiguous: z.boolean(),
+    })).max(20),
+    ambiguous: z.boolean(),
+  }).nullable().default(null),
   warnings: z.array(z.string().max(280)).max(10).default([]),
 });
 export type MeasurementLine = z.infer<typeof measurementLineSchema>;
@@ -88,15 +103,107 @@ export function kindFromUnit(unit: string): 'area' | 'lineal' | 'quantity' | nul
 }
 
 /** Editable unit guess for unit-less lines (owner 2026-11-22): correcting one
- * wrong guess is faster than typing every missing unit by hand. */
-export function guessUnitForKind(kind: 'area' | 'lineal' | 'quantity'): string {
-  return kind === 'area' ? 'm²' : kind === 'lineal' ? 'm' : 'ea';
+ * wrong guess is faster than typing every missing unit by hand.
+ * Owner 2026-11-24: the guess follows the quote/company measurement system –
+ * ft for either imperial flavour, ft² or RS for areas. */
+export function guessUnitForKind(kind: 'area' | 'lineal' | 'quantity', system: MeasurementSystem | string | null | undefined = null): string {
+  const norm = normalizeMeasurementSystem(system as MeasurementSystem);
+  if (kind === 'area') return norm === 'metric' ? 'm²' : norm === 'imperial_ft' ? 'ft²' : 'RS';
+  if (kind === 'lineal') return norm === 'metric' ? 'm' : 'ft';
+  return 'ea';
 }
 
 /** Lines that already look importable start selected (owner 2026-11-22) so
- * the default path is review-and-confirm; problem lines stay candidates. */
-export function initialStatusFor(line: { matchedComponentId: string | null; unit: string }): 'selected' | 'candidate' {
+ * the default path is review-and-confirm; problem lines stay candidates.
+ * Owner 2026-11-24: an ambiguous quantity/measurement split never
+ * auto-selects – it has to be checked first. */
+export function initialStatusFor(line: { matchedComponentId: string | null; unit: string; split?: { ambiguous: boolean } | null }): 'selected' | 'candidate' {
+  if (line.split?.ambiguous) return 'candidate';
   return line.matchedComponentId && kindFromUnit(line.unit) !== null ? 'selected' : 'candidate';
+}
+
+/* ── Deterministic quantity/measurement split (owner 2026-11-24) ────────────
+ * "N x M" / "N at M" patterns are re-derived in code from the transcribed
+ * source line, because the vision model's split is non-deterministic. Rules,
+ * in priority order:
+ *   1. the number carrying a written unit is the measurement;
+ *   2. otherwise a decimal number is the measurement and a round number is
+ *      the quantity ("4.5 x 4" = four 4.5 m runs);
+ *   3. "at"/"@" means quantity first ("2 at 4" = two 4 m runs);
+ *   4. both round with "x" and no unit is genuinely ambiguous: default to
+ *      quantity first ("2 x 4" = 2 runs of 4) and flag the line for review.
+ * Two-number patterns are length readings by default; areas identify
+ * themselves with an area unit. Quantities are whole numbers by convention –
+ * measurements should be written with a decimal (4.0) to disambiguate. */
+
+const SPLIT_UNIT = String.raw`(?:m\s*[²2]|sq\.?\s*m|ft\s*[²2]|sq\.?\s*ft|square\s*met(?:re|er)s?|square\s*feet|square\s*yards?|roofing\s*squares?|squares|rs|sq|lm|mm|cm|met(?:re|er)s?|feet|yards?|inch(?:es)?|ins|in|ft|yd|ea|each|pcs|pc|pieces|nos|no|m)`;
+
+const SPLIT_PAIR_SOURCE =
+  String.raw`(\d+(?:\.\d+)?)(?:\s*(` + SPLIT_UNIT + String.raw`)(?![a-z]))?\s*(?:([x×*])|\bat\b|@)\s*(\d+(?:\.\d+)?)(?:\s*(` + SPLIT_UNIT + String.raw`)(?![a-z]))?`;
+
+export type SplitPair = {
+  a: number; b: number; sep: 'x' | 'at';
+  aUnit: string | null; bUnit: string | null;
+  ambiguous: boolean;
+};
+
+/** Parse every "N x M" / "N at M" pair out of a transcribed source line. */
+export function parseSplitPairs(text: string): SplitPair[] {
+  const out: SplitPair[] = [];
+  if (!text) return out;
+  const re = new RegExp(SPLIT_PAIR_SOURCE, 'gi');
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null && out.length < 20) {
+    const a = Number(m[1]);
+    const b = Number(m[4]);
+    if (!Number.isFinite(a) || !Number.isFinite(b) || a <= 0 || b <= 0) continue;
+    const norm = (u: string | undefined) => (u ? u.replace(/\s+/g, ' ').trim().toLowerCase() : null);
+    const aUnit = norm(m[2]);
+    const bUnit = norm(m[5]);
+    const sep: 'x' | 'at' = m[3] ? 'x' : 'at';
+    const ambiguous = (!!aUnit && !!bUnit) || (!aUnit && !bUnit && sep === 'x' && Number.isInteger(a) === Number.isInteger(b));
+    out.push({ a, b, sep, aUnit, bUnit, ambiguous });
+  }
+  return out;
+}
+
+export type SplitReading = { entries: number[]; unit: string | null; ambiguous: boolean };
+
+/** Apply the owner's split rules to the parsed pairs. `swapped` re-derives the
+ * entries with the roles exchanged (the one-tap swap in the review UI). */
+export function readSplit(pairs: SplitPair[], swapped = false): SplitReading {
+  const entries: number[] = [];
+  let unit: string | null = null;
+  let ambiguous = false;
+  for (const p of pairs) {
+    let measurement: number;
+    let quantity: number;
+    let mUnit: string | null;
+    if (p.aUnit && !p.bUnit) { measurement = p.a; quantity = p.b; mUnit = p.aUnit; }
+    else if (p.bUnit && !p.aUnit) { measurement = p.b; quantity = p.a; mUnit = p.bUnit; }
+    else if (Number.isInteger(p.a) !== Number.isInteger(p.b)) {
+      measurement = Number.isInteger(p.a) ? p.b : p.a;
+      quantity = Number.isInteger(p.a) ? p.a : p.b;
+      mUnit = Number.isInteger(p.a) ? p.bUnit : p.aUnit;
+    } else if (p.sep === 'at') { measurement = p.b; quantity = p.a; mUnit = p.bUnit; }
+    else { measurement = p.b; quantity = p.a; mUnit = p.bUnit; ambiguous = true; }
+    if (p.aUnit && p.bUnit) { measurement = p.a; quantity = p.b; mUnit = p.aUnit; ambiguous = true; }
+    if (swapped) {
+      const previous = measurement;
+      measurement = quantity;
+      quantity = previous;
+      mUnit = measurement === p.a ? p.aUnit : p.bUnit;
+    }
+    if (Number.isInteger(quantity) && quantity >= 1 && quantity <= 50) {
+      for (let i = 0; i < quantity && entries.length < 50; i += 1) entries.push(measurement);
+    } else {
+      // A non-integer count is not a count – keep both numbers and flag it.
+      entries.push(p.a, p.b);
+      ambiguous = true;
+    }
+    if (mUnit && !unit) unit = mUnit;
+  }
+  return { entries, unit, ambiguous };
 }
 
 const LENGTH_TO_M: Array<[RegExp, number]> = [

@@ -30,6 +30,7 @@ const SYSTEM = `You are a specialist roofing MEASUREMENT extraction service for 
 Extract measurement and quantity lines from the user's text, photograph, PDF or spreadsheet content. Measurements and quantities ONLY – never prices, costs, rates or product prices from price lists.
 Extract up to 60 distinct measured items, preserving the source order. sourceIndex starts at 1.
 GROUP repeated measurements of the SAME item into ONE line with multiple entries: five separate 10 m hip runs become one line labelled hips with entries [10,10,10,10,10]. A single written total (50 m) stays one entry.
+Two-number lines: a number, then x, ×, * or "at"/"@", then a second number means a quantity and a measurement (4.5 x 4 = four runs of 4.5 → entries [4.5,4.5,4.5,4.5]; 2 at 4 = two 4 m runs → entries [4,4]). The number with a unit attached is the measurement; otherwise the decimal number is the measurement and the whole number is the count; with "at"/"@" the count comes first. Two-number lines are length measurements unless an area unit is written.
 kind: "area" for surface/coverage measurements (m², ft², squares), "length" for linear runs (ridge, hip, valley, eaves, barge, gutter in m/ft), "count" for counted items (ea, pcs, no).
 unit: the unit exactly as written in the source (m, mm, ft, m², ft², sq, ea, …). null when the source does not state one. Never convert between units and never invent a unit.
 Never invent or repair unreadable values: skip them. Handwritten notes: read carefully; ambiguous handwriting means skip that value, not guess.

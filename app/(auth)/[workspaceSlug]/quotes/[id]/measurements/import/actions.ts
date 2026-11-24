@@ -6,7 +6,7 @@ import {
 } from '@/app/lib/measurements-import/storage.server';
 import {
   editableLineSchema, measurementLineSchema, resolvedBasis,
-  toCanonicalLength, toCanonicalArea, validateForImport, familyOf,
+  toCanonicalLength, toCanonicalArea, validateForImport, familyOf, readSplit,
   type MeasurementLine,
 } from '@/app/lib/measurements-import/domain';
 import { matchLine, type MatchComponent } from '@/app/lib/measurements-import/auto-match';
@@ -120,9 +120,12 @@ export async function updateMeasurementLine(importId: string, lineId: string, ed
     }
     // Owner 2026-11-22: editing the unit confirms it – clear the assumed flag.
     const unitConfirmed = changes.unit !== undefined && changes.unit !== data.unit;
+    // Owner 2026-11-24: hand-edited entries invalidate the stored pattern
+    // reading – drop it so the swap affordance cannot resurrect stale values.
     const next = measurementLineSchema.parse({
       ...data, ...changes,
       unitGuessed: unitConfirmed ? false : data.unitGuessed,
+      split: changes.entries ? null : data.split,
       matchedName, matchConfidence: confidence,
       matchOrigin: componentChanged ? 'user' : data.matchOrigin,
     });
@@ -134,6 +137,38 @@ export async function updateMeasurementLine(importId: string, lineId: string, ed
     return { ok: true };
   } catch (error) {
     return { ok: false, message: error instanceof Error ? error.message : 'Unable to save this line.' };
+  }
+}
+
+/** Owner 2026-11-24: one-tap swap of an ambiguous quantity/measurement split
+ * ("2 x 4" read as 2 runs of 4 → 4 runs of 2). Confirms the direction. */
+export async function swapMeasurementSplit(importId: string, lineId: string): Promise<{ ok: true } | { ok: false; message: string }> {
+  try {
+    if (!uuid(importId) || !uuid(lineId)) return { ok: false, message: 'Invalid line.' };
+    const { profile, admin } = await scopedImportContext();
+    const { session, lines } = await loadMeasurementImport(importId);
+    const found = lines.find(l => l.id === lineId);
+    if (!found) return { ok: false, message: 'This line no longer belongs to the import.' };
+    if (found.status === 'imported') return { ok: false, message: 'This line was already added to the quote.' };
+    const split = found.line_data.split;
+    if (!split || !split.pairs.length) return { ok: false, message: 'This line has no stored quantity/measurement pattern to swap.' };
+    const reading = readSplit(split.pairs, true);
+    const next = measurementLineSchema.parse({
+      ...found.line_data,
+      entries: reading.entries.map(value => ({ value })),
+      // The user has now confirmed the direction – no longer ambiguous.
+      split: { pairs: split.pairs, ambiguous: false },
+      warnings: found.line_data.warnings.filter(w => !w.startsWith('Could not tell the quantity')),
+    });
+    const status = found.status === 'skipped' ? 'candidate' : found.status;
+    const { error } = await admin.from('quote_measurement_import_lines')
+      .update({ line_data: next, status, updated_at: new Date().toISOString() })
+      .eq('id', lineId).eq('import_id', importId).eq('user_id', profile.id).eq('company_id', profile.company_id);
+    if (error) throw Error('Unable to swap this line.');
+    revalidatePath(`/[workspaceSlug]/quotes/${session.quote_id}/measurements/import`, 'page');
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : 'Unable to swap this line.' };
   }
 }
 

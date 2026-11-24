@@ -9,11 +9,12 @@ import { CreateSmartComponentModal } from '@/app/components/CreateSmartComponent
 import { measurementTypeLabel, type ComponentLibraryRow, type MeasurementSystem } from '@/app/lib/types';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import type { MeasurementImportLineRow, MeasurementImportRow } from '@/app/lib/measurements-import/domain';
-import { toCanonicalLength, toCanonicalArea } from '@/app/lib/measurements-import/domain';
+import { toCanonicalLength, toCanonicalArea, kindFromUnit } from '@/app/lib/measurements-import/domain';
 import type { MatchComponent } from '@/app/lib/measurements-import/auto-match';
 import {
   loadImportReview, updateMeasurementLine, setMeasurementLineStatus,
   updateMeasurementImportBasis, rematchMeasurementImport, confirmMeasurementImport, deleteMeasurementImportAction,
+  swapMeasurementSplit,
 } from './actions';
 
 type Review = { session: MeasurementImportRow; lines: MeasurementImportLineRow[]; components: MatchComponent[] };
@@ -115,6 +116,14 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
     setCurrent(cur => cur ? { ...cur, lines: cur.lines.map(l => l.id === line.id ? { ...l, status } : l) } : cur);
     const result = await setMeasurementLineStatus(current!.session.id, line.id, status);
     if (!result.ok) { setError(result.message); await reload(current!.session.id); }
+  }
+
+  /** Owner 2026-11-24: one-tap swap of an ambiguous quantity/measurement split. */
+  async function swapSplit(line: MeasurementImportLineRow) {
+    if (!current) return;
+    const result = await swapMeasurementSplit(current.session.id, line.id);
+    if (!result.ok) { setError(result.message); return; }
+    await reload(current.session.id);
   }
 
   function setEntry(line: MeasurementImportLineRow, index: number, raw: string) {
@@ -223,6 +232,7 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
             {busy ? 'Reading your measurements…' : 'Extract measurements'}
           </QcButton>
           <p className="mi-extract-hint">Reading a photo or document can take up to a minute on longer jobs.</p>
+          <p className="mi-extract-hint">Tip: write lengths with a decimal (4.5 or 4.0) and quantities as whole numbers – a unit next to a number (4.5m) is always kept.</p>
         </div>
         {error && <div className="pa-alert" role="alert">{error}</div>}
         {notice && <div className="pa-success" role="status">{notice}</div>}
@@ -281,6 +291,7 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
       <div className="mi-lines">
         {lines.map(line => <LineRow key={line.id} line={line} components={components} masterBasis={session.default_basis}
           drafts={drafts} onDraft={setEntry} onCommitEntry={commitEntry} onField={setField} onCommitField={commitField} onSave={saveLine} onToggle={toggleStatus}
+          onSwap={swapSplit}
           currency={currency} measurementSystem={measurementSystem} onCreateComponent={setCreatingFor} disableCreate={componentCap?.atCap ?? false} />)}
       </div>
 
@@ -324,7 +335,7 @@ export function MeasurementImportClient({ workspaceSlug, quoteId, quoteLabel, co
   );
 }
 
-function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry, onField, onCommitField, onSave, onToggle, currency, measurementSystem, onCreateComponent, disableCreate }: {
+function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry, onField, onCommitField, onSave, onToggle, onSwap, currency, measurementSystem, onCreateComponent, disableCreate }: {
   line: MeasurementImportLineRow; components: MatchComponent[]; masterBasis: 'plan' | 'actual';
   drafts: Record<string, string>;
   onDraft: (line: MeasurementImportLineRow, index: number, raw: string) => void;
@@ -333,6 +344,7 @@ function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry
   onCommitField: (line: MeasurementImportLineRow, field: 'label' | 'unit') => Promise<void>;
   onSave: (line: MeasurementImportLineRow, patch: Partial<MeasurementImportLineRow['line_data']>) => Promise<void>;
   onToggle: (line: MeasurementImportLineRow, status: 'selected' | 'skipped' | 'candidate') => Promise<void>;
+  onSwap: (line: MeasurementImportLineRow) => Promise<void>;
   currency: string; measurementSystem: string;
   onCreateComponent: (line: MeasurementImportLineRow) => void;
   disableCreate?: boolean;
@@ -342,6 +354,10 @@ function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry
   const quickUnits = data.kind === 'area' ? ['m²', 'ft²', 'sq'] : data.kind === 'lineal' ? ['m', 'ft'] : data.kind === 'quantity' ? ['ea'] : [];
   const canCombine = !!component && LINEAL_FAMILY.has(component.measurement_type) && data.entries.length >= 2;
   const tone = data.matchedComponentId && (data.matchConfidence === 'high' || data.matchConfidence === 'medium' || data.matchOrigin === 'user') ? 'pa-in-found' : 'pa-in-missing';
+  // Owner 2026-11-24: row-level reading confidence, mirroring the pricing
+  // extractor's convention – pale green = confident, light orange = check me.
+  const unitRecognised = !data.unit || kindFromUnit(data.unit) !== null;
+  const needsCheck = !!data.split?.ambiguous || !unitRecognised || tone === 'pa-in-missing';
   // Owner 2026-11-16: preview the line exactly like a quote-builder component
   // card – numbered entries with waste-adjusted values, quantity total and
   // item+labour cost from the matched component's rules.
@@ -393,7 +409,7 @@ function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry
       <QcButton size="sm" variant="ghost" onClick={() => onToggle(line, 'candidate')}>Restore</QcButton></div>;
   }
   return (
-    <div className={`mi-line mi-line--selectable${line.status === 'selected' ? ' mi-line--selected' : ''}`} onClick={rowClick} role="button" tabIndex={0}
+    <div className={`mi-line mi-line--selectable${line.status === 'selected' ? ' mi-line--selected' : ''}${needsCheck ? ' mi-line--check' : ' mi-line--ok'}`} onClick={rowClick} role="button" tabIndex={0}
       aria-pressed={line.status === 'selected'} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(line, line.status === 'selected' ? 'candidate' : 'selected'); } }}>
       <input type="checkbox" checked={line.status === 'selected'} onChange={e => onToggle(line, e.target.checked ? 'selected' : 'candidate')} aria-label={`Select ${data.label}`} />
       <div className="mi-line-main">
@@ -406,6 +422,10 @@ function LineRow({ line, components, masterBasis, drafts, onDraft, onCommitEntry
             onBlur={() => onCommitField(line, 'unit')} />
           {data.unitGuessed && <span className="mi-kind mi-kind--assumed" data-qc-tip="The source had no unit – this is a guess from the reading. Change it if wrong.">assumed</span>}
           {data.kind && <span className="mi-kind">{KIND_LABEL[data.kind] ?? data.kind}</span>}
+          {data.split?.ambiguous && (
+            <button type="button" className="mi-swap" onClick={() => onSwap(line)}
+              data-qc-tip="Swap which number is the quantity and which is the measurement.">⇄ swap qty × length</button>
+          )}
           {(data.unitGuessed || !data.unit) && quickUnits.length > 0 && (
             <div className="mi-unit-quick" role="group" aria-label="Set the unit">
               {quickUnits.map(u => (

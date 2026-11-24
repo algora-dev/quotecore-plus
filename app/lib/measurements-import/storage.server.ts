@@ -6,6 +6,7 @@ import { verifyQuoteOwnership } from '@/app/lib/auth/ownership';
 import {
   measurementLineSchema, kindFromUnit,
   guessUnitForKind, initialStatusFor,
+  parseSplitPairs, readSplit,
   type ExtractedMeasurementLine, type MeasurementImportLineRow, type MeasurementImportRow,
 } from './domain';
 import { matchLine, type MatchComponent } from './auto-match';
@@ -42,26 +43,44 @@ export async function fetchLibraryComponents(admin: SupabaseClient, companyId: s
 
 /** Auto-match runs server-side at insert time (owner decision: match on entry,
  * after the user has chosen the library to apply). */
-function lineDataFromExtraction(line: ExtractedMeasurementLine, components: MatchComponent[]) {
-  const unitKind = kindFromUnit(line.unit);
-  const kind = line.kind ?? unitKind;
+function lineDataFromExtraction(line: ExtractedMeasurementLine, components: MatchComponent[], system: string | null) {
+  // Owner 2026-11-24: the written "N x M" / "N at M" pattern is re-derived
+  // deterministically in code – the model's split is non-deterministic, so
+  // the code reading wins when the two disagree.
+  const pairs = parseSplitPairs(line.excerpt ?? line.label);
+  const split = pairs.length ? readSplit(pairs) : null;
+  let entries = line.entries;
+  let unit = line.unit ?? '';
+  let kind = line.kind ?? null;
+  if (split) {
+    if (split.entries.length) entries = split.entries;
+    if (split.unit) unit = split.unit;
+    const splitKind = split.unit ? kindFromUnit(split.unit) : null;
+    // Owner 2026-11-24: two-number patterns are lengths by default (areas
+    // identify themselves with an area unit); a model count reading keeps
+    // its kind – count lines read "x 5", not "N x M".
+    kind = splitKind ?? (kind === 'quantity' ? 'quantity' : 'lineal');
+  }
+  const unitKind = kindFromUnit(unit);
+  if (unitKind) kind = unitKind;
   // Owner 2026-11-22: when the source states no unit, pre-fill an editable
   // guess from the reading instead of hard-blocking the line at confirm time.
-  let unit = line.unit ?? '';
+  // Owner 2026-11-24: the guess follows the quote/company measurement system.
   let unitGuessed = false;
-  if (!unit && kind) { unit = guessUnitForKind(kind); unitGuessed = true; }
+  if (!unit && kind) { unit = guessUnitForKind(kind, system); unitGuessed = true; }
   const match = matchLine(line.label, kind, components);
   const warnings: string[] = [];
+  if (split?.ambiguous) warnings.push('Could not tell the quantity from the measurement – check this line. The default reading is applied.');
   if (unitGuessed) warnings.push(`No unit was written in the source – assumed ${unit} from the reading. Change it if wrong.`);
-  else if (!line.unit) warnings.push('No unit was found – set it while reviewing.');
-  else if (kindFromUnit(line.unit) === null) warnings.push(`The unit "${line.unit}" was not recognised – check it while reviewing.`);
+  else if (!unit) warnings.push('No unit was found – set it while reviewing.');
+  else if (kindFromUnit(unit) === null) warnings.push(`The unit "${unit}" was not recognised – check it while reviewing.`);
   if (line.kind && unitKind && line.kind !== unitKind) warnings.push('Source unit and reading disagree – check the measurement kind.');
   if (match.confidence === 'low') warnings.push('This match is a guess – check the component.');
   return measurementLineSchema.parse({
     label: line.label,
     unit, unitGuessed,
     kind,
-    entries: line.entries.map(value => ({ value })),
+    entries: entries.map(value => ({ value })),
     matchedComponentId: match.componentId,
     matchedName: match.name,
     matchConfidence: match.confidence,
@@ -69,6 +88,7 @@ function lineDataFromExtraction(line: ExtractedMeasurementLine, components: Matc
     basisOverride: null,
     combineEntries: false,
     warnings,
+    split: split ? { pairs, ambiguous: split.ambiguous } : null,
   });
 }
 
@@ -78,6 +98,11 @@ export async function insertMeasurementImport(args: {
   lines: ExtractedMeasurementLine[]; components: MatchComponent[];
 }): Promise<{ importId: string; count: number }> {
   const { profile, admin } = await scopedImportContext(args.quoteId);
+  // Owner 2026-11-24: the assumed unit follows the quote's measurement system,
+  // falling back to the company default (same priority as material orders).
+  const { data: quoteRow } = await admin.from('quotes').select('measurement_system').eq('id', args.quoteId).maybeSingle();
+  const { data: companyRow } = await admin.from('companies').select('default_measurement_system').eq('id', profile.company_id).maybeSingle();
+  const system: string | null = quoteRow?.measurement_system ?? companyRow?.default_measurement_system ?? 'metric';
   const usable = args.lines.filter(item => item.label?.trim()).slice(0, 60);
   if (!usable.length) throw Error('No measurement lines could be identified. Provide a clearer photo or document.');
   const { data: session, error } = await admin.from('quote_measurement_imports').insert({
@@ -88,7 +113,7 @@ export async function insertMeasurementImport(args: {
   }).select('id').single();
   if (error || !session) throw Error('Unable to create the import. Has the measurements import migration been applied?');
   const rows = usable.map((item, i) => {
-    const data = lineDataFromExtraction(item, args.components);
+    const data = lineDataFromExtraction(item, args.components, system);
     return {
       import_id: session.id, company_id: profile.company_id, user_id: profile.id,
       source_index: i + 1,
