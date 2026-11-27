@@ -101,6 +101,15 @@ export default async function FreeWorkspacePage({
                   <span><b>02</b> Get your pricing in</span>
                   <span><b>03</b> See the fastest next steps</span>
                 </div>
+                {/* Owner 2026-11-27: hero signup CTA — a mini version of the bottom signup
+                    card, full width of the workflow pills, with a read-on suggestion below. */}
+                <FreeWorkspaceButton className={styles.heroSignup} direct refTag={refTag}>
+                  <span className={styles.heroSignupLabel}>Create My Free Workspace</span>
+                  <span className={styles.heroSignupArrow} aria-hidden="true">↗</span>
+                </FreeWorkspaceButton>
+                <p className={styles.heroSignupHint}>
+                  We suggest reading the rest of this page to see how QuoteCore+ can help you.
+                </p>
               </div>
               <div className={styles.heroVisual} aria-label="Hand-drawn roof plan becoming a finished quotation">
                 <div className={styles.heroGlow} aria-hidden="true" />
@@ -301,8 +310,9 @@ export default async function FreeWorkspacePage({
                 </li>
               ))}
             </ol>
-            {/* The single intentional signup entry on the page. The shared component now
-                defaults to /free-trial; `direct` + forwarded ref keep this one on /signup. */}
+            {/* One of the two intentional direct signup entries on the page (hero mini CTA +
+                this card). The shared component defaults to /free-trial; `direct` + forwarded
+                ref keep these on /signup. */}
             <FreeWorkspaceButton className={styles.signupCard} direct refTag={refTag}>
               <span className={styles.signupHeader}>
                 <span className={styles.signupKicker}>Create My Free Workspace</span>
