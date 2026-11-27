@@ -102,10 +102,15 @@ export default async function FreeWorkspacePage({
                   <span><b>03</b> See the fastest next steps</span>
                 </div>
                 {/* Owner 2026-11-27: hero signup CTA — a mini version of the bottom signup
-                    card, full width of the workflow pills, with a read-on suggestion below. */}
+                    card, full width of the workflow pills, with a read-on suggestion below.
+                    Owner fix 15:48: label + arrow share one line (arrow right after the
+                    text); "No card needed · Access and try all features" line beneath. */}
                 <FreeWorkspaceButton className={styles.heroSignup} direct refTag={refTag}>
-                  <span className={styles.heroSignupLabel}>Create My Free Workspace</span>
-                  <span className={styles.heroSignupArrow} aria-hidden="true">↗</span>
+                  <span className={styles.heroSignupRow}>
+                    <span className={styles.heroSignupLabel}>Create My Free Workspace</span>
+                    <span className={styles.heroSignupArrow} aria-hidden="true">↗</span>
+                  </span>
+                  <span className={styles.heroSignupMeta}>No card needed · Access and try all features</span>
                 </FreeWorkspaceButton>
                 <p className={styles.heroSignupHint}>
                   We suggest reading the rest of this page to see how QuoteCore+ can help you.
